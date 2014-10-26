@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'p':
 				if(strlen(optarg) != 2) {
-					fprintf(stderr, "Falsche Position, --help für mehr Informationen\n");
+					fprintf(stderr, "invalid position, use --help for more details\n");
 					break;
 				}
 
@@ -162,11 +162,11 @@ int main(int argc, char *argv[]) {
 				help();
 				exit(0);
 			case ':':
-				fprintf(stderr, "Argument fehlt, --help für mehr Informationen\n");
+				fprintf(stderr, "argument missing, use --help for more details\n");
 				break;
 			case '?':
 			default:
-				fprintf(stderr, "Unbekannte Option, --help für mehr Informationen\n");
+				fprintf(stderr, "unknown option, use --help for more details\n");
 				break;
 		}
 	}
@@ -252,7 +252,7 @@ int exec_commands(commands *cmds, modjpeg_handle *m) {
 }
 
 void help(void) {
-	fprintf(stderr, "modjpeg (c) 2006 Ingo Oppermann\n\n");
+	fprintf(stderr, "modjpeg (c) 2006+ Ingo Oppermann\n\n");
 	fprintf(stderr, "Optionen:\n");
 
 	fprintf(stderr, "\t--input, -i file\n");
@@ -275,7 +275,7 @@ void help(void) {
 
 	fprintf(stderr, "\t--logo, -l file[,mask]\n");
 	fprintf(stderr, "\t\tName des Bildes, das als Logo verwendet werden soll. Die Maske ist optional.\n");
-	fprintf(stderr, "\t\tLogo und Maske müssen im JPEG-Format sein.\n");
+	fprintf(stderr, "\t\tLogo und Maske muessen im JPEG-Format sein.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--position, -p [t|b][l|r]\n");
@@ -283,21 +283,21 @@ void help(void) {
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--luminance, -y value\n");
-	fprintf(stderr, "\t\tVerändert die Helligkeit des Bildes entsprechend des Wertes in value.\n");
+	fprintf(stderr, "\t\tVeraendert die Helligkeit des Bildes entsprechend des Wertes in value.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--tintblue, -b value\n");
-	fprintf(stderr, "\t\tEin positiver Wert färbt das Bild blau, ein negativer Wert färbt\n");
+	fprintf(stderr, "\t\tEin positiver Wert faerbt das Bild blau, ein negativer Wert faerbt\n");
 	fprintf(stderr, "\t\tdas Bild gelb.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--tintred, -r value\n");
-	fprintf(stderr, "\t\tEin positiver Wert färbt das Bild rot, ein negativer Wert färbt\n");
-	fprintf(stderr, "\t\tdas Bild grün.\n");
+	fprintf(stderr, "\t\tEin positiver Wert faerbt das Bild rot, ein negativer Wert faerbt\n");
+	fprintf(stderr, "\t\tdas Bild gruen.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--pixelate, -x\n");
-	fprintf(stderr, "\t\tVerpixelt das Bild in 8x8-Blöcken.\n");
+	fprintf(stderr, "\t\tVerpixelt das Bild in 8x8-Bloecken.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--grayscale, -g\n");

@@ -3,7 +3,7 @@
 # 
 # Die folgende Zeile entsprechend anpassen
 #------------------------------------------------------------------------------
-JPEGDIR = /usr/local
+JPEGDIR = /opt/local
 
 # Ab hier ist nichts mehr anzupassen
 
@@ -17,11 +17,11 @@ LIBS = -lm -ljpeg
 
 #COMPILERFLAGS_SHARED = -Wall -O2 -fPIC -c
 #COMPILERFLAGS_STATIC = -Wall -O2 -c
-COMPILERFLAGS = -Wall -O2 -c -fPIC
+COMPILERFLAGS = -Wall -O2 -c
 
 #LINKERFLAGS_SHARED = -shared
 #LINKERFLAGS_STATIC =
-LINKERFLAGS = -shared
+LINKERFLAGS = 
 
 CC = gcc
 CFLAGS = $(COMPILERFLAGS) $(INCLUDE)
@@ -44,8 +44,8 @@ APPS = test \
        modjpeg
 
 libmodjpeg: $(OBJECTS)
-	$(CC) $(LFLAGS) $(OBJECTS) -Wl,-soname -Wl,libmodjpeg.so -o libmodjpeg.so
-#	ar rv libmodjpeg.a $(OBJECTS)
+#	$(CC) $(LFLAGS) $(OBJECTS) -Wl,-soname -Wl,libmodjpeg.so -o libmodjpeg.so
+	ar rv libmodjpeg.a $(OBJECTS)
 
 apps: $(APPS)
 
