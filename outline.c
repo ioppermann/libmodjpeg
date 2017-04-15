@@ -118,6 +118,7 @@ destroy_dropon(dropon) {
 #define MODJPEG_COLORSPACE_RGB		2
 #define MODJPEG_COLORSPACE_GRAYSCALE	3
 #define MODJPEG_COLORSPACE_GRAYSCALEA	4
+#define MODJPEG_COLORSPACE_YCC		5
 
 #define MODJPEG_ALIGN_TOP		1
 #define MODJPEG_ALIGN_BOTTOM		2
@@ -159,11 +160,34 @@ void modjpeg_init_destination(j_compress_ptr cinfo);
 boolean modjpeg_empty_output_buffer(j_compress_ptr cinfo);
 void modjpeg_term_destination(j_compress_ptr cinfo);
 
-typedef float* modjpeg_image_block;
+typedef struct {
+	int h_samp_factor;
+	int v_samp_factor;
+} modjpeg_sampling_t;
+
+typedef float modjpeg_jpegblock_t;
+
+typedef struct {
+	int width_in_blocks;
+	int height_in_blocks;
+
+	int h_samp_factor;
+	int v_samp_factor;
+
+	int num_blocks;
+	modjpeg_jpegblock_t **blocks;
+} modjpeg_jpegcomponent_t;
 
 typedef struct {
 	struct jpeg_decompress_struct cinfo;
 	jvirt_barray_ptr *coef;
+
+	modjpeg_sampling_t samp_factor[4];
+
+	int is_mask;
+
+	int num_components;
+	modjpeg_jpegcomponent_t *components;
 } modjpeg_jpegimage_t;
 
 typedef struct {
@@ -194,10 +218,10 @@ int compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegimage_t *x, modjpeg_jp
 
 int prepare_mask(modjpeg_jpegimage_t *m);
 
-int encode_jpeg(char **buffer, size_t *len, unsigned char *rawdata, int colorspace, int width, int height);
+int encode_jpeg(char **buffer, size_t *len, unsigned char *rawdata, int colorspace, modjpeg_sampling_t s[4], int width, int height);
 int decode_jpeg(char **buffer, size_t *len, int *colorspace, int *width, int *height, const char *filename);
 
-void modjpeg_convolve_add(modjpeg_image_block x, modjpeg_image_block y, float w, int k, int l);
+void modjpeg_convolve_add(modjpeg_jpegblock_t *x, modjpeg_jpegblock_t *y, float w, int k, int l);
 
 int main(int argc, char **argv) {
 	modjpeg_jpegimage_t *m;
@@ -218,7 +242,7 @@ int main(int argc, char **argv) {
 
 	printf("%dx%d pixel, %ld bytes\n", width, height, len);
 
-	d = create_dropon(buffer, MODJPEG_COLORSPACE_RGBA, width, height);
+	d = create_dropon(buffer, MODJPEG_COLORSPACE_RGB, width, height);
 
 	//compose(m, d, MODJPEG_ALIGN_CENTER, MODJPEG_ALIGN_BOTTOM, 0, 0);
 	compose(m, d, MODJPEG_ALIGN_LEFT, MODJPEG_ALIGN_TOP, 0, 0);
@@ -278,13 +302,13 @@ int compose(modjpeg_jpegimage_t *m, modjpeg_dropon_t *d, int align_h, int align_
 		char *buffer = NULL;
 		size_t len = 0;
 
-		encode_jpeg(&buffer, &len, (unsigned char *)d->rawimage, MODJPEG_COLORSPACE_RGB, d->width, d->height);
+		encode_jpeg(&buffer, &len, (unsigned char *)d->rawimage, MODJPEG_COLORSPACE_RGB, m->samp_factor, d->width, d->height);
 		printf("encoded len: %ld\n", len);
 		d->image = create_image(buffer, len);
 		free(buffer);
 
 		if(d->rawalpha != NULL) {
-			encode_jpeg(&buffer, &len, (unsigned char *)d->rawalpha, MODJPEG_COLORSPACE_GRAYSCALE, d->width, d->height);
+			encode_jpeg(&buffer, &len, (unsigned char *)d->rawalpha, MODJPEG_COLORSPACE_YCC, m->samp_factor, d->width, d->height);
 			printf("encoded len: %ld\n", len);
 			d->alpha = create_image(buffer, len);
 			prepare_mask(d->alpha);
@@ -383,6 +407,9 @@ int compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegimage_t *x, modjpeg_jp
 	JCOEFPTR coefs_m, coefs_x, coefs_w;
 	float X[DCTSIZE2], Y[DCTSIZE2];
 
+	modjpeg_jpegcomponent_t *comp;
+	modjpeg_jpegblock_t *b;
+
 	int p, q;
 
 	cinfo_m = &m->cinfo;
@@ -402,7 +429,7 @@ int compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegimage_t *x, modjpeg_jp
 	for(c = 0; c < cinfo_x->num_components; c++) {
 		component_m = &cinfo_m->comp_info[c];
 		component_x = &cinfo_x->comp_info[c];
-		//component_w = &cinfo_w->comp_info[c];
+		comp = &w->components[c];
 
 		width_in_blocks = cinfo_x->image_width / (cinfo_x->max_h_samp_factor * DCTSIZE) * component_x->h_samp_factor;
 		height_in_blocks = cinfo_x->image_height / (cinfo_x->max_v_samp_factor * DCTSIZE) * component_x->v_samp_factor;
@@ -432,16 +459,15 @@ int compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegimage_t *x, modjpeg_jp
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks_m = (*cinfo_m->mem->access_virt_barray)((j_common_ptr)&cinfo_m, m->coef[c], logo_height_offset + l, 1, TRUE);
 			blocks_x = (*cinfo_x->mem->access_virt_barray)((j_common_ptr)&cinfo_x, x->coef[c], l, 1, TRUE);
-			blocks_w = (*cinfo_w->mem->access_virt_barray)((j_common_ptr)&cinfo_w, w->coef[0], l, 1, TRUE);
 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs_m = blocks_m[0][logo_width_offset + k];
 				coefs_x = blocks_x[0][k];
-				coefs_w = blocks_w[0][k];
+				b = comp->blocks[comp->height_in_blocks * l + k];
 
 				for(p = 0; p < DCTSIZE; p++) {
 					for(q = 0; q < DCTSIZE; q++) {
-						printf("%4d ", coefs_w[p * q]);
+						printf("%.2f ", b[DCTSIZE * p + q]);
 					}
 					printf("\n");
 				}
@@ -460,14 +486,14 @@ int compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegimage_t *x, modjpeg_jp
 				// y' = w * x (Faltung)
 				printf("w * x | ");
 				for(i = 0; i < DCTSIZE; i++) {
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 0], i, 0);
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 1], i, 1);
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 2], i, 2);
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 3], i, 3);
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 4], i, 4);
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 5], i, 5);
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 6], i, 6);
-					modjpeg_convolve_add(X, Y, coefs_w[(i << 3) + 7], i, 7);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 0], i, 0);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 1], i, 1);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 2], i, 2);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 3], i, 3);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 4], i, 4);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 5], i, 5);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 6], i, 6);
+					modjpeg_convolve_add(X, Y, b[(i << 3) + 7], i, 7);
 				}
 
 				// y = x1 + y'
@@ -487,54 +513,81 @@ int compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegimage_t *x, modjpeg_jp
 
 int prepare_mask(modjpeg_jpegimage_t *m) {
 	int c, k, l, i;
-	int width_in_blocks, height_in_blocks;
 	jpeg_component_info *component;
+	modjpeg_jpegcomponent_t *comp;
+	modjpeg_jpegblock_t *b;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
 
+	int p, q;
+
+	m->is_mask = 1;
+
 	printf("mask: %dx%dpx, %d components: ", m->cinfo.output_width, m->cinfo.output_height, m->cinfo.num_components);
 
-	for(c = 0; c < m->cinfo.num_components; c++) {
+	m->num_components = m->cinfo.num_components;
+	m->components = (modjpeg_jpegcomponent_t *)calloc(m->num_components, sizeof(modjpeg_jpegcomponent_t));
+
+	for(c = 0; c < m->num_components; c++) {
 		component = &m->cinfo.comp_info[c];
+		comp = &m->components[c];
 
 		printf("(%d,%d) ", component->h_samp_factor, component->v_samp_factor);
 
-		width_in_blocks = m->cinfo.image_width / (m->cinfo.max_h_samp_factor * DCTSIZE) * component->h_samp_factor;
-		height_in_blocks = m->cinfo.image_height / (m->cinfo.max_v_samp_factor * DCTSIZE) * component->v_samp_factor;
+		comp->h_samp_factor = component->h_samp_factor;
+		comp->v_samp_factor = component->v_samp_factor;
 
-		printf("%dx%d blocks ", width_in_blocks, height_in_blocks);
+		comp->width_in_blocks = m->cinfo.image_width / (m->cinfo.max_h_samp_factor * DCTSIZE) * component->h_samp_factor;
+		comp->height_in_blocks = m->cinfo.image_height / (m->cinfo.max_v_samp_factor * DCTSIZE) * component->v_samp_factor;
 
-		for(l = 0; l < height_in_blocks; l++) {
+		comp->num_blocks = comp->width_in_blocks * comp->height_in_blocks;
+		comp->blocks = (modjpeg_jpegblock_t **)calloc(comp->num_blocks, sizeof(modjpeg_jpegblock_t *));
+
+		printf("%dx%d blocks ", comp->width_in_blocks, comp->height_in_blocks);
+
+		for(l = 0; l < comp->height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
 
-			for(k = 0; k < width_in_blocks; k++) {
+			for(k = 0; k < comp->width_in_blocks; k++) {
+				comp->blocks[comp->height_in_blocks * l + k] = (modjpeg_jpegblock_t *)calloc(64, sizeof(modjpeg_jpegblock_t));
+				b = comp->blocks[comp->height_in_blocks * l + k];
+
 				coefs = blocks[0][k];
 
 				coefs[0] += 1024;
+/*
+				printf("component %d (%d,%d)\n", c, l, k);
 
+				for(p = 0; p < DCTSIZE; p++) {
+					for(q = 0; q < DCTSIZE; q++) {
+						printf("%4d ", coefs[DCTSIZE * p + q]);
+					}
+					printf("\n");
+				}
+*/
 				/*
 				// w'(j, i) = w(j, i) * 1/255 * c(i) * c(j) * 1/4
 				// Der Faktor 1/4 kommt von den V(i) und V(j)
 				// => 1/255 * 1/4 = 1/1020
 				*/
-				coefs[0] *= (0.3535534 * 0.3535534 / 1020.0);
-				coefs[1] *= (0.3535534 * 0.5 / 1020.0);
-				coefs[2] *= (0.3535534 * 0.5 / 1020.0);
-				coefs[3] *= (0.3535534 * 0.5 / 1020.0);
-				coefs[4] *= (0.3535534 * 0.5 / 1020.0);
-				coefs[5] *= (0.3535534 * 0.5 / 1020.0);
-				coefs[6] *= (0.3535534 * 0.5 / 1020.0);
-				coefs[7] *= (0.3535534 * 0.5 / 1020.0);
+				b[0] = (float)coefs[0] * (0.3535534 * 0.3535534 / 1020.0);
+				b[1] = (float)coefs[1] * (0.3535534 * 0.5 / 1020.0);
+				b[2] = (float)coefs[2] * (0.3535534 * 0.5 / 1020.0);
+				b[3] = (float)coefs[3] * (0.3535534 * 0.5 / 1020.0);
+				b[4] = (float)coefs[4] * (0.3535534 * 0.5 / 1020.0);
+				b[5] = (float)coefs[5] * (0.3535534 * 0.5 / 1020.0);
+				b[6] = (float)coefs[6] * (0.3535534 * 0.5 / 1020.0);
+				b[7] = (float)coefs[7] * (0.3535534 * 0.5 / 1020.0);
 
 				for(i = 1; i < 8; i++) {
-					coefs[(i << 3)]     *= (0.5 * 0.3535534 / 1020.0);
-					coefs[(i << 3) + 1] *= (0.5 * 0.5 / 1020.0);
-					coefs[(i << 3) + 2] *= (0.5 * 0.5 / 1020.0);
-					coefs[(i << 3) + 3] *= (0.5 * 0.5 / 1020.0);
-					coefs[(i << 3) + 4] *= (0.5 * 0.5 / 1020.0);
-					coefs[(i << 3) + 5] *= (0.5 * 0.5 / 1020.0);
-					coefs[(i << 3) + 6] *= (0.5 * 0.5 / 1020.0);
-					coefs[(i << 3) + 7] *= (0.5 * 0.5 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 0] * (0.5 * 0.3535534 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 1] * (0.5 * 0.5 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 2] * (0.5 * 0.5 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 3] * (0.5 * 0.5 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 4] * (0.5 * 0.5 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 5] * (0.5 * 0.5 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 6] * (0.5 * 0.5 / 1020.0);
+					b[(i << 3) + 0] = (float)coefs[(i << 3) + 7] * (0.5 * 0.5 / 1020.0);
 				}
 			}
 		}
@@ -545,7 +598,7 @@ int prepare_mask(modjpeg_jpegimage_t *m) {
 	return 0;
 }
 
-int encode_jpeg(char **buffer, size_t *len, unsigned char *rawdata, int colorspace, int width, int height) {
+int encode_jpeg(char **buffer, size_t *len, unsigned char *rawdata, int colorspace, modjpeg_sampling_t s[4], int width, int height) {
 	struct jpeg_compress_struct cinfo;
 	struct modjpeg_error_mgr jerr;
 	struct modjpeg_dest_mgr dest;
@@ -579,6 +632,10 @@ int encode_jpeg(char **buffer, size_t *len, unsigned char *rawdata, int colorspa
 		cinfo.input_components = 3;
 		cinfo.in_color_space = JCS_RGB;
 	}
+	else if(colorspace == MODJPEG_COLORSPACE_YCC) {
+		cinfo.input_components = 3;
+		cinfo.in_color_space = JCS_YCbCr;
+	}
 	else {
 		cinfo.input_components = 1;
 		cinfo.in_color_space = JCS_GRAYSCALE;
@@ -588,19 +645,19 @@ int encode_jpeg(char **buffer, size_t *len, unsigned char *rawdata, int colorspa
 
 	cinfo.optimize_coding = TRUE;
 
-	if(colorspace == MODJPEG_COLORSPACE_RGB) {
-		cinfo.comp_info[0].h_samp_factor = 2;
-		cinfo.comp_info[0].v_samp_factor = 2;
+	if(colorspace == MODJPEG_COLORSPACE_RGB || colorspace == MODJPEG_COLORSPACE_YCC) {
+		cinfo.comp_info[0].h_samp_factor = s[0].h_samp_factor;
+		cinfo.comp_info[0].v_samp_factor = s[0].v_samp_factor;
 
-		cinfo.comp_info[1].h_samp_factor = 1;
-		cinfo.comp_info[1].v_samp_factor = 1;
+		cinfo.comp_info[1].h_samp_factor = s[1].h_samp_factor;;
+		cinfo.comp_info[1].v_samp_factor = s[1].v_samp_factor;;
 
-		cinfo.comp_info[2].h_samp_factor = 1;
-		cinfo.comp_info[2].v_samp_factor = 1;
+		cinfo.comp_info[2].h_samp_factor = s[2].h_samp_factor;;
+		cinfo.comp_info[2].v_samp_factor = s[2].v_samp_factor;;
 	}
 	else {
-		cinfo.comp_info[0].h_samp_factor = 1;
-		cinfo.comp_info[0].v_samp_factor = 1;
+		cinfo.comp_info[0].h_samp_factor = s[0].h_samp_factor;;
+		cinfo.comp_info[0].v_samp_factor = s[0].v_samp_factor;;
 	}
 
 	jpeg_set_quality(&cinfo, 100, TRUE);
@@ -689,36 +746,36 @@ modjpeg_dropon_t *create_dropon(const char *buffer, unsigned int colorspace, siz
 		return NULL;
 	}
 
-	if(colorspace == MODJPEG_COLORSPACE_RGBA) {	
-		nsamples = 1 * width * height;
+	d->rawalpha = (char *)calloc(nsamples, sizeof(char));
+	if(d->rawalpha == NULL) {
+		printf("can't allocate buffer");
+		return NULL;
+	}
 
-		d->rawalpha = (char *)calloc(nsamples, sizeof(char));
-		if(d->rawalpha == NULL) {
-			printf("can't allocate buffer");
-			return NULL;
-		}
+	const char *p = buffer;
+	char *pimage = d->rawimage;
+	char *palpha = d->rawalpha;
 
-		const char *p = buffer;
-		char *pimage = d->rawimage;
-		char *palpha = d->rawalpha;
+	size_t v = 0;
 
-		size_t v = 0;
+	if(colorspace == MODJPEG_COLORSPACE_RGBA) {
 		for(v = 0; v < (width * height); v++) {
 			*pimage++ = *p++;
 			*pimage++ = *p++;
 			*pimage++ = *p++;
-			*palpha++ = (char)64;
+			*palpha++ = *p;
+			*palpha++ = *p;
+			*palpha++ = *p++;
 		}
 	}
 	else {
-		const char *p = buffer;
-		char *pimage = d->rawimage;
-
-		size_t v = 0;
 		for(v = 0; v < (width * height); v++) {
 			*pimage++ = *p++;
 			*pimage++ = *p++;
 			*pimage++ = *p++;
+			*palpha++ = (char)255;
+			*palpha++ = (char)255;
+			*palpha++ = (char)255;
 		}
 	}
 
@@ -877,6 +934,9 @@ modjpeg_jpegimage_t *create_image(const char *buffer, size_t len) {
 		component = &m->cinfo.comp_info[c];
 
 		printf("(%d,%d)", component->h_samp_factor, component->v_samp_factor);
+
+		m->samp_factor[c].h_samp_factor = component->h_samp_factor;
+		m->samp_factor[c].v_samp_factor = component->v_samp_factor;
 
 		width_in_blocks = m->cinfo.image_width / (m->cinfo.max_h_samp_factor * DCTSIZE) * component->h_samp_factor;
 		height_in_blocks = m->cinfo.image_height / (m->cinfo.max_v_samp_factor * DCTSIZE) * component->v_samp_factor;
@@ -1085,7 +1145,7 @@ void modjpeg_term_source(j_decompress_ptr cinfo) {
   /* no work necessary here */
 }
 
-void modjpeg_convolve_add(modjpeg_image_block x, modjpeg_image_block y, float w, int k, int l)
+void modjpeg_convolve_add(modjpeg_jpegblock_t *x, modjpeg_jpegblock_t *y, float w, int k, int l)
 {
 	float z[64] = {0, 0, 0, 0, 0, 0, 0, 0,
 		       0, 0, 0, 0, 0, 0, 0, 0,
