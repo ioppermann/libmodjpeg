@@ -21,6 +21,28 @@ luminance(jpegimage, ..) {
 	increase Y component
 }
 
+0. Logo inkl. Maske laden (Drop-on)
+   - unterstütze Farbräume: RGB, YCrCb, GRAYSCALE mit optionalem Alpha
+   - Logo immer mit 3 Komponenten RAW bereithalten und Farbraum merken
+   - Maske immer mit 1 Komponente RAW bereithalten
+
+   - 3 Helfer:
+     - Raw RGBA, YCrCbA oder GRAYSCALEA laden
+     - Logo von JPEG laden, ohne Maske aber mit Überblendwert
+     - Logo von JPEG laden, Maske von JPEG laden mit Y als Alpha
+
+1. Original-JPEG laden
+   - Farbraum bestimmen (unterstützte Farbräume: RGB, YCrCb, GRAYSCALE)
+   - Sampling bestimmen
+
+2. Logo inkl. Maske als RGBA bereithalten
+   - RGB als JPEG im Speicher ablegen (gleicher Farbraum und gleiches Sampling wie Original-JPEG) => LOGO-JEPG
+   - A als Y mit Cr=0 und Cb=0 JPEG im Speicher ablegen (gleicher Farbraum und gleiches Sampling wie Original-JPEG) => MASK-JPEG
+
+3. Kooeffizienten von LOGO-JPEG und MASK-JPEG laden
+
+4. LOGO-JPEG und MASK-JPEG auf Original-JPEG anwenden
+
 */
 
 // gcc outline.c -o outline -Wall -O2 -lm -ljpeg -I/opt/local/include -L/opt/local/lib
@@ -42,6 +64,7 @@ luminance(jpegimage, ..) {
 #define MODJPEG_COLORSPACE_GRAYSCALE	3
 #define MODJPEG_COLORSPACE_GRAYSCALEA	4
 #define MODJPEG_COLORSPACE_YCC		5
+#define MODJPEG_COLORSPACE_YCCA		6
 
 #define MODJPEG_ALIGN_TOP		1
 #define MODJPEG_ALIGN_BOTTOM		2
@@ -49,6 +72,7 @@ luminance(jpegimage, ..) {
 #define MODJPEG_ALIGN_RIGHT		4
 #define MODJPEG_ALIGN_CENTER		5
 
+#define MODJPEG_BLEND_NONUNIFORM	-1
 #define MODJPEG_BLEND_NONE		0
 #define MODJPEG_BLEND_FULL		255
 
@@ -121,6 +145,8 @@ typedef struct {
 	char *rawimage;
 	char *rawalpha;
 
+	short blend;
+
 	size_t width;
 	size_t height;
 
@@ -136,8 +162,8 @@ int mj_write_jpegimage_to_file(modjpeg_jpegimage_t *m, char *filename);
 
 void mj_destroy_jpegimage(modjpeg_jpegimage_t *m);
 
-modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_mem(const char *buffer, unsigned short blend, unsigned int colorspace, size_t width, size_t height);
-modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_file(const char *filename, const char *mask, unsigned short blend);
+modjpeg_jpegdropon_t *mj_read_jpegdropon_from_raw(const char *rawdata, short blend, unsigned int colorspace, size_t width, size_t height);
+modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_file(const char *filename, const char *mask, short blend);
 int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, modjpeg_jpegsampling_t s[4]);
 void mj_destroy_jpegdropon(modjpeg_jpegdropon_t *d);
 
@@ -158,7 +184,7 @@ int main(int argc, char **argv) {
 	modjpeg_jpegdropon_t *d;
 
 	m = mj_read_jpegimage_from_file("./images/in.jpg");
-	d = mj_read_jpegdropon_from_jpeg_file("./images/logo.jpg", "./images/mask.jpg", 128);
+	d = mj_read_jpegdropon_from_jpeg_file("./images/logo.jpg", "./images/mask.jpg", 255);
 
 	//compose(m, d, MODJPEG_ALIGN_CENTER, MODJPEG_ALIGN_BOTTOM, 0, 0);
 	mj_compose(m, d, MODJPEG_ALIGN_CENTER, MODJPEG_ALIGN_TOP, 0, 0);
@@ -171,7 +197,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_file(const char *filename, const char *mask, unsigned short blend) {
+modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_file(const char *filename, const char *mask, short blend) {
 	char *buffer = NULL;
 	int colorspace = 0;
 	int width = 0;
@@ -186,10 +212,10 @@ modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_file(const char *filename, co
 	printf("image: %dx%d pixel, %ld bytes\n", width, height, len);
 
 	if(mask != NULL) {
-		
+
 	}
 
-	modjpeg_jpegdropon_t *d = mj_read_jpegdropon_from_jpeg_mem(buffer, blend, colorspace, width, height);
+	modjpeg_jpegdropon_t *d = mj_read_jpegdropon_from_raw(buffer, blend, colorspace, width, height);
 
 	free(buffer);
 
@@ -235,12 +261,16 @@ int mj_compose(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int
 		mj_update_jpegdropon(d, m->samp_factor);
 	}
 
-	//if(d->has_mask == 1) {
+	if(d->blend == MODJPEG_BLEND_NONE) {
+		return 0;
+	}
+
+	if(d->blend != MODJPEG_BLEND_FULL) {
 		mj_compose_with_mask(m, d->image, d->alpha, align_h, align_v);
-	//}
-	//else {
-	//	mj_compose_without_mask(m, d->image, align_h, align_v);
-	//}
+	}
+	else {
+		mj_compose_without_mask(m, d->image, align_h, align_v);
+	}
 
 	return 0;
 }
@@ -716,14 +746,17 @@ void mj_destroy_jpegmask(modjpeg_jpegmask_t *w) {
 	return;
 }
 
-modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_mem(const char *buffer, unsigned short blend, unsigned int colorspace, size_t width, size_t height) {
+modjpeg_jpegdropon_t *mj_read_jpegdropon_from_raw(const char *rawdata, short blend, unsigned int colorspace, size_t width, size_t height) {
 	modjpeg_jpegdropon_t *d;
 	int ncomponents = 0;
 
-	if(buffer == NULL) {
+	if(rawdata == NULL) {
 		return NULL;
 	}
 
+	if(blend < MODJPEG_BLEND_NONE) {
+		blend = MODJPEG_BLEND_NONE;
+	}
 	if(blend > MODJPEG_BLEND_FULL) {
 		blend = MODJPEG_BLEND_FULL;
 	}
@@ -756,6 +789,8 @@ modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_mem(const char *buffer, unsig
 		return NULL;
 	}
 
+	d->blend = blend;
+
 	d->width = width;
 	d->height = height;
 
@@ -774,7 +809,7 @@ modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_mem(const char *buffer, unsig
 		return NULL;
 	}
 
-	const char *p = buffer;
+	const char *p = rawdata;
 	char *pimage = d->rawimage;
 	char *palpha = d->rawalpha;
 
@@ -789,15 +824,17 @@ modjpeg_jpegdropon_t *mj_read_jpegdropon_from_jpeg_mem(const char *buffer, unsig
 			*palpha++ = *p;
 			*palpha++ = *p++;
 		}
+
+		d->blend = MODJPEG_BLEND_NONUNIFORM;
 	}
 	else {
 		for(v = 0; v < (width * height); v++) {
 			*pimage++ = *p++;
 			*pimage++ = *p++;
 			*pimage++ = *p++;
-			*palpha++ = (char)blend;
-			*palpha++ = (char)blend;
-			*palpha++ = (char)blend;
+			*palpha++ = (char)d->blend;
+			*palpha++ = (char)d->blend;
+			*palpha++ = (char)d->blend;
 		}
 	}
 
