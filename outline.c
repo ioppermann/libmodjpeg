@@ -114,6 +114,16 @@ void modjpeg_term_destination(j_compress_ptr cinfo);
 typedef struct {
 	int h_samp_factor;
 	int v_samp_factor;
+} modjpeg_jpegsamplingfactor_t;
+
+typedef struct {
+	int max_h_samp_factor;
+	int max_v_samp_factor;
+
+	int h_factor;
+	int v_factor;
+
+	modjpeg_jpegsamplingfactor_t samp_factor[4];
 } modjpeg_jpegsampling_t;
 
 typedef float modjpeg_jpegblock_t;
@@ -133,7 +143,10 @@ typedef struct {
 	struct jpeg_decompress_struct cinfo;
 	jvirt_barray_ptr *coef;
 
-	modjpeg_jpegsampling_t samp_factor[4];
+	int h_blocks;
+	int v_blocks;
+
+	modjpeg_jpegsampling_t sampling;
 } modjpeg_jpegimage_t;
 
 typedef struct {
@@ -145,10 +158,10 @@ typedef struct {
 	int raw_colorspace;
 
 	int blend;
+	unsigned short offset;
 
 	int image_ncomponents;
 	int image_colorspace;
-	unsigned short image_offset;
 
 	modjpeg_jpegcomponent_t *image;
 
@@ -171,17 +184,17 @@ void mj_destroy_jpegimage(modjpeg_jpegimage_t *m);
 
 modjpeg_jpegdropon_t *mj_read_jpegdropon_from_raw(const char *rawdata, short blend, unsigned int colorspace, size_t width, size_t height);
 modjpeg_jpegdropon_t *mj_read_jpegdropon_from_file(const char *filename, const char *mask, short blend);
-int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modjpeg_jpegsampling_t s[4]);
+int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modjpeg_jpegsampling_t *s, unsigned short offset);
 void mj_destroy_jpegdropon(modjpeg_jpegdropon_t *d);
 
 void mj_destroy_jpegcomponent(modjpeg_jpegcomponent_t *c);
 
-int mj_compose(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int align_v, int offset_x, int offset_y);
-int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int align_v);
-int mj_compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int align_v);
+int mj_compose(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int h_align, int v_align, int x_offset, int y_offset);
+int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int h_offset, int v_offset);
+int mj_compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int h_offset, int v_offset);
 
-int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *rawdata, int rawcolorspace, J_COLOR_SPACE jpegcolorspace, modjpeg_jpegsampling_t s[4], int width, int height);
-int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int colorspace, const char *filename);
+int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *raw_data, int raw_colorspace, J_COLOR_SPACE jpeg_colorspace, modjpeg_jpegsampling_t *s, int width, int height);
+int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int want_colorspace, const char *filename);
 
 void mj_convolve(modjpeg_jpegblock_t *x, modjpeg_jpegblock_t *y, float w, int k, int l);
 
@@ -194,7 +207,7 @@ int main(int argc, char **argv) {
 	m = mj_read_jpegimage_from_file("./images/in.jpg");
 	d = mj_read_jpegdropon_from_file("./images/logo.jpg", "./images/alpha.jpg", 128);
 
-	mj_compose(m, d, MODJPEG_ALIGN_CENTER, MODJPEG_ALIGN_TOP, 0, 0);
+	mj_compose(m, d, MODJPEG_ALIGN_RIGHT, MODJPEG_ALIGN_BOTTOM, 0, 0);
 
 	mj_write_jpegimage_to_file(m, "./images/out.jpg");
 
@@ -204,40 +217,56 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-modjpeg_jpegdropon_t *mj_read_jpegdropon_from_file(const char *image, const char *alpha, short blend) {
+modjpeg_jpegdropon_t *mj_read_jpegdropon_from_file(const char *image_file, const char *alpha_file, short blend) {
 	printf("entering %s\n", __FUNCTION__);
 
-	char *imagebuffer = NULL, *alphabuffer = NULL, *buffer;
+	char *image_buffer = NULL, *alpha_buffer = NULL, *buffer = NULL;
 	int colorspace;
-	int width = 0;
-	int height = 0;
+	int image_width = 0, alpha_width = 0;
+	int image_height = 0, alpha_height = 0;
 	size_t len = 0;
 
-	if(mj_decode_jpeg_to_buffer(&imagebuffer, &len, &width, &height, MODJPEG_COLORSPACE_RGB, image) == -1) {
-		printf("can't decode jpeg\n");
-		exit(1);
+	if(mj_decode_jpeg_to_buffer(&image_buffer, &len, &image_width, &image_height, MODJPEG_COLORSPACE_RGB, image_file) != 0) {
+		printf("can't decode jpeg from %s\n", image_file);
+
+		return NULL;
 	}
 
-	printf("image: %dx%d pixel, %ld bytes (%ld bytes/pixel)\n", width, height, len, len / (width * height));
+	printf("image: %dx%d pixel, %ld bytes (%ld bytes/pixel)\n", image_width, image_height, len, len / (image_width * image_height));
 
-	if(alpha != NULL) {
-		if(mj_decode_jpeg_to_buffer(&alphabuffer, &len, &width, &height, MODJPEG_COLORSPACE_GRAYSCALE, alpha) == -1) {
-			printf("can't decode jpeg\n");
-			exit(1);
+	if(alpha_file != NULL) {
+		if(mj_decode_jpeg_to_buffer(&alpha_buffer, &len, &alpha_width, &alpha_height, MODJPEG_COLORSPACE_GRAYSCALE, alpha_file) != 0) {
+			printf("can't decode jpeg from %s\n", alpha_file);
+
+			free(image_buffer);
+			return NULL;
 		}
 
-		printf("alpha: %dx%d pixel, %ld bytes (%ld bytes/pixel)\n", width, height, len, len / (width * height));
+		printf("alpha: %dx%d pixel, %ld bytes (%ld bytes/pixel)\n", alpha_width, alpha_height, len, len / (alpha_width * alpha_height));
 
-		buffer = (char *)calloc(4 * width * height, sizeof(char));
+		if(image_width != alpha_width || image_height != alpha_height) {
+			printf("error: dimensions of image and alpha need to be the same!\n");
+
+			free(image_buffer);
+			free(alpha_buffer);
+
+			return NULL;
+		}
+
+		buffer = (char *)calloc(4 * image_width * image_height, sizeof(char));
 		if(buffer == NULL) {
-			printf("can't allocate buffer\n");
-			exit(1);
+			printf("can't allocate memory for buffer\n");
+
+			free(image_buffer);
+			free(alpha_buffer);
+
+			return NULL;
 		}
 
 		int v;
-		char *t = buffer, *p = imagebuffer, *q = alphabuffer;
+		char *t = buffer, *p = image_buffer, *q = alpha_buffer;
 
-		for(v = 0; v < (width * height); v++) {
+		for(v = 0; v < (image_width * image_height); v++) {
 			*t++ = *p++;
 			*t++ = *p++;
 			*t++ = *p++;
@@ -247,27 +276,38 @@ modjpeg_jpegdropon_t *mj_read_jpegdropon_from_file(const char *image, const char
 		colorspace = MODJPEG_COLORSPACE_RGBA; 
 	}
 	else {
-		buffer = imagebuffer;
+		buffer = image_buffer;
 		colorspace = MODJPEG_COLORSPACE_RGB;
 	}
 
-	modjpeg_jpegdropon_t *d = mj_read_jpegdropon_from_raw(buffer, blend, colorspace, width, height);
+	modjpeg_jpegdropon_t *d = mj_read_jpegdropon_from_raw(buffer, blend, colorspace, image_width, image_height);
 
-	free(imagebuffer);
+	free(image_buffer);
 
-	if(alphabuffer != NULL) {
-		free(alphabuffer);
+	if(alpha_buffer != NULL) {
+		free(alpha_buffer);
 		free(buffer);
 	}
 
 	return d;
 }
 
-int mj_compose(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int align_v, int offset_x, int offset_y) {
+int mj_compose(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int h_align, int v_align, int x_offset, int y_offset) {
 	printf("entering %s\n", __FUNCTION__);
 
 	int reload = 0;
+	int h_offset = 0, v_offset = 0, offset = 0;
 	jpeg_component_info *component_m = NULL;
+
+	if(m == NULL || d == NULL) {
+		return 0;
+	}
+
+	printf("blend: %d\n", d->blend);
+
+	if(d->blend == MODJPEG_BLEND_NONE) {
+		return 0;
+	}
 
 	if(d->image != NULL) {
 		// is the colorspace the same?
@@ -288,44 +328,72 @@ int mj_compose(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int
 				reload = 1;
 			}
 		}
-
-		// is the offset the same?
-		// ...
 	}
 	else {
+		reload = 1;
+	}
+
+	// is the offset the same?
+	// calculate needed offset, compare with d->offset
+
+	if(h_align == MODJPEG_ALIGN_LEFT) {
+		h_offset = 0;
+	}
+	else if(h_align == MODJPEG_ALIGN_CENTER) {
+		h_offset = m->cinfo.output_width / 2 - d->raw_width / 2;
+	}
+	else {
+		h_offset = m->cinfo.output_width - d->raw_width;
+	}
+
+	h_offset += x_offset;
+
+	offset = h_offset % m->sampling.h_factor;
+	h_offset = h_offset / m->sampling.h_factor;
+
+	if(v_align == MODJPEG_ALIGN_TOP) {
+		v_offset = 0;
+	}
+	else if(v_align == MODJPEG_ALIGN_CENTER) {
+		v_offset = m->cinfo.output_height / 2 - d->raw_height / 2;
+	}
+	else {
+		v_offset = m->cinfo.output_height - d->raw_height;
+	}
+
+	v_offset += y_offset;
+
+	offset += m->sampling.h_factor * (v_offset % m->sampling.v_factor);
+	v_offset = v_offset / m->sampling.v_factor;
+
+	if(offset != d->offset) {
 		reload = 1;
 	}
 
 	if(reload == 1) {
 		printf("reloading dropon\n");
 
-		mj_update_jpegdropon(d, m->cinfo.jpeg_color_space, m->samp_factor);
-	}
-
-	printf("blend: %d\n", d->blend);
-
-	if(d->blend == MODJPEG_BLEND_NONE) {
-		return 0;
+		mj_update_jpegdropon(d, m->cinfo.jpeg_color_space, &m->sampling, offset);
 	}
 
 	if(d->blend != MODJPEG_BLEND_FULL) {
-		mj_compose_with_mask(m, d, align_h, align_v);
+		mj_compose_with_mask(m, d, h_offset, v_offset);
 	}
 	else {
-		mj_compose_without_mask(m, d, align_h, align_v);
+		mj_compose_without_mask(m, d, h_offset, v_offset);
 	}
 
 	return 0;
 }
 
-int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modjpeg_jpegsampling_t s[4]) {
+int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modjpeg_jpegsampling_t *s, unsigned short offset) {
 	printf("entering %s\n", __FUNCTION__);
 
 	if(d == NULL) {
 		return -1;
 	}
 
-	int i;
+	int i, j;
 
 	if(d->image != NULL) {
 		for(i = 0; i < d->image_ncomponents; i++) {
@@ -350,28 +418,50 @@ int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modj
 
 	// hier offset berücksichtigen
 
-	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)d->raw_image, d->raw_colorspace, colorspace, s, d->raw_width, d->raw_height);
+	int offset_h = offset % s->h_factor;
+	int offset_v = offset / s->v_factor;
+
+	int raw_width = d->raw_width + s->h_factor;
+	int raw_height = d->raw_height + s->v_factor;
+	char *raw_data = (char *)calloc(3 * raw_width * raw_height, sizeof(char));
+
+	for(i = 0; i < d->raw_height; i++) {
+		for(j = 0; j < d->raw_width * 3; j++) {
+			raw_data[(i + offset_v) * raw_width * 3 + (j + offset_h * 3)] = d->raw_image[i * d->raw_width * 3 + j];
+		}
+	}
+
+	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, d->raw_colorspace, colorspace, s, raw_width, raw_height);
 	printf("encoded len: %ld\n", len);
 
 	mj_read_droponimage_from_mem(d, buffer, len);
 	free(buffer);
 
-	// hier offset berücksichtigen und alpha auf 3 komponenten ausdehnen
+	// hier offset berücksichtigen
 
-	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)d->raw_alpha, MODJPEG_COLORSPACE_YCC, JCS_YCbCr, s, d->raw_width, d->raw_height);
+	for(i = 0; i < d->raw_height; i++) {
+		for(j = 0; j < d->raw_width * 3; j++) {
+			raw_data[(i + offset_v) * raw_width * 3 + (j + offset_h * 3)] = d->raw_alpha[i * d->raw_width * 3 + j];
+		}
+	}
+
+	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, MODJPEG_COLORSPACE_YCC, JCS_YCbCr, s, raw_width, raw_height);
 	printf("encoded len: %ld\n", len);
 
 	mj_read_droponalpha_from_mem(d, buffer, len);
 	free(buffer);
 
+	free(raw_data);
+
+	d->offset = offset;
+
 	return 0;
 }
 
-int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int align_v) {
+int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int h_offset, int v_offset) {
 	printf("entering %s\n", __FUNCTION__);
 
 	int c, k, l, i;
-	int h_blocks, v_blocks;
 	int width_offset = 0, height_offset = 0;
 	int width_in_blocks = 0, height_in_blocks = 0;
 	struct jpeg_decompress_struct *cinfo_m;
@@ -384,20 +474,6 @@ int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int
 
 	cinfo_m = &m->cinfo;
 
-	h_blocks = cinfo_m->image_width / (cinfo_m->max_h_samp_factor * DCTSIZE);
-	if((h_blocks * cinfo_m->max_h_samp_factor * DCTSIZE) < (cinfo_m->image_width - (cinfo_m->max_h_samp_factor * DCTSIZE / 2))) {
-		h_blocks++;
-	}
-
-	printf("h_blocks: %d\n", h_blocks);
-
-	v_blocks = cinfo_m->image_height / (cinfo_m->max_v_samp_factor * DCTSIZE);
-	if((v_blocks * cinfo_m->max_v_samp_factor * DCTSIZE) < (cinfo_m->image_height - (cinfo_m->max_v_samp_factor * DCTSIZE / 2))) {
-		v_blocks++;
-	}
-
-	printf("v_blocks: %d\n", v_blocks);
-
 	for(c = 0; c < d->image_ncomponents; c++) {
 		printf("component %d\n", c);
 
@@ -407,30 +483,8 @@ int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int
 		width_in_blocks = imagecomp->width_in_blocks;
 		height_in_blocks = imagecomp->height_in_blocks;
 
-		// Die Offsets fuer das Logo berechnen
-		if(align_h == MODJPEG_ALIGN_LEFT) {
-			width_offset = 0;
-		}
-		else if(align_h == MODJPEG_ALIGN_CENTER) {
-			width_offset = (component_m->h_samp_factor * h_blocks) / 2 - width_in_blocks;
-		}
-		else {
-			width_offset = (component_m->h_samp_factor * h_blocks) - width_in_blocks;
-		}
-
-		printf("width_offset: %d\n", width_offset);
-
-		if(align_v == MODJPEG_ALIGN_TOP) {
-			height_offset = 0;
-		}
-		else if(align_v == MODJPEG_ALIGN_CENTER) {
-			height_offset = (component_m->v_samp_factor * v_blocks) / 2  - height_in_blocks;
-		}
-		else {
-			height_offset = (component_m->v_samp_factor * v_blocks) - height_in_blocks;
-		}
-
-		printf("height_offset: %d\n", height_offset);
+		width_offset = h_offset * component_m->h_samp_factor;
+		height_offset = v_offset * component_m->v_samp_factor;
 
 		/* Die Werte des Logos in das Bild kopieren */
 		for(l = 0; l < height_in_blocks; l++) {
@@ -438,7 +492,7 @@ int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int
 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs_m = blocks_m[0][width_offset + k];
-				imageblock = imagecomp->blocks[imagecomp->height_in_blocks * l + k];
+				imageblock = imagecomp->blocks[height_in_blocks * l + k];
 
 				for(i = 0; i < DCTSIZE2; i += 4) {
 					coefs_m[i + 0] = (int)imageblock[i + 0];
@@ -453,11 +507,10 @@ int mj_compose_without_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int
 	return 0;
 }
 
-int mj_compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int align_h, int align_v) {
+int mj_compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int h_offset, int v_offset) {
 	printf("entering %s\n", __FUNCTION__);
 
 	int c, k, l, i;
-	int h_blocks, v_blocks;
 	int width_offset = 0, height_offset = 0;
 	int width_in_blocks = 0, height_in_blocks = 0;
 	struct jpeg_decompress_struct *cinfo_m;
@@ -471,16 +524,6 @@ int mj_compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int al
 
 	cinfo_m = &m->cinfo;
 
-	h_blocks = cinfo_m->image_width / (cinfo_m->max_h_samp_factor * DCTSIZE);
-	if((h_blocks * cinfo_m->max_h_samp_factor * DCTSIZE) < (cinfo_m->image_width - (cinfo_m->max_h_samp_factor * DCTSIZE / 2))) {
-		h_blocks++;
-	}
-
-	v_blocks = cinfo_m->image_height / (cinfo_m->max_v_samp_factor * DCTSIZE);
-	if((v_blocks * cinfo_m->max_v_samp_factor * DCTSIZE) < (cinfo_m->image_height - (cinfo_m->max_v_samp_factor * DCTSIZE / 2))) {
-		v_blocks++;
-	}
-
 	for(c = 0; c < d->image_ncomponents; c++) {
 		component_m = &cinfo_m->comp_info[c];
 		imagecomp = &d->image[c];
@@ -489,26 +532,8 @@ int mj_compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int al
 		width_in_blocks = imagecomp->width_in_blocks;
 		height_in_blocks = imagecomp->height_in_blocks;
 
-		// Die Offsets fuer das Logo berechnen
-		if(align_h == MODJPEG_ALIGN_LEFT) {
-			width_offset = 0;
-		}
-		else if(align_h == MODJPEG_ALIGN_CENTER) {
-			width_offset = (component_m->h_samp_factor * h_blocks) / 2 - width_in_blocks;
-		}
-		else {
-			width_offset = (component_m->h_samp_factor * h_blocks) - width_in_blocks;
-		}
-
-		if(align_v == MODJPEG_ALIGN_TOP) {
-			height_offset = 0;
-		}
-		else if(align_v == MODJPEG_ALIGN_CENTER) {
-			height_offset = (component_m->v_samp_factor * v_blocks) / 2  - height_in_blocks;
-		}
-		else {
-			height_offset = (component_m->v_samp_factor * v_blocks) - height_in_blocks;
-		}
+		width_offset = h_offset * component_m->h_samp_factor;
+		height_offset = v_offset * component_m->v_samp_factor;
 
 		/* Die Werte des Logos in das Bild kopieren */
 		for(l = 0; l < height_in_blocks; l++) {
@@ -516,8 +541,8 @@ int mj_compose_with_mask(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int al
 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs_m = blocks_m[0][width_offset + k];
-				alphablock = alphacomp->blocks[alphacomp->height_in_blocks * l + k];
-				imageblock = imagecomp->blocks[imagecomp->height_in_blocks * l + k];
+				alphablock = alphacomp->blocks[height_in_blocks * l + k];
+				imageblock = imagecomp->blocks[height_in_blocks * l + k];
 /*
 				int p, q;
 
@@ -601,8 +626,8 @@ int mj_read_droponimage_from_mem(modjpeg_jpegdropon_t *d, const char *buffer, si
 		comp->h_samp_factor = component->h_samp_factor;
 		comp->v_samp_factor = component->v_samp_factor;
 
-		comp->width_in_blocks = m->cinfo.image_width / (m->cinfo.max_h_samp_factor * DCTSIZE) * component->h_samp_factor;
-		comp->height_in_blocks = m->cinfo.image_height / (m->cinfo.max_v_samp_factor * DCTSIZE) * component->v_samp_factor;
+		comp->width_in_blocks = m->h_blocks * component->h_samp_factor;
+		comp->height_in_blocks = m->v_blocks * component->v_samp_factor;
 
 		comp->nblocks = comp->width_in_blocks * comp->height_in_blocks;
 		comp->blocks = (modjpeg_jpegblock_t **)calloc(comp->nblocks, sizeof(modjpeg_jpegblock_t *));
@@ -681,8 +706,8 @@ int mj_read_droponalpha_from_mem(modjpeg_jpegdropon_t *d, const char *buffer, si
 		comp->h_samp_factor = component->h_samp_factor;
 		comp->v_samp_factor = component->v_samp_factor;
 
-		comp->width_in_blocks = m->cinfo.image_width / (m->cinfo.max_h_samp_factor * DCTSIZE) * component->h_samp_factor;
-		comp->height_in_blocks = m->cinfo.image_height / (m->cinfo.max_v_samp_factor * DCTSIZE) * component->v_samp_factor;
+		comp->width_in_blocks = m->h_blocks * component->h_samp_factor;
+		comp->height_in_blocks = m->v_blocks * component->v_samp_factor;
 
 		comp->nblocks = comp->width_in_blocks * comp->height_in_blocks;
 		comp->blocks = (modjpeg_jpegblock_t **)calloc(comp->nblocks, sizeof(modjpeg_jpegblock_t *));
@@ -747,7 +772,7 @@ int mj_read_droponalpha_from_mem(modjpeg_jpegdropon_t *d, const char *buffer, si
 	return 0;
 }
 
-int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, modjpeg_jpegsampling_t s[4], int width, int height) {
+int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, modjpeg_jpegsampling_t *s, int width, int height) {
 	printf("entering %s\n", __FUNCTION__);
 
 	struct jpeg_compress_struct cinfo;
@@ -804,18 +829,18 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 	cinfo.optimize_coding = TRUE;
 
 	if(colorspace == MODJPEG_COLORSPACE_RGB || colorspace == MODJPEG_COLORSPACE_YCC) {
-		cinfo.comp_info[0].h_samp_factor = s[0].h_samp_factor;
-		cinfo.comp_info[0].v_samp_factor = s[0].v_samp_factor;
+		cinfo.comp_info[0].h_samp_factor = s->samp_factor[0].h_samp_factor;
+		cinfo.comp_info[0].v_samp_factor = s->samp_factor[0].v_samp_factor;
 
-		cinfo.comp_info[1].h_samp_factor = s[1].h_samp_factor;;
-		cinfo.comp_info[1].v_samp_factor = s[1].v_samp_factor;;
+		cinfo.comp_info[1].h_samp_factor = s->samp_factor[1].h_samp_factor;;
+		cinfo.comp_info[1].v_samp_factor = s->samp_factor[1].v_samp_factor;;
 
-		cinfo.comp_info[2].h_samp_factor = s[2].h_samp_factor;;
-		cinfo.comp_info[2].v_samp_factor = s[2].v_samp_factor;;
+		cinfo.comp_info[2].h_samp_factor = s->samp_factor[2].h_samp_factor;;
+		cinfo.comp_info[2].v_samp_factor = s->samp_factor[2].v_samp_factor;;
 	}
 	else {
-		cinfo.comp_info[0].h_samp_factor = s[0].h_samp_factor;;
-		cinfo.comp_info[0].v_samp_factor = s[0].v_samp_factor;;
+		cinfo.comp_info[0].h_samp_factor = s->samp_factor[0].h_samp_factor;;
+		cinfo.comp_info[0].v_samp_factor = s->samp_factor[0].v_samp_factor;;
 	}
 
 	jpeg_set_quality(&cinfo, 100, TRUE);
@@ -1083,7 +1108,7 @@ modjpeg_jpegimage_t *mj_read_jpegimage_from_file(const char *filename) {
 	return m;
 }
 
-int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int colorspace, const char *filename) {
+int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int want_colorspace, const char *filename) {
 	printf("entering %s\n", __FUNCTION__);
 
 	FILE *fp;
@@ -1112,7 +1137,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 
 	jpeg_read_header(&cinfo, TRUE);
 
-	switch(colorspace) {
+	switch(want_colorspace) {
 		case MODJPEG_COLORSPACE_RGB:
 			cinfo.out_color_space = JCS_RGB;
 			break;
@@ -1123,6 +1148,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 			cinfo.out_color_space = JCS_GRAYSCALE;
 			break;
 		default:
+			printf("error: unsupported colorspace (%d)\n", want_colorspace);
 			jpeg_destroy_decompress(&cinfo);
 			return -1;
 	}
@@ -1210,6 +1236,17 @@ modjpeg_jpegimage_t *mj_read_jpegimage_from_mem(const char *buffer, size_t len) 
 
 	printf("%dx%dpx, %d components: ", m->cinfo.output_width, m->cinfo.output_height, m->cinfo.num_components);
 
+	m->sampling.max_h_samp_factor = m->cinfo.max_h_samp_factor;
+	m->sampling.max_v_samp_factor = m->cinfo.max_v_samp_factor;
+
+	m->sampling.h_factor = (m->sampling.max_h_samp_factor * DCTSIZE);
+	m->sampling.v_factor = (m->sampling.max_v_samp_factor * DCTSIZE);
+
+	m->h_blocks = m->cinfo.image_width / m->sampling.h_factor;
+	m->v_blocks = m->cinfo.image_height / m->sampling.v_factor;
+
+	printf("h_blocks: %d, v_blocks: %d\n", m->h_blocks, m->v_blocks);
+
 	int c, k, l, i;
 	int width_in_blocks, height_in_blocks;
 	jpeg_component_info *component;
@@ -1221,11 +1258,11 @@ modjpeg_jpegimage_t *mj_read_jpegimage_from_mem(const char *buffer, size_t len) 
 
 		printf("(%d,%d)", component->h_samp_factor, component->v_samp_factor);
 
-		m->samp_factor[c].h_samp_factor = component->h_samp_factor;
-		m->samp_factor[c].v_samp_factor = component->v_samp_factor;
+		m->sampling.samp_factor[c].h_samp_factor = component->h_samp_factor;
+		m->sampling.samp_factor[c].v_samp_factor = component->v_samp_factor;
 
-		width_in_blocks = m->cinfo.image_width / (m->cinfo.max_h_samp_factor * DCTSIZE) * component->h_samp_factor;
-		height_in_blocks = m->cinfo.image_height / (m->cinfo.max_v_samp_factor * DCTSIZE) * component->v_samp_factor;
+		width_in_blocks = m->h_blocks * component->h_samp_factor;
+		height_in_blocks = m->v_blocks * component->v_samp_factor;
 
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
@@ -1311,8 +1348,8 @@ int mj_write_jpegimage_to_buffer(modjpeg_jpegimage_t *m, char **buffer, size_t *
 
 		//printf("(%d,%d)", component->h_samp_factor, component->v_samp_factor);
 
-		width_in_blocks = m->cinfo.image_width / (m->cinfo.max_h_samp_factor * DCTSIZE) * component->h_samp_factor;
-		height_in_blocks = m->cinfo.image_height / (m->cinfo.max_v_samp_factor * DCTSIZE) * component->v_samp_factor;
+		width_in_blocks = m->h_blocks * component->h_samp_factor;
+		height_in_blocks = m->v_blocks * component->v_samp_factor;
 
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
