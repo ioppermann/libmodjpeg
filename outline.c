@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
 	m = mj_read_jpegimage_from_file("./images/in.jpg");
 	d = mj_read_jpegdropon_from_file("./images/logo.jpg", "./images/alpha.jpg", 128);
 
-	mj_compose(m, d, MODJPEG_ALIGN_RIGHT, MODJPEG_ALIGN_BOTTOM, 0, 0);
+	mj_compose(m, d, MODJPEG_ALIGN_LEFT, MODJPEG_ALIGN_TOP, 10, 10);
 
 	mj_write_jpegimage_to_file(m, "./images/out.jpg");
 
@@ -386,7 +386,7 @@ int mj_compose(modjpeg_jpegimage_t *m, modjpeg_jpegdropon_t *d, int h_align, int
 	return 0;
 }
 
-int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modjpeg_jpegsampling_t *s, unsigned short offset) {
+int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modjpeg_jpegsampling_t *sampling, unsigned short offset) {
 	printf("entering %s\n", __FUNCTION__);
 
 	if(d == NULL) {
@@ -418,20 +418,30 @@ int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modj
 
 	// hier offset berücksichtigen
 
-	int offset_h = offset % s->h_factor;
-	int offset_v = offset / s->v_factor;
+	int h_offset = offset % sampling->h_factor;
+	int v_offset = offset / sampling->v_factor;
 
-	int raw_width = d->raw_width + s->h_factor;
-	int raw_height = d->raw_height + s->v_factor;
+	int raw_width = d->raw_width + sampling->h_factor;
+	int raw_height = d->raw_height + sampling->v_factor;
 	char *raw_data = (char *)calloc(3 * raw_width * raw_height, sizeof(char));
+	if(raw_data == NULL) {
+		return -1;
+	}
+
+	char *p, *q;
 
 	for(i = 0; i < d->raw_height; i++) {
-		for(j = 0; j < d->raw_width * 3; j++) {
-			raw_data[(i + offset_v) * raw_width * 3 + (j + offset_h * 3)] = d->raw_image[i * d->raw_width * 3 + j];
+		p = &raw_data[(i + v_offset) * raw_width * 3 + (h_offset * 3)];
+		q = &d->raw_image[i * d->raw_width * 3];
+
+		for(j = 0; j < d->raw_width; j++) {
+			*p++ = *q++;
+			*p++ = *q++;
+			*p++ = *q++;
 		}
 	}
 
-	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, d->raw_colorspace, colorspace, s, raw_width, raw_height);
+	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, d->raw_colorspace, colorspace, sampling, raw_width, raw_height);
 	printf("encoded len: %ld\n", len);
 
 	mj_read_droponimage_from_mem(d, buffer, len);
@@ -440,12 +450,17 @@ int mj_update_jpegdropon(modjpeg_jpegdropon_t *d, J_COLOR_SPACE colorspace, modj
 	// hier offset berücksichtigen
 
 	for(i = 0; i < d->raw_height; i++) {
-		for(j = 0; j < d->raw_width * 3; j++) {
-			raw_data[(i + offset_v) * raw_width * 3 + (j + offset_h * 3)] = d->raw_alpha[i * d->raw_width * 3 + j];
+		p = &raw_data[(i + v_offset) * raw_width * 3 + (h_offset * 3)];
+		q = &d->raw_alpha[i * d->raw_width * 3];
+
+		for(j = 0; j < d->raw_width; j++) {
+			*p++ = *q++;
+			*p++ = *q++;
+			*p++ = *q++;
 		}
 	}
 
-	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, MODJPEG_COLORSPACE_YCC, JCS_YCbCr, s, raw_width, raw_height);
+	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, MODJPEG_COLORSPACE_YCC, JCS_YCbCr, sampling, raw_width, raw_height);
 	printf("encoded len: %ld\n", len);
 
 	mj_read_droponalpha_from_mem(d, buffer, len);
@@ -1358,10 +1373,10 @@ int mj_write_jpegimage_to_buffer(modjpeg_jpegimage_t *m, char **buffer, size_t *
 				coefs = blocks[0][k];
 
 				for(i = 0; i < DCTSIZE2; i += 4) {
-					coefs[i + 0] = (int)coefs[i + 0] / component->quant_table->quantval[i + 0];
-					coefs[i + 1] = (int)coefs[i + 1] / component->quant_table->quantval[i + 1];
-					coefs[i + 2] = (int)coefs[i + 2] / component->quant_table->quantval[i + 2];
-					coefs[i + 3] = (int)coefs[i + 3] / component->quant_table->quantval[i + 3];
+					coefs[i + 0] /= component->quant_table->quantval[i + 0];
+					coefs[i + 1] /= component->quant_table->quantval[i + 1];
+					coefs[i + 2] /= component->quant_table->quantval[i + 2];
+					coefs[i + 3] /= component->quant_table->quantval[i + 3];
 				}
 			}
 		}
