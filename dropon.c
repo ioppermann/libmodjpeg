@@ -147,8 +147,16 @@ int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sa
 	int h_offset = offset % sampling->h_factor;
 	int v_offset = offset / sampling->v_factor;
 
-	int raw_width = d->raw_width + sampling->h_factor;
-	int raw_height = d->raw_height + sampling->v_factor;
+	int raw_width = d->raw_width;
+	if(h_offset != 0) {
+		raw_width += sampling->h_factor;
+	}
+
+	int raw_height = d->raw_height;
+	if(v_offset != 0) {
+		raw_height += sampling->v_factor;
+	}
+
 	char *raw_data = (char *)calloc(3 * raw_width * raw_height, sizeof(char));
 	if(raw_data == NULL) {
 		return -1;
