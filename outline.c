@@ -210,13 +210,13 @@ void mj_convolve(mj_block_t *x, mj_block_t *y, float w, int k, int l);
 int main(int argc, char **argv) {
 	printf("entering %s\n", __FUNCTION__);
 
-	mj_jpeg_t *m;
 	mj_dropon_t *d;
+	d = mj_read_dropon_from_jpeg("./images/logo.jpg", "./images/alpha2.jpg", 128);
 
+	mj_jpeg_t *m;
 	m = mj_read_jpeg_from_file("./images/in.jpg");
-	d = mj_read_dropon_from_jpeg("./images/logo.jpg", "./images/alpha.jpg", 128);
 
-	mj_compose(m, d, MJ_ALIGN_LEFT, MJ_ALIGN_TOP, 10, 10);
+	mj_compose(m, d, MJ_ALIGN_CENTER, MJ_ALIGN_CENTER, 0, 0);
 
 	mj_write_jpeg_to_file(m, "./images/out.jpg");
 
@@ -518,11 +518,15 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 				coefs_m = blocks_m[0][width_offset + k];
 				imageblock = imagecomp->blocks[height_in_blocks * l + k];
 
-				for(i = 0; i < DCTSIZE2; i += 4) {
+				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] = (int)imageblock[i + 0];
 					coefs_m[i + 1] = (int)imageblock[i + 1];
 					coefs_m[i + 2] = (int)imageblock[i + 2];
 					coefs_m[i + 3] = (int)imageblock[i + 3];
+					coefs_m[i + 4] = (int)imageblock[i + 4];
+					coefs_m[i + 5] = (int)imageblock[i + 5];
+					coefs_m[i + 6] = (int)imageblock[i + 6];
+					coefs_m[i + 7] = (int)imageblock[i + 7];
 				}
 			}
 		}
@@ -579,11 +583,15 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 */
 				// x = x0 - x1
 				printf("component %d (%d,%d): x0 - x1 | ", c, l, k);
-				for(i = 0; i < DCTSIZE2; i += 4) {
+				for(i = 0; i < DCTSIZE2; i += 8) {
 					X[i + 0] = imageblock[i + 0] - coefs_m[i + 0];
 					X[i + 1] = imageblock[i + 1] - coefs_m[i + 1];
 					X[i + 2] = imageblock[i + 2] - coefs_m[i + 2];
 					X[i + 3] = imageblock[i + 3] - coefs_m[i + 3];
+					X[i + 4] = imageblock[i + 4] - coefs_m[i + 4];
+					X[i + 5] = imageblock[i + 5] - coefs_m[i + 5];
+					X[i + 6] = imageblock[i + 6] - coefs_m[i + 6];
+					X[i + 7] = imageblock[i + 7] - coefs_m[i + 7];
 				}
 
 				memset(Y, 0, DCTSIZE2 * sizeof(float));
@@ -603,11 +611,15 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 
 				// y = x1 + y'
 				printf("x1 + y'\n");
-				for(i = 0; i < DCTSIZE2; i += 4) {
+				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] += (int)Y[i + 0];
 					coefs_m[i + 1] += (int)Y[i + 1];
 					coefs_m[i + 2] += (int)Y[i + 2];
 					coefs_m[i + 3] += (int)Y[i + 3];
+					coefs_m[i + 4] += (int)Y[i + 4];
+					coefs_m[i + 5] += (int)Y[i + 5];
+					coefs_m[i + 6] += (int)Y[i + 6];
+					coefs_m[i + 7] += (int)Y[i + 7];
 				}
 			}
 		}
@@ -678,11 +690,15 @@ int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 					printf("\n");
 				}
 */
-				for(i = 0; i < DCTSIZE2; i += 4) {
+				for(i = 0; i < DCTSIZE2; i += 8) {
 					b[i + 0] = (float)coefs[i + 0];
 					b[i + 1] = (float)coefs[i + 1];
 					b[i + 2] = (float)coefs[i + 2];
 					b[i + 3] = (float)coefs[i + 3];
+					b[i + 4] = (float)coefs[i + 4];
+					b[i + 5] = (float)coefs[i + 5];
+					b[i + 6] = (float)coefs[i + 6];
+					b[i + 7] = (float)coefs[i + 7];
 				}
 			}
 		}
@@ -773,15 +789,15 @@ int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 				b[6] = (float)coefs[6] * (0.3535534 * 0.5 / 1020.0);
 				b[7] = (float)coefs[7] * (0.3535534 * 0.5 / 1020.0);
 
-				for(i = 1; i < 8; i++) {
-					b[(i << 3) + 0] = (float)coefs[(i << 3) + 0] * (0.5 * 0.3535534 / 1020.0);
-					b[(i << 3) + 1] = (float)coefs[(i << 3) + 1] * (0.5 * 0.5 / 1020.0);
-					b[(i << 3) + 2] = (float)coefs[(i << 3) + 2] * (0.5 * 0.5 / 1020.0);
-					b[(i << 3) + 3] = (float)coefs[(i << 3) + 3] * (0.5 * 0.5 / 1020.0);
-					b[(i << 3) + 4] = (float)coefs[(i << 3) + 4] * (0.5 * 0.5 / 1020.0);
-					b[(i << 3) + 5] = (float)coefs[(i << 3) + 5] * (0.5 * 0.5 / 1020.0);
-					b[(i << 3) + 6] = (float)coefs[(i << 3) + 6] * (0.5 * 0.5 / 1020.0);
-					b[(i << 3) + 7] = (float)coefs[(i << 3) + 7] * (0.5 * 0.5 / 1020.0);
+				for(i = 8; i < DCTSIZE2; i += 8) {
+					b[i + 0] = (float)coefs[i + 0] * (0.5 * 0.3535534 / 1020.0);
+					b[i + 1] = (float)coefs[i + 1] * (0.5 * 0.5 / 1020.0);
+					b[i + 2] = (float)coefs[i + 2] * (0.5 * 0.5 / 1020.0);
+					b[i + 3] = (float)coefs[i + 3] * (0.5 * 0.5 / 1020.0);
+					b[i + 4] = (float)coefs[i + 4] * (0.5 * 0.5 / 1020.0);
+					b[i + 5] = (float)coefs[i + 5] * (0.5 * 0.5 / 1020.0);
+					b[i + 6] = (float)coefs[i + 6] * (0.5 * 0.5 / 1020.0);
+					b[i + 7] = (float)coefs[i + 7] * (0.5 * 0.5 / 1020.0);
 				}
 			}
 		}
@@ -1267,9 +1283,13 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	m->sampling.v_factor = (m->sampling.max_v_samp_factor * DCTSIZE);
 
 	m->h_blocks = m->cinfo.image_width / m->sampling.h_factor;
+	if(m->cinfo.image_width % m->sampling.h_factor != 0) {
+		m->h_blocks++;
+	}
 	m->v_blocks = m->cinfo.image_height / m->sampling.v_factor;
-
-	printf("h_blocks: %d, v_blocks: %d\n", m->h_blocks, m->v_blocks);
+	if(m->cinfo.image_height % m->sampling.v_factor != 0) {
+		m->v_blocks++;
+	}
 
 	int c, k, l, i;
 	int width_in_blocks, height_in_blocks;
@@ -1280,13 +1300,13 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	for(c = 0; c < m->cinfo.num_components; c++) {
 		component = &m->cinfo.comp_info[c];
 
-		printf("(%d,%d)", component->h_samp_factor, component->v_samp_factor);
-
 		m->sampling.samp_factor[c].h_samp_factor = component->h_samp_factor;
 		m->sampling.samp_factor[c].v_samp_factor = component->v_samp_factor;
 
 		width_in_blocks = m->h_blocks * component->h_samp_factor;
 		height_in_blocks = m->v_blocks * component->v_samp_factor;
+
+		printf("(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, width_in_blocks, height_in_blocks);
 
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
