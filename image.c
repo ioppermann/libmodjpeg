@@ -242,11 +242,15 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs = blocks[0][k];
 
-				for(i = 0; i < DCTSIZE2; i += 4) {
+				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs[i + 0] *= component->quant_table->quantval[i + 0];
 					coefs[i + 1] *= component->quant_table->quantval[i + 1];
 					coefs[i + 2] *= component->quant_table->quantval[i + 2];
 					coefs[i + 3] *= component->quant_table->quantval[i + 3];
+					coefs[i + 4] *= component->quant_table->quantval[i + 4];
+					coefs[i + 5] *= component->quant_table->quantval[i + 5];
+					coefs[i + 6] *= component->quant_table->quantval[i + 6];
+					coefs[i + 7] *= component->quant_table->quantval[i + 7];
 				}
 			}
 		}

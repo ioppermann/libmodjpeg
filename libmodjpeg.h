@@ -44,11 +44,11 @@
 #define MJ_COLORSPACE_YCC		5
 #define MJ_COLORSPACE_YCCA		6
 
-#define MJ_ALIGN_TOP			1
-#define MJ_ALIGN_BOTTOM			2
-#define MJ_ALIGN_LEFT			3
-#define MJ_ALIGN_RIGHT			4
-#define MJ_ALIGN_CENTER			5
+#define MJ_ALIGN_LEFT			(1 << 0)
+#define MJ_ALIGN_RIGHT			(1 << 1)
+#define MJ_ALIGN_TOP			(1 << 2)
+#define MJ_ALIGN_BOTTOM			(1 << 3)
+#define MJ_ALIGN_CENTER			(1 << 4)
 
 #define MJ_BLEND_NONUNIFORM		-1
 #define MJ_BLEND_NONE			0
@@ -120,7 +120,7 @@ mj_dropon_t *mj_read_dropon_from_jpeg(const char *filename, const char *mask, sh
 mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len);
 mj_jpeg_t *mj_read_jpeg_from_file(const char *filename);
 
-int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, int h_align, int v_align, int x_offset, int y_offset);
+int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset);
 
 int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len);
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename);

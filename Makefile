@@ -63,7 +63,7 @@ compose.o: compose.c libmodjpeg.h dropon.h dropon.c convolve.h convolve.c compos
 effect.o: effect.c libmodjpeg.h jpeg.h jpeg.c effect.h
 	$(CC) $(CFLAGS) effect.c
 
-modjpeg: modjpeg.c libmodjpeg.a
+modjpeg: modjpeg.c libmodjpeg
 	$(CC) -Wall -O2 -o modjpeg modjpeg.c -L. $(LFLAGS) -lmodjpeg $(INCLUDE)
 
 clean:

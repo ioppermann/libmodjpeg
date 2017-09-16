@@ -53,68 +53,70 @@ static struct option longopts[] = {
 	{ NULL,		0,			NULL,		0 }
 };
 
-
-#define CMD_DROPON		1
-#define CMD_POSITION 		2
-#define CMD_LUMINANCE		3
-#define CMD_TINTBLUE		4
-#define CMD_TINTRED		5
-#define CMD_PIXELATE		6
-#define CMD_GRAYSCALE		7
-
-typedef struct commands {
-	int type;
-	int value;
-} commands;
-
-typedef commands *commands_ptr;
-
-int add_command(commands *cmds, int type, int value);
-int exec_commands(commands *cmds, modjpeg_handle *m);
 void help(void);
 
 int main(int argc, char *argv[]) {
-	int c, opterr, mustargs, t;
-	char *finput = NULL, *foutput = NULL, *str;
-	modjpeg mj;
-	modjpeg_handle *m;
-	commands cmds[32];
-
-	memset(cmds, 0, 32 * sizeof(commands));
+	int c, opterr, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT;
+	char *str;
+	mj_jpeg_t *m = NULL;
+	mj_dropon_t *d = NULL;
 
 	opterr = 1;
-	mustargs = 0;
-
-	modjpeg_init(&mj);
 
 	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :y: :b: :r: xgh", longopts, NULL)) != -1) {
 		switch(c) {
 			case 'i':
-				finput = optarg;
+				if(m != NULL) {
+					mj_destroy_jpeg(m);
+					m = NULL;
+				}
 
-				if(strlen(finput) == 1 && finput[0] == '-') {
-					finput = NULL;
+				m = mj_read_jpeg_from_file(optarg);
+				if(m == NULL) {
+					fprintf(stderr, "can't read image from '%s'\n", optarg);
+					exit(1);
 				}
 
 				break;
 			case 'o':
-				foutput = optarg;
+				if(m == NULL) {
+					fprintf(stderr, "can't write image without loading an image first (--input)\n");
+					exit(1);
+				}
 
-				if(strlen(foutput) == 1 && foutput[0] == '-') {
-					foutput = NULL;
+				if(mj_write_jpeg_to_file(m, optarg) != 0) {
+					fprintf(stderr, "can't write image to '%s'\n", optarg);
+					exit(1);
 				}
 
 				break;
 			case 'd':
+				if(m == NULL) {
+					fprintf(stderr, "can't apply a dropon without loading an image first (--input)\n");
+					exit(1);
+				}
+
+				if(d != NULL) {
+					mj_destroy_dropon(d);
+					d = NULL;
+				}
+
 				str = strchr(optarg, ',');
 				if(str != NULL) {
 					*str = '\0';
-					t = modjpeg_set_logo_file(&mj, optarg, str + 1);
+					d = mj_read_dropon_from_jpeg(optarg, str + 1, MJ_BLEND_FULL);
 				}
 				else {
-					t = modjpeg_set_logo_file(&mj, optarg, NULL);
+					d = mj_read_dropon_from_jpeg(optarg, NULL, MJ_BLEND_FULL);
 				}
-				add_command(cmds, CMD_DROPON, t);
+
+				if(d == NULL) {
+					fprintf(stderr, "can't read dropon from '%s'\n", optarg);
+					exit(1);
+				}
+
+				mj_compose(m, d, position, 0, 0);
+
 				break;
 			case 'p':
 				if(strlen(optarg) != 2) {
@@ -122,40 +124,70 @@ int main(int argc, char *argv[]) {
 					break;
 				}
 
-				t = 0;
+				position = 0;
 				if(optarg[0] == 't') {
-					t |= MJ_ALIGN_TOP;
+					position |= MJ_ALIGN_TOP;
 				}
 				else if(optarg[0] == 'b') {
-					t |= MJ_ALIGN_BOTTOM;
+					position |= MJ_ALIGN_BOTTOM;
+				}
+				else if(optarg[0] == 'c') {
+					position |= MJ_ALIGN_CENTER;
 				}
 
 				if(optarg[1] == 'l') {
-					t |= MJ_ALIGN_LEFT;
+					position |= MJ_ALIGN_LEFT;
 				}
 				else if(optarg[1] == 'r') {
-					t |= MJ_ALIGN_RIGHT;
+					position |= MJ_ALIGN_RIGHT;
+				}
+				else if(optarg[1] == 'c') {
+					position |= MJ_ALIGN_CENTER;
 				}
 
-				add_command(cmds, CMD_POSITION, t);
 				break;
 			case 'y':
+				if(m == NULL) {
+					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					exit(1);
+				}
+
 				t = (int)strtol(optarg, NULL, 10);
-				add_command(cmds, CMD_LUMINANCE, t);
+				mj_effect_luminance(m, t);
 				break;
 			case 'b':
+				if(m == NULL) {
+					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					exit(1);
+				}
+
 				t = (int)strtol(optarg, NULL, 10);
-				add_command(cmds, CMD_TINTBLUE, t);
+				mj_effect_tint(m, t, 0);
 				break;
 			case 'r':
+				if(m == NULL) {
+					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					exit(1);
+				}
+
 				t = (int)strtol(optarg, NULL, 10);
-				add_command(cmds, CMD_TINTRED, t);
+				mj_effect_tint(m, 0, t);
 				break;
 			case 'x':
-				add_command(cmds, CMD_PIXELATE, 0);
+				if(m == NULL) {
+					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					exit(1);
+				}
+
+				mj_effect_pixelate(m);
 				break;
 			case 'g':
-				add_command(cmds, CMD_GRAYSCALE, 0);
+				if(m == NULL) {
+					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					exit(1);
+				}
+				
+				mj_effect_grayscale(m);
 				break;
 			case 'h':
 				help();
@@ -170,87 +202,12 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if(finput != NULL) {
-		m = modjpeg_set_image_file(&mj, finput);
-	}
-	else {
-		m = modjpeg_set_image_fp(&mj, stdin);
+	if(m != NULL) {
+		mj_destroy_jpeg(m);
 	}
 
-	exec_commands(cmds, m);
-
-	if(foutput != NULL) {
-		modjpeg_get_image_file(m, foutput, MODJPEG_OPTIMIZE);
-	}
-	else {
-		modjpeg_get_image_fp(m, stdout, MODJPEG_OPTIMIZE);
-	}
-
-	modjpeg_destroy(&mj);
-
-	return 0;
-}
-
-int add_command(commands *cmds, int type, int value) {
-	int i;
-	commands *cmd = NULL;
-
-	for(i = 0; i < 32; i++) {
-		if(cmds[i].type == 0) {
-			cmd = &cmds[i];
-			break;
-		}
-	}
-
-	if(cmd == NULL) {
-		return -1;
-	}
-
-	cmd->type = type;
-	cmd->value = value;
-
-	return 0;
-}
-
-int exec_commands(commands *cmds, modjpeg_handle *m) {
-	int i, logoposition = 0;
-	commands *cmd;
-
-	for(i = 0; i < 32; i++) {
-		cmd = &cmds[i];
-
-		if(cmd->type == 0) {
-			break;
-		}
-
-		switch(cmd->type) {
-			case CMD_WATERMARK:
-				modjpeg_add_watermark(m, cmd->value);
-				break;
-			case CMD_LOGO:
-				modjpeg_add_logo(m, cmd->value, logoposition);
-				break;
-			case CMD_LOGOPOSITION:
-				logoposition = cmd->value;
-				break;
-			case CMD_LUMINANCE:
-				modjpeg_effect_luminance(m, cmd->value);
-				break;
-			case CMD_TINTBLUE:
-				modjpeg_effect_tint(m, cmd->value, 0);
-				break;
-			case CMD_TINTRED:
-				modjpeg_effect_tint(m, 0, cmd->value);
-				break;
-			case CMD_PIXELATE:
-				modjpeg_effect_pixelate(m);
-				break;
-			case CMD_GRAYSCALE:
-				modjpeg_effect_grayscale(m);
-				break;
-			default:
-				break;
-		}
+	if(d != NULL) {
+		mj_destroy_dropon(d);
 	}
 
 	return 0;
@@ -278,8 +235,8 @@ void help(void) {
 	fprintf(stderr, "\t\tLogo und Maske muessen im JPEG-Format sein.\n");
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--position, -p [t|b][l|r]\n");
-	fprintf(stderr, "\t\tDie Position des dropon. t = top, b = bottom, l = left, r = right.\n");
+	fprintf(stderr, "\t--position, -p [t|b][c][l|r]\n");
+	fprintf(stderr, "\t\tDie Position des dropon. t = top, b = bottom, l = left, r = right, c = center.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--luminance, -y value\n");
@@ -308,17 +265,17 @@ void help(void) {
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\tEin Logo in der rechten oberen Ecke platzieren:\n");
-	fprintf(stderr, "\t\tmodjpeg --position tr --dropon logo.jpg < in.jpg > out.jpg\n");
+	fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --output out.jpg\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\tEin Logo in der rechten oberen Ecke platzieren und nachher das Bild\n");
 	fprintf(stderr, "\tverpixeln:\n");
-	fprintf(stderr, "\t\tmodjpeg --position tr --dropon logo.jpg --pixelate < in.jpg > out.jpg\n");
+	fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --pixelate --output out.jpg\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\tErst das Bild verpixeln, dann ein Logo in der rechten oberen Ecke\n");
 	fprintf(stderr, "\tplatzieren:\n");
-	fprintf(stderr, "\t\tmodjpeg --pixelate --position tr --dropon logo.jpg < in.jpg > out.jpg\n");
+	fprintf(stderr, "\t\tmodjpeg --input in.jpg --pixelate --position tr --dropon logo.jpg --output out.jpg\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\n");

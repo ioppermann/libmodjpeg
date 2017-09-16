@@ -38,7 +38,7 @@
 #include "convolve.h"
 #include "compose.h"
 
-int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, int h_align, int v_align, int x_offset, int y_offset) {
+int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset) {
 	printf("entering %s\n", __FUNCTION__);
 
 	int reload = 0;
@@ -82,14 +82,14 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, int h_align, int v_align, int x_off
 	// is the offset the same?
 	// calculate needed offset, compare with d->offset
 
-	if(h_align == MJ_ALIGN_LEFT) {
+	if((align & MJ_ALIGN_LEFT) != 0) {
 		h_offset = 0;
 	}
-	else if(h_align == MJ_ALIGN_CENTER) {
-		h_offset = m->cinfo.output_width / 2 - d->raw_width / 2;
+	else if((align & MJ_ALIGN_RIGHT) != 0) {
+		h_offset = m->cinfo.output_width - d->raw_width;
 	}
 	else {
-		h_offset = m->cinfo.output_width - d->raw_width;
+		h_offset = m->cinfo.output_width / 2 - d->raw_width / 2;
 	}
 
 	h_offset += x_offset;
@@ -97,14 +97,14 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, int h_align, int v_align, int x_off
 	offset = h_offset % m->sampling.h_factor;
 	h_offset = h_offset / m->sampling.h_factor;
 
-	if(v_align == MJ_ALIGN_TOP) {
+	if((align & MJ_ALIGN_TOP) != 0) {
 		v_offset = 0;
 	}
-	else if(v_align == MJ_ALIGN_CENTER) {
-		v_offset = m->cinfo.output_height / 2 - d->raw_height / 2;
+	else if((align & MJ_ALIGN_BOTTOM) != 0) {
+		v_offset = m->cinfo.output_height - d->raw_height;
 	}
 	else {
-		v_offset = m->cinfo.output_height - d->raw_height;
+		v_offset = m->cinfo.output_height / 2 - d->raw_height / 2;
 	}
 
 	v_offset += y_offset;
@@ -122,11 +122,11 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, int h_align, int v_align, int x_off
 		mj_update_dropon(d, m->cinfo.jpeg_color_space, &m->sampling, offset);
 	}
 
-	if(d->blend != MJ_BLEND_FULL) {
-		mj_compose_with_mask(m, d, h_offset, v_offset);
+	if(d->blend == MJ_BLEND_FULL && d->offset == 0) {
+		mj_compose_without_mask(m, d, h_offset, v_offset);
 	}
 	else {
-		mj_compose_without_mask(m, d, h_offset, v_offset);
+		mj_compose_with_mask(m, d, h_offset, v_offset);
 	}
 
 	return 0;
