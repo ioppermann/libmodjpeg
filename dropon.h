@@ -1,6 +1,4 @@
 /*
- * matrix.h
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -32,11 +30,14 @@
  *
  */
 
-#ifndef _LIBMODJPEG_MATRIX_H_
-#define _LIBMODJPEG_MATRIX_H_
+#ifndef _LIBMODJPEG_DROPON_H_
+#define _LIBMODJPEG_DROPON_H_
 
-void modjpeg_matrix_mul(float *res, float *a, int ah, int aw, float *b, int bh, int bw);
-void modjpeg_matrix_add(float *res, float *a, float *b, int h, int w);
-void modjpeg_matrix_sub(float *res, float *a, float *b, int h, int w);
+int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t len);
+int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t len);
+
+int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *s, unsigned short offset);
+
+void mj_destroy_component(mj_component_t *c);
 
 #endif

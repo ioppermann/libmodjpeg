@@ -1,6 +1,4 @@
 /*
- * modjpeg.c
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -44,8 +42,7 @@
 static struct option longopts[] = {
 	{ "input",	required_argument,	NULL,		'i' },
 	{ "output",	required_argument,	NULL,		'o' },
-	{ "watermark",	required_argument,	NULL,		'w' },
-	{ "logo",	required_argument,	NULL,		'l' },
+	{ "dropon",	required_argument,	NULL,		'd' },
 	{ "position",	required_argument,	NULL,		'p' },
 	{ "luminance",	required_argument,	NULL,		'y' },
 	{ "tintblue",	required_argument,	NULL,		'b' },
@@ -57,14 +54,13 @@ static struct option longopts[] = {
 };
 
 
-#define CMD_WATERMARK		1
-#define CMD_LOGO		2
-#define CMD_LOGOPOSITION	3
-#define CMD_LUMINANCE		4
-#define CMD_TINTBLUE		5
-#define CMD_TINTRED		6
-#define CMD_PIXELATE		7
-#define CMD_GRAYSCALE		8
+#define CMD_DROPON		1
+#define CMD_POSITION 		2
+#define CMD_LUMINANCE		3
+#define CMD_TINTBLUE		4
+#define CMD_TINTRED		5
+#define CMD_PIXELATE		6
+#define CMD_GRAYSCALE		7
 
 typedef struct commands {
 	int type;
@@ -91,35 +87,34 @@ int main(int argc, char *argv[]) {
 
 	modjpeg_init(&mj);
 
-	while((c = getopt_long(argc, argv, "i:o:w:l:p:y:b:r:xgh", longopts, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :y: :b: :r: xgh", longopts, NULL)) != -1) {
 		switch(c) {
 			case 'i':
 				finput = optarg;
 
-				if(strlen(finput) == 1 && finput[0] == '-')
+				if(strlen(finput) == 1 && finput[0] == '-') {
 					finput = NULL;
+				}
 
 				break;
 			case 'o':
 				foutput = optarg;
 
-				if(strlen(foutput) == 1 && foutput[0] == '-')
+				if(strlen(foutput) == 1 && foutput[0] == '-') {
 					foutput = NULL;
+				}
 
 				break;
-			case 'w':
-				t = modjpeg_set_watermark_file(&mj, optarg);
-				add_command(cmds, CMD_WATERMARK, t);
-				break;
-			case 'l':
+			case 'd':
 				str = strchr(optarg, ',');
 				if(str != NULL) {
 					*str = '\0';
 					t = modjpeg_set_logo_file(&mj, optarg, str + 1);
 				}
-				else
+				else {
 					t = modjpeg_set_logo_file(&mj, optarg, NULL);
-				add_command(cmds, CMD_LOGO, t);
+				}
+				add_command(cmds, CMD_DROPON, t);
 				break;
 			case 'p':
 				if(strlen(optarg) != 2) {
@@ -128,17 +123,21 @@ int main(int argc, char *argv[]) {
 				}
 
 				t = 0;
-				if(optarg[0] == 't')
-					t |= MODJPEG_TOP;
-				else if(optarg[0] == 'b')
-					t |= MODJPEG_BOTTOM;
+				if(optarg[0] == 't') {
+					t |= MJ_ALIGN_TOP;
+				}
+				else if(optarg[0] == 'b') {
+					t |= MJ_ALIGN_BOTTOM;
+				}
 
-				if(optarg[1] == 'l')
-					t |= MODJPEG_LEFT;
-				else if(optarg[1] == 'r')
-					t |= MODJPEG_RIGHT;
+				if(optarg[1] == 'l') {
+					t |= MJ_ALIGN_LEFT;
+				}
+				else if(optarg[1] == 'r') {
+					t |= MJ_ALIGN_RIGHT;
+				}
 
-				add_command(cmds, CMD_LOGOPOSITION, t);
+				add_command(cmds, CMD_POSITION, t);
 				break;
 			case 'y':
 				t = (int)strtol(optarg, NULL, 10);
@@ -171,17 +170,21 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if(finput != NULL)
+	if(finput != NULL) {
 		m = modjpeg_set_image_file(&mj, finput);
-	else
+	}
+	else {
 		m = modjpeg_set_image_fp(&mj, stdin);
+	}
 
 	exec_commands(cmds, m);
 
-	if(foutput != NULL)
+	if(foutput != NULL) {
 		modjpeg_get_image_file(m, foutput, MODJPEG_OPTIMIZE);
-	else
+	}
+	else {
 		modjpeg_get_image_fp(m, stdout, MODJPEG_OPTIMIZE);
+	}
 
 	modjpeg_destroy(&mj);
 
@@ -199,8 +202,9 @@ int add_command(commands *cmds, int type, int value) {
 		}
 	}
 
-	if(cmd == NULL)
+	if(cmd == NULL) {
 		return -1;
+	}
 
 	cmd->type = type;
 	cmd->value = value;
@@ -215,8 +219,9 @@ int exec_commands(commands *cmds, modjpeg_handle *m) {
 	for(i = 0; i < 32; i++) {
 		cmd = &cmds[i];
 
-		if(cmd->type == 0)
+		if(cmd->type == 0) {
 			break;
+		}
 
 		switch(cmd->type) {
 			case CMD_WATERMARK:
@@ -268,18 +273,13 @@ void help(void) {
 
 	fprintf(stderr, "\tBei den folgenden Optionen ist die Reihenfolge wichtig, in der sie stehen.\n\n");
 
-	fprintf(stderr, "\t--watermark, -w file\n");
-	fprintf(stderr, "\t\tName des Bildes, das als Wasserzeichen verwendet werden soll. Das Bild\n");
-	fprintf(stderr, "\t\tmuss im JPEG-Format sein.\n");
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "\t--logo, -l file[,mask]\n");
+	fprintf(stderr, "\t--dropon, -d file[,mask]\n");
 	fprintf(stderr, "\t\tName des Bildes, das als Logo verwendet werden soll. Die Maske ist optional.\n");
 	fprintf(stderr, "\t\tLogo und Maske muessen im JPEG-Format sein.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--position, -p [t|b][l|r]\n");
-	fprintf(stderr, "\t\tDie Position des Logos. t = top, b = bottom, l = left, r = right.\n");
+	fprintf(stderr, "\t\tDie Position des dropon. t = top, b = bottom, l = left, r = right.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--luminance, -y value\n");
@@ -308,17 +308,17 @@ void help(void) {
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\tEin Logo in der rechten oberen Ecke platzieren:\n");
-	fprintf(stderr, "\t\tmodjpeg --position tr --logo logo.jpg < in.jpg > out.jpg\n");
+	fprintf(stderr, "\t\tmodjpeg --position tr --dropon logo.jpg < in.jpg > out.jpg\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\tEin Logo in der rechten oberen Ecke platzieren und nachher das Bild\n");
 	fprintf(stderr, "\tverpixeln:\n");
-	fprintf(stderr, "\t\tmodjpeg --position tr --logo logo.jpg --pixelate < in.jpg > out.jpg\n");
+	fprintf(stderr, "\t\tmodjpeg --position tr --dropon logo.jpg --pixelate < in.jpg > out.jpg\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\tErst das Bild verpixeln, dann ein Logo in der rechten oberen Ecke\n");
 	fprintf(stderr, "\tplatzieren:\n");
-	fprintf(stderr, "\t\tmodjpeg --pixelate --position tr --logo logo.jpg < in.jpg > out.jpg\n");
+	fprintf(stderr, "\t\tmodjpeg --pixelate --position tr --dropon logo.jpg < in.jpg > out.jpg\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\n");

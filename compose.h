@@ -1,6 +1,4 @@
 /*
- * matrix.c
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -32,50 +30,10 @@
  *
  */
 
-#include "libmodjpeg.h"
-#include "matrix.h"
+#ifndef _LIBMODJPEG_COMPOSE_H_
+#define _LIBMODJPEG_COMPOSE_H_
 
-/* Multipliziert zwei Matrizen. Achtung: Basiert auf 8x8 Matrizen! */
-void modjpeg_matrix_mul(float *res, float *a, int ah, int aw, float *b, int bh, int bw) {
-	int i, j, k;
+int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset);
+int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset);
 
-	// aw == bh !!
-
-	for(i = 0; i < ah; i++) {
-		for(j = 0; j < bw; j++) {
-			res[(i << 3) + j] = 0.0;
-			for(k = 0; k < bh; k++)
-				res[(i << 3) + j] += a[(i << 3) + k] * b[(k << 3) + j];
-		}
-	}
-
-	return;
-}
-
-/* Addiert zwei Matrizen. Achtung: Basiert auf 8x8 Matrizen! */
-void modjpeg_matrix_add(float *res, float *a, float *b, int h, int w) {
-	int i, j, k;
-
-	for(i = 0; i < h; i++) {
-		for(j = 0; j < w; j++) {
-			k = (i << 3) + j;
-			res[k] = a[k] + b[k];
-		}
-	}
-
-	return;
-}
-
-/* Subtrahiert zwei Matrizen. Achtung: Basiert auf 8x8 Matrizen! */
-void modjpeg_matrix_sub(float *res, float *a, float *b, int h, int w) {
-	int i, j, k;
-
-	for(i = 0; i < h; i++) {
-		for(j = 0; j < w; j++) {
-			k = (i << 3) + j;
-			res[k] = a[k] - b[k];
-		}
-	}
-
-	return;
-}
+#endif

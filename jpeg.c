@@ -1,6 +1,4 @@
 /*
- * jpeg.c
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -37,53 +35,57 @@
 
 #include "libmodjpeg.h"
 #include "jpeg.h"
+#include "jpeglib.h"
+#include "jerror.h"
 
-void modjpeg_error_exit(j_common_ptr cinfo) {
-	modjpeg_error_ptr myerr = (modjpeg_error_ptr)cinfo->err;
+/** JPEG reading and writing **/
+
+void mj_jpeg_error_exit(j_common_ptr cinfo) {
+	mj_jpeg_error_ptr myerr = (mj_jpeg_error_ptr)cinfo->err;
 
 	longjmp(myerr->setjmp_buffer, 1);
 }
 
-void modjpeg_init_destination(j_compress_ptr cinfo) {
-	modjpeg_dest_ptr dest = (modjpeg_dest_ptr)cinfo->dest;
+void mj_jpeg_init_destination(j_compress_ptr cinfo) {
+	mj_jpeg_dest_ptr dest = (mj_jpeg_dest_ptr)cinfo->dest;
 
-	dest->buf = (JOCTET *)malloc(MODJPEG_DESTBUFFER_CHUNKSIZE * sizeof(JOCTET));
+	dest->buf = (JOCTET *)malloc(MJ_DESTBUFFER_CHUNKSIZE * sizeof(JOCTET));
 	if(dest->buf == NULL)
 		ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 0);
-	dest->size = MODJPEG_DESTBUFFER_CHUNKSIZE;
+	dest->size = MJ_DESTBUFFER_CHUNKSIZE;
 
 	dest->pub.next_output_byte = dest->buf;
-	dest->pub.free_in_buffer = MODJPEG_DESTBUFFER_CHUNKSIZE;
+	dest->pub.free_in_buffer = MJ_DESTBUFFER_CHUNKSIZE;
 
 	return;
 }
 
-boolean modjpeg_empty_output_buffer(j_compress_ptr cinfo) {
+boolean mj_jpeg_empty_output_buffer(j_compress_ptr cinfo) {
 	JOCTET *ret;
-	modjpeg_dest_ptr dest = (modjpeg_dest_ptr)cinfo->dest;
+	mj_jpeg_dest_ptr dest = (mj_jpeg_dest_ptr)cinfo->dest;
 
-	ret = (JOCTET *)realloc(dest->buf, (dest->size + MODJPEG_DESTBUFFER_CHUNKSIZE) * sizeof(JOCTET));
+	ret = (JOCTET *)realloc(dest->buf, (dest->size + MJ_DESTBUFFER_CHUNKSIZE) * sizeof(JOCTET));
 	if(ret == NULL)
 		ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 0);
 	dest->buf = ret;
-	dest->size += MODJPEG_DESTBUFFER_CHUNKSIZE;
+	dest->size += MJ_DESTBUFFER_CHUNKSIZE;
 
-	dest->pub.next_output_byte = dest->buf + (dest->size - MODJPEG_DESTBUFFER_CHUNKSIZE);
-	dest->pub.free_in_buffer = MODJPEG_DESTBUFFER_CHUNKSIZE;
+	dest->pub.next_output_byte = dest->buf + (dest->size - MJ_DESTBUFFER_CHUNKSIZE);
+	dest->pub.free_in_buffer = MJ_DESTBUFFER_CHUNKSIZE;
 
 	return TRUE;
 }
 
-void modjpeg_term_destination(j_compress_ptr cinfo) {
-	modjpeg_dest_ptr dest = (modjpeg_dest_ptr)cinfo->dest;
+void mj_jpeg_term_destination(j_compress_ptr cinfo) {
+	mj_jpeg_dest_ptr dest = (mj_jpeg_dest_ptr)cinfo->dest;
 
 	dest->size -= dest->pub.free_in_buffer;
 
 	return;
 }
 
-void modjpeg_init_source(j_decompress_ptr cinfo) {
-	modjpeg_src_ptr src = (modjpeg_src_ptr)cinfo->src;
+void mj_jpeg_init_source(j_decompress_ptr cinfo) {
+	mj_jpeg_src_ptr src = (mj_jpeg_src_ptr)cinfo->src;
 
 	src->pub.bytes_in_buffer = 0;
 	src->pub.next_input_byte = NULL;
@@ -91,8 +93,8 @@ void modjpeg_init_source(j_decompress_ptr cinfo) {
 	return;
 }
 
-boolean modjpeg_fill_input_buffer(j_decompress_ptr cinfo) {
-	modjpeg_src_ptr src = (modjpeg_src_ptr)cinfo->src;
+boolean mj_jpeg_fill_input_buffer(j_decompress_ptr cinfo) {
+	mj_jpeg_src_ptr src = (mj_jpeg_src_ptr)cinfo->src;
 
 	src->pub.next_input_byte = src->buf;
 	src->pub.bytes_in_buffer = src->size;
@@ -100,13 +102,15 @@ boolean modjpeg_fill_input_buffer(j_decompress_ptr cinfo) {
 	return TRUE;
 }
 
-void modjpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes) {
-	modjpeg_src_ptr src = (modjpeg_src_ptr)cinfo->src;
+void mj_jpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes) {
+	mj_jpeg_src_ptr src = (mj_jpeg_src_ptr)cinfo->src;
 
 	src->pub.next_input_byte += (size_t)num_bytes;
 	src->pub.bytes_in_buffer -= (size_t)num_bytes;
 }
 
-void modjpeg_term_source(j_decompress_ptr cinfo) {
+void mj_jpeg_term_source(j_decompress_ptr cinfo) {
   /* no work necessary here */
 }
+
+

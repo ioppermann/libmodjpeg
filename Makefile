@@ -28,20 +28,13 @@ CFLAGS = $(COMPILERFLAGS) $(INCLUDE)
 LFLAGS = $(LINKERFLAGS) $(LIBDIR) $(LIBS)
 
 OBJECTS = convolve.o \
-          dct.o \
-          effect.o \
           image.o \
-          init.o \
           jpeg.o \
-          logo.o \
-          matrix.o \
-          memory.o \
-          read.o \
-          resample.o \
-          watermark.o
+          dropon.o \
+          compose.o \
+          effect.o
 
-APPS = test \
-       modjpeg
+APPS = modjpeg
 
 libmodjpeg: $(OBJECTS)
 #	$(CC) $(LFLAGS) $(OBJECTS) -Wl,-soname -Wl,libmodjpeg.so -o libmodjpeg.so
@@ -55,41 +48,20 @@ apps: $(APPS)
 convolve.o: convolve.c libmodjpeg.h convolve.h
 	$(CC) $(CFLAGS) convolve.c
 
-dct.o: dct.c libmodjpeg.h dct.h
-	$(CC) $(CFLAGS) dct.c
-
-effect.o: effect.c libmodjpeg.h effect.h
-	$(CC) $(CFLAGS) effect.c
-
-image.o: image.c libmodjpeg.h image.h jpeg.h
+image.o: image.c libmodjpeg.h image.h image.c jpeg.h jpeg.c
 	$(CC) $(CFLAGS) image.c
-
-init.o: init.c libmodjpeg.h init.h resample.h image.h logo.h watermark.h
-	$(CC) $(CFLAGS) init.c
 
 jpeg.o: jpeg.c libmodjpeg.h jpeg.h
 	$(CC) $(CFLAGS) jpeg.c
 
-logo.o: logo.c libmodjpeg.h logo.h convolve.h resample.h read.h memory.h
-	$(CC) $(CFLAGS) logo.c
+dropon.o: dropon.c libmodjpeg.h image.h image.c dropon.h
+	$(CC) $(CFLAGS) dropon.c
 
-matrix.o: matrix.c libmodjpeg.h matrix.h
-	$(CC) $(CFLAGS) matrix.c
+compose.o: compose.c libmodjpeg.h dropon.h dropon.c convolve.h convolve.c compose.h
+	$(CC) $(CFLAGS) compose.c
 
-memory.o: memory.c libmodjpeg.h memory.h
-	$(CC) $(CFLAGS) memory.c
-
-read.o: read.c libmodjpeg.h read.h memory.h dct.h resample.h jpeg.h
-	$(CC) $(CFLAGS) read.c
-
-resample.o: resample.c libmodjpeg.h resample.h memory.h matrix.h
-	$(CC) $(CFLAGS) resample.c
-
-watermark.o: watermark.c libmodjpeg.h watermark.h convolve.h resample.h read.h memory.h
-	$(CC) $(CFLAGS) watermark.c
-
-test: test.c libmodjpeg.a
-	$(CC) -Wall -O2 -o test test.c -L. $(LFLAGS) -lmodjpeg $(INCLUDE)
+effect.o: effect.c libmodjpeg.h jpeg.h jpeg.c effect.h
+	$(CC) $(CFLAGS) effect.c
 
 modjpeg: modjpeg.c libmodjpeg.a
 	$(CC) -Wall -O2 -o modjpeg modjpeg.c -L. $(LFLAGS) -lmodjpeg $(INCLUDE)

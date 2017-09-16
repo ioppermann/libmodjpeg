@@ -1,6 +1,4 @@
 /*
- * convolve.h
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -37,6 +35,6 @@
 
 #include "libmodjpeg.h"
 
-void modjpeg_convolve_add(modjpeg_image_block x, modjpeg_image_block y, float w, int k, int l);
+void mj_convolve(mj_block_t *x, mj_block_t *y, float w, int k, int l);
 
 #endif

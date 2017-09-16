@@ -1,6 +1,4 @@
 /*
- * effect.c
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -34,17 +32,23 @@
 
 #include "libmodjpeg.h"
 #include "effect.h"
+#include "jpeg.h"
 
-int modjpeg_effect_grayscale(modjpeg_handle *m) {
+int mj_effect_grayscale(mj_jpeg_t *m) {
 	int i, c, k, l;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
 
-	if(m->coef == NULL)
-		return -1;
+	if(m == NULL || m->coef == NULL) {
+		return 0;
+	}
 
-	/* Alle Farbkomponenten auf 0 setzen */
+	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
+		return 0;
+	}
+
+	/* set all color components to 0 */
 	for(c = 1; c < m->cinfo.num_components; c++) {
 		component = &m->cinfo.comp_info[c];
 
@@ -53,11 +57,15 @@ int modjpeg_effect_grayscale(modjpeg_handle *m) {
 
 			for(k = 0; k < component->width_in_blocks; k++) {
 				coefs = blocks[0][k];
-				for(i = 0; i < DCTSIZE2; i += 4) {
-					coefs[i] = 0;
+				for(i = 0; i < DCTSIZE2; i += 8) {
+					coefs[i + 0] = 0;
 					coefs[i + 1] = 0;
 					coefs[i + 2] = 0;
 					coefs[i + 3] = 0;
+					coefs[i + 4] = 0;
+					coefs[i + 5] = 0;
+					coefs[i + 6] = 0;
+					coefs[i + 7] = 0;
 				}
 			}
 		}
@@ -66,14 +74,15 @@ int modjpeg_effect_grayscale(modjpeg_handle *m) {
 	return 0;
 }
 
-int modjpeg_effect_pixelate(modjpeg_handle *m) {
+int mj_effect_pixelate(mj_jpeg_t *m) {
 	int i, c, k, l;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
 
-	if(m->coef == NULL)
-		return -1;
+	if(m == NULL || m->coef == NULL) {
+		return 0;
+	}
 
 	/* Bei allen Componenten die AC-Koeffizienten auf 0 setzen */
 	for(c = 0; c < m->cinfo.num_components; c++) {
@@ -88,12 +97,20 @@ int modjpeg_effect_pixelate(modjpeg_handle *m) {
 				coefs[1] = 0;
 				coefs[2] = 0;
 				coefs[3] = 0;
+				coefs[4] = 0;
+				coefs[5] = 0;
+				coefs[6] = 0;
+				coefs[7] = 0;
 
-				for(i = 4; i < DCTSIZE2; i += 4) {
-					coefs[i] = 0;
+				for(i = 8; i < DCTSIZE2; i += 8) {
+					coefs[i + 0] = 0;
 					coefs[i + 1] = 0;
 					coefs[i + 2] = 0;
 					coefs[i + 3] = 0;
+					coefs[i + 4] = 0;
+					coefs[i + 5] = 0;
+					coefs[i + 6] = 0;
+					coefs[i + 7] = 0;
 				}
 			}
 		}
@@ -102,20 +119,23 @@ int modjpeg_effect_pixelate(modjpeg_handle *m) {
 	return 0;
 }
 
-int modjpeg_effect_tint(modjpeg_handle *m, int cb_value, int cr_value) {
+int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 	int l, k;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
 
-	if(m->coef == NULL)
-		return -1;
-
-	if(m->cinfo.jpeg_color_space != JCS_YCbCr)
-		return -1;
-
-	if(cb_value == 0 && cr_value == 0)
+	if(m == NULL || m->coef == NULL) {
 		return 0;
+	}
+
+	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
+		return 0;
+	}
+
+	if(cb_value == 0 && cr_value == 0) {
+		return 0;
+	}
 
 	if(cb_value != 0) {
 		component = &m->cinfo.comp_info[1];
@@ -160,14 +180,19 @@ int modjpeg_effect_tint(modjpeg_handle *m, int cb_value, int cr_value) {
 	return 0;
 }
 
-int modjpeg_effect_luminance(modjpeg_handle *m, int value) {
+int mj_effect_luminance(mj_jpeg_t *m, int value) {
 	int l, k;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
 
-	if(m->coef == NULL)
-		return -1;
+	if(m == NULL || m->coef == NULL) {
+		return 0;
+	}
+
+	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
+		return 0;
+	}
 
 	component = &m->cinfo.comp_info[0];
 

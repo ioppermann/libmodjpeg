@@ -1,6 +1,4 @@
 /*
- * libmodjpeg.h
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -38,115 +36,101 @@
 #include <stdio.h>
 
 #include "jpeglib.h"
-#include "jerror.h"
 
-#define MODJPEG_TOP	1
-#define MODJPEG_BOTTOM	2
-#define MODJPEG_LEFT	4
-#define MODJPEG_RIGHT	8
+#define MJ_COLORSPACE_RGBA		1
+#define MJ_COLORSPACE_RGB		2
+#define MJ_COLORSPACE_GRAYSCALE 	3
+#define MJ_COLORSPACE_GRAYSCALEA	4
+#define MJ_COLORSPACE_YCC		5
+#define MJ_COLORSPACE_YCCA		6
 
-#define MODJPEG_NONE		0
-#define MODJPEG_OPTIMIZE	1
+#define MJ_ALIGN_TOP			1
+#define MJ_ALIGN_BOTTOM			2
+#define MJ_ALIGN_LEFT			3
+#define MJ_ALIGN_RIGHT			4
+#define MJ_ALIGN_CENTER			5
 
-#define MODJPEG_RGB	1
-#define MODJPEG_RGBA	2
-#define MODJPEG_YCbCr	3
-#define MODJPEG_YCbCrA	4
-#define MODJPEG_Y	5
+#define MJ_BLEND_NONUNIFORM		-1
+#define MJ_BLEND_NONE			0
+#define MJ_BLEND_FULL			255
 
-#define MODJPEG_BLOCKSIZE	DCTSIZE
-#define MODJPEG_BLOCKSIZE2	DCTSIZE2
+typedef struct {
+	int h_samp_factor;
+	int v_samp_factor;
+} mj_samplingfactor_t;
 
-typedef float* modjpeg_image_block;
+typedef struct {
+	int max_h_samp_factor;
+	int max_v_samp_factor;
 
-typedef struct modjpeg_image_component {
+	int h_factor;
+	int v_factor;
+
+	mj_samplingfactor_t samp_factor[4];
+} mj_sampling_t;
+
+typedef float mj_block_t;
+
+typedef struct {
+	int width_in_blocks;
+	int height_in_blocks;
+
 	int h_samp_factor;
 	int v_samp_factor;
 
-	JDIMENSION height_in_sblocks[2];
-	JDIMENSION width_in_sblocks[2];
+	int nblocks;
+	mj_block_t **blocks;
+} mj_component_t;
 
-	JDIMENSION height_in_blocks;
-	JDIMENSION width_in_blocks;
-
-	modjpeg_image_block **sblock[2];
-
-	modjpeg_image_block **block;
-} modjpeg_image_component;
-
-typedef struct modjpeg_image {
-	int max_h_samp_factor;
-	int max_v_samp_factor;
-	JDIMENSION image_width;
-	JDIMENSION image_height;
-	int num_components;
-	J_COLOR_SPACE jpeg_color_space;
-
-	modjpeg_image_component **component;
-} modjpeg_image;
-
-typedef struct modjpeg {
-	int clogos;
-	modjpeg_image **logos;
-	modjpeg_image **masks;
-
-	int cwatermarks;
-	modjpeg_image **watermarks;
-
-	float resamp_c[MODJPEG_BLOCKSIZE2], resamp_d[MODJPEG_BLOCKSIZE2], resamp_e[MODJPEG_BLOCKSIZE2], resamp_f[MODJPEG_BLOCKSIZE2];
-	float resamp_ct[MODJPEG_BLOCKSIZE2], resamp_dt[MODJPEG_BLOCKSIZE2], resamp_et[MODJPEG_BLOCKSIZE2], resamp_ft[MODJPEG_BLOCKSIZE2];
-
-	float costable[4 * MODJPEG_BLOCKSIZE];
-} modjpeg;
-
-typedef struct modjpeg_handle {
-	modjpeg *mj;
-
+typedef struct {
 	struct jpeg_decompress_struct cinfo;
 	jvirt_barray_ptr *coef;
-} modjpeg_handle;
 
-// Public Prototypes
+	int h_blocks;
+	int v_blocks;
 
-int modjpeg_init(modjpeg *mj);
-int modjpeg_reset(modjpeg *mj);
-int modjpeg_destroy(modjpeg *mj);
+	mj_sampling_t sampling;
+} mj_jpeg_t;
 
-// Load JPEG image from file
-int modjpeg_set_logo_file(modjpeg *mj, const char *logo, const char *mask);
-int modjpeg_set_watermark_file(modjpeg *mj, const char *watermark);
-modjpeg_handle *modjpeg_set_image_file(modjpeg *mj, const char *image);
+typedef struct {
+	char *raw_image;
+	char *raw_alpha;
 
-// Load JPEG image from memory
-int modjpeg_set_logo_mem(modjpeg *mj, const char *logo, int logo_size, const char *mask, int mask_size);
-int modjpeg_set_watermark_mem(modjpeg *mj, const char *watermark, int watermark_size);
-modjpeg_handle *modjpeg_set_image_mem(modjpeg *mj, const char *image, int image_size);
+	size_t raw_width;
+	size_t raw_height;
+	int raw_colorspace;
 
-// Load raw image from memory
-int modjpeg_set_logo_raw(modjpeg *mj, const char *logo, int width, int height, int type);
-int modjpeg_set_watermark_raw(modjpeg *mj, const char *watermark, int width, int height, int type);
+	int blend;
+	unsigned short offset;
 
-// Load JPEG image from file pointer
-modjpeg_handle *modjpeg_set_image_fp(modjpeg *mj, const FILE *image);
+	int image_ncomponents;
+	int image_colorspace;
 
-// Store resulting image to file or memory
-int modjpeg_get_image_file(modjpeg_handle *m, const char *fname, int options);
-int modjpeg_get_image_mem(modjpeg_handle *m, char **buffer, int *size, int options);
-int modjpeg_get_image_fp(modjpeg_handle *m, const FILE *fp, int options);
+	mj_component_t *image;
 
-// Unload images
-int modjpeg_unset_logo(modjpeg *mj, int lid);
-int modjpeg_unset_watermark(modjpeg *mj, int wid);
-int modjpeg_unset_image(modjpeg_handle *m);
+	int alpha_ncomponents;
+	unsigned short alpha_offset;
 
-// Apply logo or watermark
-int modjpeg_add_logo(modjpeg_handle *m, int lid, int position);
-int modjpeg_add_watermark(modjpeg_handle *m, int wid);
+	mj_component_t *alpha;
+} mj_dropon_t;
 
-// Effects
-int modjpeg_effect_grayscale(modjpeg_handle *m);
-int modjpeg_effect_pixelate(modjpeg_handle *m);
-int modjpeg_effect_tint(modjpeg_handle *m, int cb_value, int cr_value);
-int modjpeg_effect_luminance(modjpeg_handle *m, int value);
+mj_dropon_t *mj_read_dropon_from_buffer(const char *rawdata, unsigned int colorspace, size_t width, size_t height, short blend);
+mj_dropon_t *mj_read_dropon_from_jpeg(const char *filename, const char *mask, short blend);
+
+mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len);
+mj_jpeg_t *mj_read_jpeg_from_file(const char *filename);
+
+int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, int h_align, int v_align, int x_offset, int y_offset);
+
+int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len);
+int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename);
+
+void mj_destroy_jpeg(mj_jpeg_t *m);
+void mj_destroy_dropon(mj_dropon_t *d);
+
+int mj_effect_grayscale(mj_jpeg_t *m);
+int mj_effect_pixelate(mj_jpeg_t *m);
+int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value);
+int mj_effect_luminance(mj_jpeg_t *m, int value);
 
 #endif

@@ -1,6 +1,4 @@
 /*
- * image.h
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -37,12 +35,7 @@
 
 #include "libmodjpeg.h"
 
-#define MODJPEG_IMAGE_FILENAME		1
-#define MODJPEG_IMAGE_BUFFER		2
-#define MODJPEG_IMAGE_FILEPOINTER	3
-
-modjpeg_handle *modjpeg_set_image(modjpeg *mj, const void *image_file, int image_size, int type);
-
-int modjpeg_get_image(modjpeg_handle *m, const void *image, char **buffer, int *size, int options, int type);
+int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *raw_data, int raw_colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height);
+int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int want_colorspace, const char *filename);
 
 #endif

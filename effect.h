@@ -1,6 +1,4 @@
 /*
- * effect.h
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 

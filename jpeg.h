@@ -1,6 +1,4 @@
 /*
- * jpeg.h
- *
  * Copyright (c) 2006, Ingo Oppermann
  * All rights reserved.
  * 
@@ -38,41 +36,42 @@
 #include <setjmp.h>
 
 #include "libmodjpeg.h"
+#include "jpeglib.h"
 
-#define MODJPEG_DESTBUFFER_CHUNKSIZE	2048
+#define MJ_DESTBUFFER_CHUNKSIZE		2048
 
-struct modjpeg_error_mgr {
+struct mj_jpeg_error_mgr {
 	struct jpeg_error_mgr pub;
 
 	jmp_buf setjmp_buffer;
 };
 
-struct modjpeg_dest_mgr {
+struct mj_jpeg_dest_mgr {
 	struct jpeg_destination_mgr pub;
 
 	JOCTET *buf;
 	size_t size;
 };
 
-struct modjpeg_src_mgr {
+struct mj_jpeg_src_mgr {
 	struct jpeg_source_mgr pub;
 
 	JOCTET *buf;
 	size_t size;
 };
 
-typedef struct modjpeg_error_mgr* modjpeg_error_ptr;
-typedef struct modjpeg_src_mgr *modjpeg_src_ptr;
-typedef struct modjpeg_dest_mgr* modjpeg_dest_ptr;
+typedef struct mj_jpeg_error_mgr* mj_jpeg_error_ptr;
+typedef struct mj_jpeg_src_mgr *mj_jpeg_src_ptr;
+typedef struct mj_jpeg_dest_mgr* mj_jpeg_dest_ptr;
 
-void modjpeg_init_source(j_decompress_ptr cinfo);
-boolean modjpeg_fill_input_buffer(j_decompress_ptr cinfo);
-void modjpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes);
-void modjpeg_term_source(j_decompress_ptr cinfo);
+void mj_jpeg_init_source(j_decompress_ptr cinfo);
+boolean mj_jpeg_fill_input_buffer(j_decompress_ptr cinfo);
+void mj_jpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes);
+void mj_jpeg_term_source(j_decompress_ptr cinfo);
 
-void modjpeg_error_exit(j_common_ptr cinfo);
-void modjpeg_init_destination(j_compress_ptr cinfo);
-boolean modjpeg_empty_output_buffer(j_compress_ptr cinfo);
-void modjpeg_term_destination(j_compress_ptr cinfo);
+void mj_jpeg_error_exit(j_common_ptr cinfo);
+void mj_jpeg_init_destination(j_compress_ptr cinfo);
+boolean mj_jpeg_empty_output_buffer(j_compress_ptr cinfo);
+void mj_jpeg_term_destination(j_compress_ptr cinfo);
 
 #endif
