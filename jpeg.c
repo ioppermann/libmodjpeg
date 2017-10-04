@@ -50,8 +50,9 @@ void mj_jpeg_init_destination(j_compress_ptr cinfo) {
 	mj_jpeg_dest_ptr dest = (mj_jpeg_dest_ptr)cinfo->dest;
 
 	dest->buf = (JOCTET *)malloc(MJ_DESTBUFFER_CHUNKSIZE * sizeof(JOCTET));
-	if(dest->buf == NULL)
+	if(dest->buf == NULL) {
 		ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 0);
+	}
 	dest->size = MJ_DESTBUFFER_CHUNKSIZE;
 
 	dest->pub.next_output_byte = dest->buf;
@@ -65,8 +66,9 @@ boolean mj_jpeg_empty_output_buffer(j_compress_ptr cinfo) {
 	mj_jpeg_dest_ptr dest = (mj_jpeg_dest_ptr)cinfo->dest;
 
 	ret = (JOCTET *)realloc(dest->buf, (dest->size + MJ_DESTBUFFER_CHUNKSIZE) * sizeof(JOCTET));
-	if(ret == NULL)
+	if(ret == NULL) {
 		ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 0);
+	}
 	dest->buf = ret;
 	dest->size += MJ_DESTBUFFER_CHUNKSIZE;
 

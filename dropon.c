@@ -243,9 +243,6 @@ int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 		comp->h_samp_factor = component->h_samp_factor;
 		comp->v_samp_factor = component->v_samp_factor;
 
-		comp->width_in_blocks = m->h_blocks * component->h_samp_factor;
-		comp->height_in_blocks = m->v_blocks * component->v_samp_factor;
-
 		comp->width_in_blocks = component->width_in_blocks;
 		comp->height_in_blocks = component->height_in_blocks;
 
@@ -328,9 +325,6 @@ int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 
 		comp->h_samp_factor = component->h_samp_factor;
 		comp->v_samp_factor = component->v_samp_factor;
-
-		comp->width_in_blocks = m->h_blocks * component->h_samp_factor;
-		comp->height_in_blocks = m->v_blocks * component->v_samp_factor;
 
 		comp->width_in_blocks = component->width_in_blocks;
 		comp->height_in_blocks = component->height_in_blocks;

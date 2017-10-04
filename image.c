@@ -70,9 +70,6 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len) {
 
 		//printf("(%d,%d)", component->h_samp_factor, component->v_samp_factor);
 
-		width_in_blocks = m->h_blocks * component->h_samp_factor;
-		height_in_blocks = m->v_blocks * component->v_samp_factor;
-
 		width_in_blocks = component->width_in_blocks;
 		height_in_blocks = component->height_in_blocks;
 
@@ -213,15 +210,6 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	m->sampling.h_factor = (m->sampling.max_h_samp_factor * DCTSIZE);
 	m->sampling.v_factor = (m->sampling.max_v_samp_factor * DCTSIZE);
 
-	m->h_blocks = m->cinfo.image_width / m->sampling.h_factor;
-	if(m->cinfo.image_width % m->sampling.h_factor != 0) {
-		m->h_blocks++;
-	}
-	m->v_blocks = m->cinfo.image_height / m->sampling.v_factor;
-	if(m->cinfo.image_height % m->sampling.v_factor != 0) {
-		m->v_blocks++;
-	}
-
 	int c, k, l, i;
 	int width_in_blocks, height_in_blocks;
 	jpeg_component_info *component;
@@ -234,14 +222,10 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 		m->sampling.samp_factor[c].h_samp_factor = component->h_samp_factor;
 		m->sampling.samp_factor[c].v_samp_factor = component->v_samp_factor;
 
-		width_in_blocks = m->h_blocks * component->h_samp_factor;
-		height_in_blocks = m->v_blocks * component->v_samp_factor;
-
 		width_in_blocks = component->width_in_blocks;
 		height_in_blocks = component->height_in_blocks;
 
-		printf("(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, m->h_blocks * component->h_samp_factor, m->v_blocks * component->v_samp_factor);
-		printf("orig (%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, component->width_in_blocks, component->height_in_blocks);
+		printf("(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, width_in_blocks, height_in_blocks);
 
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
@@ -477,7 +461,7 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 	JSAMPROW row_pointer[1];
 
 	while(cinfo.next_scanline < cinfo.image_height) {
-		printf("%d ", cinfo.next_scanline * row_stride);
+		//printf("%d ", cinfo.next_scanline * row_stride);
 		row_pointer[0] = &data[cinfo.next_scanline * row_stride];
 		jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}
