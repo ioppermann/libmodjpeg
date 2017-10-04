@@ -44,6 +44,7 @@ static struct option longopts[] = {
 	{ "output",	required_argument,	NULL,		'o' },
 	{ "dropon",	required_argument,	NULL,		'd' },
 	{ "position",	required_argument,	NULL,		'p' },
+	{ "offset",	required_argument,	NULL,		'm' },
 	{ "luminance",	required_argument,	NULL,		'y' },
 	{ "tintblue",	required_argument,	NULL,		'b' },
 	{ "tintred",	required_argument,	NULL,		'r' },
@@ -56,14 +57,14 @@ static struct option longopts[] = {
 void help(void);
 
 int main(int argc, char *argv[]) {
-	int c, opterr, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT;
+	int c, opterr, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT, offset_x = 0, offset_y = 0;
 	char *str;
 	mj_jpeg_t *m = NULL;
 	mj_dropon_t *d = NULL;
 
 	opterr = 1;
 
-	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :y: :b: :r: xgh", longopts, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgh", longopts, NULL)) != -1) {
 		switch(c) {
 			case 'i':
 				if(m != NULL) {
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
 					exit(1);
 				}
 
-				mj_compose(m, d, position, 0, 0);
+				mj_compose(m, d, position, offset_x, offset_y);
 
 				break;
 			case 'p':
@@ -145,6 +146,13 @@ int main(int argc, char *argv[]) {
 					position |= MJ_ALIGN_CENTER;
 				}
 
+				break;
+			case 'm':
+				offset_x = (int)strtol(optarg, NULL, 10);
+				str = strchr(optarg, ',');
+				if(str != NULL) {
+					offset_y = (int)strtol(++str, NULL, 10);
+				}
 				break;
 			case 'y':
 				if(m == NULL) {

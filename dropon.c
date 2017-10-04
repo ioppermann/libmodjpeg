@@ -147,14 +147,16 @@ int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sa
 	int h_offset = offset % sampling->h_factor;
 	int v_offset = offset / sampling->v_factor;
 
-	int raw_width = d->raw_width;
-	if(h_offset != 0) {
-		raw_width += sampling->h_factor;
+	int raw_width = d->raw_width + h_offset;
+	int padding = raw_width % DCTSIZE;
+	if(padding != 0) {
+		raw_width += DCTSIZE - padding;
 	}
 
-	int raw_height = d->raw_height;
-	if(v_offset != 0) {
-		raw_height += sampling->v_factor;
+	int raw_height = d->raw_height + v_offset;
+	padding = raw_height % DCTSIZE;
+	if(padding != 0) {
+		raw_height += DCTSIZE - padding;
 	}
 
 	char *raw_data = (char *)calloc(3 * raw_width * raw_height, sizeof(char));
@@ -244,6 +246,9 @@ int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 		comp->width_in_blocks = m->h_blocks * component->h_samp_factor;
 		comp->height_in_blocks = m->v_blocks * component->v_samp_factor;
 
+		comp->width_in_blocks = component->width_in_blocks;
+		comp->height_in_blocks = component->height_in_blocks;
+
 		comp->nblocks = comp->width_in_blocks * comp->height_in_blocks;
 		comp->blocks = (mj_block_t **)calloc(comp->nblocks, sizeof(mj_block_t *));
 
@@ -253,18 +258,15 @@ int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
 
 			for(k = 0; k < comp->width_in_blocks; k++) {
-				comp->blocks[comp->height_in_blocks * l + k] = (mj_block_t *)calloc(64, sizeof(mj_block_t));
-				b = comp->blocks[comp->height_in_blocks * l + k];
-
+				b = (mj_block_t *)calloc(64, sizeof(mj_block_t));
 				coefs = blocks[0][k];
-
 /*
-				printf("component %d (%d,%d)\n", c, l, k);
+				printf("\ncomponent %d (%d,%d) %p\n", c, l, k, b);
 
 				int p, q;
 				for(p = 0; p < DCTSIZE; p++) {
 					for(q = 0; q < DCTSIZE; q++) {
-						printf("%4d ", coefs[DCTSIZE * p + q]);
+						printf("%5d ", coefs[DCTSIZE * p + q]);
 					}
 					printf("\n");
 				}
@@ -279,6 +281,8 @@ int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 					b[i + 6] = (float)coefs[i + 6];
 					b[i + 7] = (float)coefs[i + 7];
 				}
+
+				comp->blocks[comp->width_in_blocks * l + k] = b;
 			}
 		}
 	}
@@ -328,6 +332,9 @@ int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 		comp->width_in_blocks = m->h_blocks * component->h_samp_factor;
 		comp->height_in_blocks = m->v_blocks * component->v_samp_factor;
 
+		comp->width_in_blocks = component->width_in_blocks;
+		comp->height_in_blocks = component->height_in_blocks;
+
 		comp->nblocks = comp->width_in_blocks * comp->height_in_blocks;
 		comp->blocks = (mj_block_t **)calloc(comp->nblocks, sizeof(mj_block_t *));
 
@@ -337,9 +344,7 @@ int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
 
 			for(k = 0; k < comp->width_in_blocks; k++) {
-				comp->blocks[comp->height_in_blocks * l + k] = (mj_block_t *)calloc(64, sizeof(mj_block_t));
-				b = comp->blocks[comp->height_in_blocks * l + k];
-
+				b = (mj_block_t *)calloc(64, sizeof(mj_block_t));
 				coefs = blocks[0][k];
 
 				coefs[0] += 1024;
@@ -378,6 +383,8 @@ int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 					b[i + 6] = (float)coefs[i + 6] * (0.5 * 0.5 / 1020.0);
 					b[i + 7] = (float)coefs[i + 7] * (0.5 * 0.5 / 1020.0);
 				}
+
+				comp->blocks[comp->width_in_blocks * l + k] = b;
 			}
 		}
 	}

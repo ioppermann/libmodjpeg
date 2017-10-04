@@ -49,7 +49,9 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		return 0;
 	}
 
-	printf("blend: %d\n", d->blend);
+	//printf("(x_offset, y_offset) = (%d, %d)\n", x_offset, y_offset);
+
+	//printf("blend: %d\n", d->blend);
 
 	if(d->blend == MJ_BLEND_NONE) {
 		return 0;
@@ -95,7 +97,9 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	h_offset += x_offset;
 
 	offset = h_offset % m->sampling.h_factor;
+	//printf("h_offset=%d @ ", h_offset);
 	h_offset = h_offset / m->sampling.h_factor;
+	//printf("block %d\n", h_offset);
 
 	if((align & MJ_ALIGN_TOP) != 0) {
 		v_offset = 0;
@@ -110,7 +114,11 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	v_offset += y_offset;
 
 	offset += m->sampling.h_factor * (v_offset % m->sampling.v_factor);
+	//printf("v_offset=%d @ ", v_offset);
 	v_offset = v_offset / m->sampling.v_factor;
+	//printf("block %d\n", v_offset);
+
+	//printf("offset=%d\n", offset);
 
 	if(offset != d->offset) {
 		reload = 1;
@@ -149,8 +157,6 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 	cinfo_m = &m->cinfo;
 
 	for(c = 0; c < d->image_ncomponents; c++) {
-		printf("component %d\n", c);
-
 		component_m = &cinfo_m->comp_info[c];
 		imagecomp = &d->image[c];
 
@@ -160,13 +166,17 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 		width_offset = h_offset * component_m->h_samp_factor;
 		height_offset = v_offset * component_m->v_samp_factor;
 
+		//printf("*component %d (%d,%d) %p\n", c, width_in_blocks, height_in_blocks, imagecomp->blocks);
+
 		/* Die Werte des Logos in das Bild kopieren */
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks_m = (*cinfo_m->mem->access_virt_barray)((j_common_ptr)&cinfo_m, m->coef[c], height_offset + l, 1, TRUE);
 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs_m = blocks_m[0][width_offset + k];
-				imageblock = imagecomp->blocks[height_in_blocks * l + k];
+				imageblock = imagecomp->blocks[width_in_blocks * l + k];
+
+				//printf("*component (%d,%d) %p\n", l, k, imageblock);
 
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] = (int)imageblock[i + 0];
@@ -180,6 +190,8 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 				}
 			}
 		}
+
+		break;
 	}
 
 	return 0;
@@ -219,8 +231,8 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs_m = blocks_m[0][width_offset + k];
-				alphablock = alphacomp->blocks[height_in_blocks * l + k];
-				imageblock = imagecomp->blocks[height_in_blocks * l + k];
+				alphablock = alphacomp->blocks[width_in_blocks * l + k];
+				imageblock = imagecomp->blocks[width_in_blocks * l + k];
 /*
 				int p, q;
 
@@ -232,7 +244,7 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 				}
 */
 				// x = x0 - x1
-				printf("component %d (%d,%d): x0 - x1 | ", c, l, k);
+				//printf("component %d (%d,%d): x0 - x1 | ", c, l, k);
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					X[i + 0] = imageblock[i + 0] - coefs_m[i + 0];
 					X[i + 1] = imageblock[i + 1] - coefs_m[i + 1];
@@ -247,7 +259,7 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 				memset(Y, 0, DCTSIZE2 * sizeof(float));
 
 				// y' = w * x (Faltung)
-				printf("w * x | ");
+				//printf("w * x | ");
 				for(i = 0; i < DCTSIZE; i++) {
 					mj_convolve(X, Y, alphablock[(i * DCTSIZE) + 0], i, 0);
 					mj_convolve(X, Y, alphablock[(i * DCTSIZE) + 1], i, 1);
@@ -260,7 +272,7 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 				}
 
 				// y = x1 + y'
-				printf("x1 + y'\n");
+				//printf("x1 + y'\n");
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] += (int)Y[i + 0];
 					coefs_m[i + 1] += (int)Y[i + 1];

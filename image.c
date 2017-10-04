@@ -73,6 +73,9 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len) {
 		width_in_blocks = m->h_blocks * component->h_samp_factor;
 		height_in_blocks = m->v_blocks * component->v_samp_factor;
 
+		width_in_blocks = component->width_in_blocks;
+		height_in_blocks = component->height_in_blocks;
+
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
 
@@ -234,7 +237,11 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 		width_in_blocks = m->h_blocks * component->h_samp_factor;
 		height_in_blocks = m->v_blocks * component->v_samp_factor;
 
-		printf("(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, width_in_blocks, height_in_blocks);
+		width_in_blocks = component->width_in_blocks;
+		height_in_blocks = component->height_in_blocks;
+
+		printf("(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, m->h_blocks * component->h_samp_factor, m->v_blocks * component->v_samp_factor);
+		printf("orig (%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, component->width_in_blocks, component->height_in_blocks);
 
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
