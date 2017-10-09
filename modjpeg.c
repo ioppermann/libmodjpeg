@@ -74,26 +74,26 @@ int main(int argc, char *argv[]) {
 
 				m = mj_read_jpeg_from_file(optarg);
 				if(m == NULL) {
-					fprintf(stderr, "can't read image from '%s'\n", optarg);
+					fprintf(stderr, "Can't read image from '%s'\n", optarg);
 					exit(1);
 				}
 
 				break;
 			case 'o':
 				if(m == NULL) {
-					fprintf(stderr, "can't write image without loading an image first (--input)\n");
+					fprintf(stderr, "Can't write image without loading an image first (--input)\n");
 					exit(1);
 				}
 
 				if(mj_write_jpeg_to_file(m, optarg) != 0) {
-					fprintf(stderr, "can't write image to '%s'\n", optarg);
+					fprintf(stderr, "Can't write image to '%s'\n", optarg);
 					exit(1);
 				}
 
 				break;
 			case 'd':
 				if(m == NULL) {
-					fprintf(stderr, "can't apply a dropon without loading an image first (--input)\n");
+					fprintf(stderr, "Can't apply a dropon without loading an image first (--input)\n");
 					exit(1);
 				}
 
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 				}
 
 				if(d == NULL) {
-					fprintf(stderr, "can't read dropon from '%s'\n", optarg);
+					fprintf(stderr, "Can't read dropon from '%s'\n", optarg);
 					exit(1);
 				}
 
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'p':
 				if(strlen(optarg) != 2) {
-					fprintf(stderr, "invalid position, use --help for more details\n");
+					fprintf(stderr, "Invalid position, use --help for more details\n");
 					break;
 				}
 
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'y':
 				if(m == NULL) {
-					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					fprintf(stderr, "Can't apply effect without loading an image first (--input)\n");
 					exit(1);
 				}
 
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'b':
 				if(m == NULL) {
-					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					fprintf(stderr, "Can't apply effect without loading an image first (--input)\n");
 					exit(1);
 				}
 
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'r':
 				if(m == NULL) {
-					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					fprintf(stderr, "Can't apply effect without loading an image first (--input)\n");
 					exit(1);
 				}
 
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'x':
 				if(m == NULL) {
-					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					fprintf(stderr, "Can't apply effect without loading an image first (--input)\n");
 					exit(1);
 				}
 
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'g':
 				if(m == NULL) {
-					fprintf(stderr, "can't apply effect without loading an image first (--input)\n");
+					fprintf(stderr, "Can't apply effect without loading an image first (--input)\n");
 					exit(1);
 				}
 				
@@ -201,11 +201,11 @@ int main(int argc, char *argv[]) {
 				help();
 				exit(0);
 			case ':':
-				fprintf(stderr, "argument missing, use --help for more details\n");
+				fprintf(stderr, "Argument missing, use --help for more details\n");
 				break;
 			case '?':
 			default:
-				fprintf(stderr, "unknown option, use --help for more details\n");
+				fprintf(stderr, "Unknown option, use --help for more details\n");
 				break;
 		}
 	}
@@ -223,67 +223,69 @@ int main(int argc, char *argv[]) {
 
 void help(void) {
 	fprintf(stderr, "modjpeg (c) 2006+ Ingo Oppermann\n\n");
-	fprintf(stderr, "Optionen:\n");
+
+	fprintf(stderr, "The order for the options is important, i.e. a dropon can't be applied without\n");
+	fprintf(stderr, "loading an image first.\n\n");
+
+	fprintf(stderr, "Options:\n\n");
 
 	fprintf(stderr, "\t--input, -i file\n");
-	fprintf(stderr, "\t\tName des zu modifizierenden Bildes. Wird diese Option weggelassen\n");
-	fprintf(stderr, "\t\toder ist file gleich '-', wird stdin als Input genommen. Das Bild muss\n");
-	fprintf(stderr, "\t\tim JPEG-Format sein.\n");
+	fprintf(stderr, "\t\tPath to the image to be modified. The image needs to be a JPEG.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--ouput, -o file\n");
-	fprintf(stderr, "\t\tName des resultierenden Bildes. Wird diese Option weggelassen\n");
-	fprintf(stderr, "\t\toder ist file gleich '-', wird stdout als Output genommen.\n");
+	fprintf(stderr, "\t\tPath to a file to store the modified image in.\n");
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "\tBei den folgenden Optionen ist die Reihenfolge wichtig, in der sie stehen.\n\n");
-
 	fprintf(stderr, "\t--dropon, -d file[,mask]\n");
-	fprintf(stderr, "\t\tName des Bildes, das als Logo verwendet werden soll. Die Maske ist optional.\n");
-	fprintf(stderr, "\t\tLogo und Maske muessen im JPEG-Format sein.\n");
+	fprintf(stderr, "\t\tPath to the image that should be used as dropon. The path to the mask is optional.\n");
+	fprintf(stderr, "\t\tThe dropon and the mask have to be a JPEG and of the same dimension.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--position, -p [t|b][c][l|r]\n");
-	fprintf(stderr, "\t\tDie Position des dropon. t = top, b = bottom, l = left, r = right, c = center.\n");
+	fprintf(stderr, "\t\tThe position of the dropon. t = top, b = bottom, l = left, r = right, c = center. Default: center\n");
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "\t--offser, -m [horizontal]x[vertical]\n");
+	fprintf(stderr, "\t\tThe offset to the given position in pixels. Default: 0x0\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--luminance, -y value\n");
-	fprintf(stderr, "\t\tVeraendert die Helligkeit des Bildes entsprechend des Wertes in value.\n");
+	fprintf(stderr, "\t\tChanges the brightness of the image according to the value. Use a negative value\n");
+	fprintf(stderr, "\t\tto darken the image, and a positive value to brighten the image.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--tintblue, -b value\n");
-	fprintf(stderr, "\t\tEin positiver Wert faerbt das Bild blau, ein negativer Wert faerbt\n");
-	fprintf(stderr, "\t\tdas Bild gelb.\n");
+	fprintf(stderr, "\t\tColor the image. Use a negative value to tint the image yellow, and use a positive\n");
+	fprintf(stderr, "\t\tvalue to tint the image blue.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--tintred, -r value\n");
-	fprintf(stderr, "\t\tEin positiver Wert faerbt das Bild rot, ein negativer Wert faerbt\n");
-	fprintf(stderr, "\t\tdas Bild gruen.\n");
+	fprintf(stderr, "\t\tColor the image. Use a negative value to tint the image green, and use a positive\n");
+	fprintf(stderr, "\t\tvalue to tint the image red.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--pixelate, -x\n");
-	fprintf(stderr, "\t\tVerpixelt das Bild in 8x8-Bloecken.\n");
+	fprintf(stderr, "\t\tPixelate the image into 8x8 blocks.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--grayscale, -g\n");
-	fprintf(stderr, "\t\tReduziert das Bild zu Graustufen.\n");
+	fprintf(stderr, "\t\tReduce the image to grayscale.\n");
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "Beispiele:\n");
+	fprintf(stderr, "Examples:\n");
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "\tEin Logo in der rechten oberen Ecke platzieren:\n");
+	fprintf(stderr, "\tPlace a logo in the top right corner:\n");
 	fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --output out.jpg\n");
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "\tEin Logo in der rechten oberen Ecke platzieren und nachher das Bild\n");
-	fprintf(stderr, "\tverpixeln:\n");
-	fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --pixelate --output out.jpg\n");
+	fprintf(stderr, "\tPixelate the image and then place a logo in the top right corner:\n");
+	fprintf(stderr, "\t\tmodjpeg --input in.jpg --pixelate --position tr --dropon logo.jpg --output out.jpg\n");
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "\tErst das Bild verpixeln, dann ein Logo in der rechten oberen Ecke\n");
-	fprintf(stderr, "\tplatzieren:\n");
-	fprintf(stderr, "\t\tmodjpeg --input in.jpg --pixelate --position tr --dropon logo.jpg --output out.jpg\n");
+	fprintf(stderr, "\tPlace a logo in the top right corner and then pixelate the image (including the logo):\n");
+	fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --pixelate --output out.jpg\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\n");
