@@ -1,11 +1,11 @@
 #------------------------------------------------------------------------------
-# mod_jpeg Makefile
+# libmodjpeg Makefile
 # 
-# Die folgende Zeile entsprechend anpassen
+# Adjust the following line
 #------------------------------------------------------------------------------
 JPEGDIR = /opt/local
 
-# Ab hier ist nichts mehr anzupassen
+# Don't change anything below this line
 
 INCLUDEJPEG = -I$(JPEGDIR)/include
 LIBRARYJPEG = -L$(JPEGDIR)/lib
