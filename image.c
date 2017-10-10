@@ -190,9 +190,12 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 			return NULL;
 	}
 
+	m->width = m->cinfo.output_width;
+	m->height = m->cinfo.output_height;
+
 	m->coef = jpeg_read_coefficients(&m->cinfo);
 
-	printf("%dx%dpx, %d components: ", m->cinfo.output_width, m->cinfo.output_height, m->cinfo.num_components);
+	printf("%dx%dpx, %d components: ", m->width, m->height, m->cinfo.num_components);
 
 	m->sampling.max_h_samp_factor = m->cinfo.max_h_samp_factor;
 	m->sampling.max_v_samp_factor = m->cinfo.max_v_samp_factor;

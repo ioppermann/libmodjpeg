@@ -76,6 +76,9 @@ typedef struct {
 	struct jpeg_decompress_struct cinfo;
 	jvirt_barray_ptr *coef;
 
+	int width;
+	int height;
+
 	mj_sampling_t sampling;
 } mj_jpeg_t;
 
