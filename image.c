@@ -190,10 +190,10 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 			return NULL;
 	}
 
+	m->coef = jpeg_read_coefficients(&m->cinfo);
+
 	m->width = m->cinfo.output_width;
 	m->height = m->cinfo.output_height;
-
-	m->coef = jpeg_read_coefficients(&m->cinfo);
 
 	printf("%dx%dpx, %d components: ", m->width, m->height, m->cinfo.num_components);
 
