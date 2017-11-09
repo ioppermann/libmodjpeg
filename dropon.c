@@ -102,7 +102,7 @@ mj_dropon_t *mj_read_dropon_from_jpeg(const char *image_file, const char *alpha_
 	return d;
 }
 
-int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sampling, unsigned short offset) {
+int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sampling, int block_x, int block_y, int crop_x, int crop_y, int crop_w, int crop_h) {
 	printf("entering %s\n", __FUNCTION__);
 
 	if(d == NULL) {
@@ -132,69 +132,68 @@ int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sa
 	char *buffer = NULL;
 	size_t len = 0;
 
-	// hier offset berücksichtigen
+	// crop the dropon
 
-	int h_offset = offset % sampling->h_factor;
-	int v_offset = offset / sampling->v_factor;
+	printf("crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
 
-	int raw_width = d->raw_width + h_offset;
-	int padding = raw_width % DCTSIZE;
+	int width = crop_w + block_x;
+	int padding = width % sampling->h_factor;
 	if(padding != 0) {
-		raw_width += DCTSIZE - padding;
+		width += sampling->h_factor - padding;
 	}
 
-	int raw_height = d->raw_height + v_offset;
-	padding = raw_height % DCTSIZE;
+	int height = crop_h + block_y;
+	padding = height % sampling->v_factor;
 	if(padding != 0) {
-		raw_height += DCTSIZE - padding;
+		height += sampling->v_factor - padding;
 	}
 
-	char *raw_data = (char *)calloc(3 * raw_width * raw_height, sizeof(char));
-	if(raw_data == NULL) {
+	printf("(width, height) = (%d, %d)\n", width, height);
+
+	char *data = (char *)calloc(3 * width * height, sizeof(char));
+	if(data == NULL) {
 		return -1;
 	}
 
 	char *p, *q;
 
-	for(i = 0; i < d->raw_height; i++) {
-		p = &raw_data[(i + v_offset) * raw_width * 3 + (h_offset * 3)];
-		q = &d->raw_image[i * d->raw_width * 3];
+	for(i = crop_y; i < (crop_y + crop_h); i++) {
+		p = &data[(i - crop_y + block_y) * width * 3 + (block_x * 3)];
+		q = &d->raw_image[i * d->raw_width * 3 + (crop_x * 3)];
 
-		for(j = 0; j < d->raw_width; j++) {
+		for(j = crop_x; j < (crop_x + crop_w); j++) {
 			*p++ = *q++;
 			*p++ = *q++;
 			*p++ = *q++;
 		}
 	}
 
-	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, d->raw_colorspace, colorspace, sampling, raw_width, raw_height);
+	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, d->raw_colorspace, colorspace, sampling, width, height);
 	printf("encoded len: %ld\n", len);
 
 	mj_read_droponimage_from_buffer(d, buffer, len);
 	free(buffer);
 
-	// hier offset berücksichtigen
+	for(i = crop_y; i < (crop_y + crop_h); i++) {
+		p = &data[(i - crop_y + block_y) * width * 3 + (block_x * 3)];
+		q = &d->raw_alpha[i * d->raw_width * 3 + (crop_x * 3)];
 
-	for(i = 0; i < d->raw_height; i++) {
-		p = &raw_data[(i + v_offset) * raw_width * 3 + (h_offset * 3)];
-		q = &d->raw_alpha[i * d->raw_width * 3];
-
-		for(j = 0; j < d->raw_width; j++) {
+		for(j = crop_x; j < (crop_x + crop_w); j++) {
 			*p++ = *q++;
 			*p++ = *q++;
 			*p++ = *q++;
 		}
 	}
 
-	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)raw_data, MJ_COLORSPACE_YCC, JCS_YCbCr, sampling, raw_width, raw_height);
+	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, MJ_COLORSPACE_YCC, JCS_YCbCr, sampling, width, height);
 	printf("encoded len: %ld\n", len);
 
 	mj_read_droponalpha_from_buffer(d, buffer, len);
 	free(buffer);
 
-	free(raw_data);
+	free(data);
 
-	d->offset = offset;
+	d->offset = -1;
 
 	return 0;
 }

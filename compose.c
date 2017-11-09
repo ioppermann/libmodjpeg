@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "libmodjpeg.h"
 #include "dropon.h"
@@ -32,14 +33,15 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	printf("entering %s\n", __FUNCTION__);
 
 	int reload = 0;
-	int h_offset = 0, v_offset = 0, offset = 0;
+	int h_offset = 0, v_offset = 0;
+	int crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
 	jpeg_component_info *component_m = NULL;
 
 	if(m == NULL || d == NULL) {
 		return 0;
 	}
 
-	//printf("(x_offset, y_offset) = (%d, %d)\n", x_offset, y_offset);
+	printf("(x_offset, y_offset) = (%d, %d)\n", x_offset, y_offset);
 
 	//printf("blend: %d\n", d->blend);
 
@@ -71,54 +73,109 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		reload = 1;
 	}
 
-	// is the offset the same?
-	// calculate needed offset, compare with d->offset
+	// calculate crop of dropon
+
+	// horizontally
 
 	if((align & MJ_ALIGN_LEFT) != 0) {
 		h_offset = 0;
 	}
 	else if((align & MJ_ALIGN_RIGHT) != 0) {
-		h_offset = m->cinfo.output_width - d->raw_width;
+		h_offset = m->width - d->raw_width;
 	}
 	else {
-		h_offset = m->cinfo.output_width / 2 - d->raw_width / 2;
+		h_offset = m->width / 2 - d->raw_width / 2;
 	}
 
 	h_offset += x_offset;
 
-	offset = h_offset % m->sampling.h_factor;
-	//printf("h_offset=%d @ ", h_offset);
-	h_offset = h_offset / m->sampling.h_factor;
-	//printf("block %d\n", h_offset);
+	crop_x = 0;
+
+	if(h_offset < 0) {
+		crop_x = -h_offset;
+	}
+
+	crop_w = d->raw_width - crop_x;
+
+	if(crop_x > d->raw_width) {				// dropon shifted more off the left border than its width
+		crop_w = 0;
+	}
+	else if(h_offset > m->width) {				// dropon shifted off the right border
+		crop_w = 0;
+	}
+	else if(h_offset + crop_x + crop_w > m->width) {	// dropon partially shifted off the right border
+		crop_w = m->width - crop_x - h_offset;
+	}
+
+	// vertically
 
 	if((align & MJ_ALIGN_TOP) != 0) {
 		v_offset = 0;
 	}
 	else if((align & MJ_ALIGN_BOTTOM) != 0) {
-		v_offset = m->cinfo.output_height - d->raw_height;
+		v_offset = m->height - d->raw_height;
 	}
 	else {
-		v_offset = m->cinfo.output_height / 2 - d->raw_height / 2;
+		v_offset = m->height / 2 - d->raw_height / 2;
 	}
 
 	v_offset += y_offset;
 
-	offset += m->sampling.h_factor * (v_offset % m->sampling.v_factor);
-	//printf("v_offset=%d @ ", v_offset);
-	v_offset = v_offset / m->sampling.v_factor;
-	//printf("block %d\n", v_offset);
+	crop_y = 0;
 
-	//printf("offset=%d\n", offset);
-
-	if(offset != d->offset) {
-		reload = 1;
+	if(v_offset < 0) {
+		crop_y = -v_offset;
 	}
+
+	crop_h = d->raw_height - crop_y;
+
+	if(crop_y > d->raw_height) {
+		crop_h = 0;
+	}
+	else if(v_offset > m->height) {
+		crop_h = 0;
+	}
+	else if(v_offset + crop_y + crop_h > m->height) {
+		crop_h = m->height - crop_y - v_offset;
+	}
+
+	printf("crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
+
+	if(crop_w == 0 || crop_h == 0) {
+		return 0;
+	}
+
+	int block_x = h_offset % m->sampling.h_factor;
+	if(block_x < 0) {
+		block_x = 0;
+	}
+	int block_y = v_offset % m->sampling.v_factor;
+	if(block_y < 0) {
+		block_y = 0;
+	}
+
+	printf("block offset (%d, %d)\n", block_x, block_y);
+
+	reload = 1;
 
 	if(reload == 1) {
 		printf("reloading dropon\n");
 
-		mj_update_dropon(d, m->cinfo.jpeg_color_space, &m->sampling, offset);
+		mj_update_dropon(d, m->cinfo.jpeg_color_space, &m->sampling, block_x, block_y, crop_x, crop_y, crop_w, crop_h);
 	}
+
+	h_offset /= m->sampling.h_factor;
+	v_offset /= m->sampling.v_factor;
+
+	if(h_offset < 0) {
+		h_offset = 0;
+	}
+
+	if(v_offset < 0) {
+		v_offset = 0;
+	}
+
+	printf("offset block (%d, %d)\n", h_offset, v_offset);
 
 	if(d->blend == MJ_BLEND_FULL && d->offset == 0) {
 		mj_compose_without_mask(m, d, h_offset, v_offset);
@@ -215,14 +272,16 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 		width_offset = h_offset * component_m->h_samp_factor;
 		height_offset = v_offset * component_m->v_samp_factor;
 
+		printf("component %d: (%d, %d) %d %d\n", c, width_in_blocks, height_in_blocks, width_offset, height_offset);
+
 		/* Die Werte des Logos in das Bild kopieren */
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks_m = (*cinfo_m->mem->access_virt_barray)((j_common_ptr)&cinfo_m, m->coef[c], height_offset + l, 1, TRUE);
 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs_m = blocks_m[0][width_offset + k];
-				alphablock = alphacomp->blocks[width_in_blocks * l + k];
 				imageblock = imagecomp->blocks[width_in_blocks * l + k];
+				alphablock = alphacomp->blocks[width_in_blocks * l + k];
 /*
 				int p, q;
 
