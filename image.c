@@ -28,8 +28,8 @@
 #include "image.h"
 #include "jpeg.h"
 
-int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len) {
-	printf("entering %s\n", __FUNCTION__);
+int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options) {
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	struct jpeg_compress_struct cinfo;
 	jvirt_barray_ptr *dst_coef_arrays;
@@ -58,22 +58,27 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len) {
 	for(c = 0; c < m->cinfo.num_components; c++) {
 		component = &m->cinfo.comp_info[c];
 
-		//printf("(%d,%d)", component->h_samp_factor, component->v_samp_factor);
+		//fprintf(stderr, "(%d,%d)", component->h_samp_factor, component->v_samp_factor);
 
 		width_in_blocks = component->width_in_blocks;
 		height_in_blocks = component->height_in_blocks;
 
+		// quantize coefficients
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs = blocks[0][k];
 
-				for(i = 0; i < DCTSIZE2; i += 4) {
+				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs[i + 0] /= component->quant_table->quantval[i + 0];
 					coefs[i + 1] /= component->quant_table->quantval[i + 1];
 					coefs[i + 2] /= component->quant_table->quantval[i + 2];
 					coefs[i + 3] /= component->quant_table->quantval[i + 3];
+					coefs[i + 4] /= component->quant_table->quantval[i + 4];
+					coefs[i + 5] /= component->quant_table->quantval[i + 5];
+					coefs[i + 6] /= component->quant_table->quantval[i + 6];
+					coefs[i + 7] /= component->quant_table->quantval[i + 7];
 				}
 			}
 		}
@@ -90,9 +95,13 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len) {
 
 	jpeg_copy_critical_parameters(&m->cinfo, &cinfo);
 
-	cinfo.optimize_coding = TRUE;
-	//if((options & MJ_OPTIMIZE) != 0)
-	//	cinfo.optimize_coding = TRUE;
+	if((options & MJ_OPTION_OPTIMIZE) != 0) {
+		cinfo.optimize_coding = TRUE;
+	}
+
+	if((options & MJ_OPTION_PROGRESSIVE) != 0) {
+		jpeg_simple_progression(&cinfo);
+	}
 
 	dst_coef_arrays = m->coef;
 
@@ -108,27 +117,27 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len) {
 	return 0;
 }
 
-int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename) {
-	printf("entering %s\n", __FUNCTION__);
+int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	FILE *fp;
 	char *rebuffer = NULL;
 	size_t relen = 0;
 
 	if(m == NULL) {
-		printf("jpegimage not given\n");
+		fprintf(stderr, "jpegimage not given\n");
 		return -1;
 	}
 
 	fp = fopen(filename, "wb");
 	if(fp == NULL) {
-		printf("can't open output file\n");
+		fprintf(stderr, "can't open output file\n");
 		return -1;
 	}
 
-	mj_write_jpeg_to_buffer(m, &rebuffer, &relen);
+	mj_write_jpeg_to_buffer(m, &rebuffer, &relen, options);
 
-	printf("restored image of len %ld\n", relen);
+	fprintf(stderr, "restored image of len %ld\n", relen);
 
 	fwrite(rebuffer, 1, relen, fp);
 
@@ -140,7 +149,7 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename) {
 }
 
 mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	mj_jpeg_t *m;
 	struct mj_jpeg_error_mgr jerr;
@@ -148,7 +157,7 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	//jpeg_component_info *component;
 
 	if(buffer == NULL || len == 0) {
-		printf("empty buffer\n");
+		fprintf(stderr, "empty buffer\n");
 		return NULL;
 	}
 
@@ -195,7 +204,7 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	m->width = m->cinfo.output_width;
 	m->height = m->cinfo.output_height;
 
-	printf("%dx%dpx, %d components: ", m->width, m->height, m->cinfo.num_components);
+	fprintf(stderr, "%dx%dpx, %d components: ", m->width, m->height, m->cinfo.num_components);
 
 	m->sampling.max_h_samp_factor = m->cinfo.max_h_samp_factor;
 	m->sampling.max_v_samp_factor = m->cinfo.max_v_samp_factor;
@@ -218,8 +227,9 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 		width_in_blocks = component->width_in_blocks;
 		height_in_blocks = component->height_in_blocks;
 
-		printf("(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, width_in_blocks, height_in_blocks);
+		fprintf(stderr, "(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, width_in_blocks, height_in_blocks);
 
+		// de-quant coefficients
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
 
@@ -240,13 +250,13 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 		}
 	}
 
-	printf("\n");
+	fprintf(stderr, "\n");
 
 	return m;
 }
 
 int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int want_colorspace, const char *filename) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	FILE *fp;
 	struct jpeg_decompress_struct cinfo;
@@ -285,7 +295,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 			cinfo.out_color_space = JCS_GRAYSCALE;
 			break;
 		default:
-			printf("error: unsupported colorspace (%d)\n", want_colorspace);
+			fprintf(stderr, "error: unsupported colorspace (%d)\n", want_colorspace);
 			jpeg_destroy_decompress(&cinfo);
 			return -1;
 	}
@@ -295,7 +305,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 	*width = cinfo.output_width;
 	*height = cinfo.output_height;
 
-	printf("decode jpeg: %dx%dpx with %d components\n", *width, *height, cinfo.output_components);
+	fprintf(stderr, "decode jpeg: %dx%dpx with %d components\n", *width, *height, cinfo.output_components);
 
 	int row_stride = cinfo.output_width * cinfo.output_components;
 
@@ -319,7 +329,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 }
 
 mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	FILE *fp;
 	struct stat s;
@@ -328,7 +338,7 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
 
 	fp = fopen(filename, "rb");
 	if(fp == NULL) {
-		printf("can't open input file\n");
+		fprintf(stderr, "can't open input file\n");
 		return NULL;
 	}
 
@@ -338,7 +348,7 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
 
 	buffer = (char *)calloc(len, sizeof(char));
 	if(buffer == NULL) {
-		printf("can't allocate memory for filedata\n");
+		fprintf(stderr, "can't allocate memory for filedata\n");
 		return NULL;
 	}
 
@@ -351,7 +361,7 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
 	m = mj_read_jpeg_from_buffer(buffer, len);
 	free(buffer);
 	if(m == NULL) {
-		printf("reading from buffer failed\n");
+		fprintf(stderr, "reading from buffer failed\n");
 		return NULL;
 	}
 
@@ -359,7 +369,7 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
 }
 
 void mj_destroy_jpeg(mj_jpeg_t *m) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL) {
 		return;
@@ -375,7 +385,7 @@ void mj_destroy_jpeg(mj_jpeg_t *m) {
 }
 
 int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	struct jpeg_compress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
@@ -419,7 +429,7 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 		cinfo.in_color_space = JCS_GRAYSCALE;
 	}
 	else {
-		printf("invalid colorspace\n");
+		fprintf(stderr, "invalid colorspace\n");
 		jpeg_destroy_compress(&cinfo);
 		return -1;
 	}
@@ -428,7 +438,7 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 
 	jpeg_set_defaults(&cinfo);
 
-	cinfo.optimize_coding = TRUE;
+	//cinfo.optimize_coding = TRUE;
 
 	if(colorspace == MJ_COLORSPACE_RGB || colorspace == MJ_COLORSPACE_YCC) {
 		cinfo.comp_info[0].h_samp_factor = s->samp_factor[0].h_samp_factor;
@@ -454,7 +464,6 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 	JSAMPROW row_pointer[1];
 
 	while(cinfo.next_scanline < cinfo.image_height) {
-		//printf("%d ", cinfo.next_scanline * row_stride);
 		row_pointer[0] = &data[cinfo.next_scanline * row_stride];
 		jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}

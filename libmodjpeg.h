@@ -44,6 +44,10 @@
 #define MJ_BLEND_NONE			0
 #define MJ_BLEND_FULL			255
 
+#define MJ_OPTION_NONE			0
+#define MJ_OPTION_OPTIMIZE		(1 << 0)
+#define MJ_OPTION_PROGRESSIVE		(1 << 1)
+
 typedef struct {
 	int h_samp_factor;
 	int v_samp_factor;
@@ -112,8 +116,8 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename);
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset);
 
-int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len);
-int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename);
+int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options);
+int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options);
 
 void mj_destroy_jpeg(mj_jpeg_t *m);
 void mj_destroy_dropon(mj_dropon_t *d);

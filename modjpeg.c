@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 					exit(1);
 				}
 
-				if(mj_write_jpeg_to_file(m, optarg) != 0) {
+				if(mj_write_jpeg_to_file(m, optarg, MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE) != 0) {
 					fprintf(stderr, "Can't write image to '%s'\n", optarg);
 					exit(1);
 				}

@@ -30,7 +30,7 @@
 #include "compose.h"
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	int reload = 0;
 	int h_offset = 0, v_offset = 0;
@@ -41,9 +41,9 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		return 0;
 	}
 
-	printf("(x_offset, y_offset) = (%d, %d)\n", x_offset, y_offset);
+	fprintf(stderr, "(x_offset, y_offset) = (%d, %d)\n", x_offset, y_offset);
 
-	//printf("blend: %d\n", d->blend);
+	//fprintf(stderr, "blend: %d\n", d->blend);
 
 	if(d->blend == MJ_BLEND_NONE) {
 		return 0;
@@ -139,7 +139,7 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		crop_h = m->height - crop_y - v_offset;
 	}
 
-	printf("crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
+	fprintf(stderr, "crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
 
 	if(crop_w == 0 || crop_h == 0) {
 		return 0;
@@ -154,12 +154,12 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		block_y = 0;
 	}
 
-	printf("block offset (%d, %d)\n", block_x, block_y);
+	fprintf(stderr, "block offset (%d, %d)\n", block_x, block_y);
 
 	reload = 1;
 
 	if(reload == 1) {
-		printf("reloading dropon\n");
+		fprintf(stderr, "reloading dropon\n");
 
 		mj_update_dropon(d, m->cinfo.jpeg_color_space, &m->sampling, block_x, block_y, crop_x, crop_y, crop_w, crop_h);
 	}
@@ -175,7 +175,7 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		v_offset = 0;
 	}
 
-	printf("offset block (%d, %d)\n", h_offset, v_offset);
+	fprintf(stderr, "offset block (%d, %d)\n", h_offset, v_offset);
 
 	if(d->blend == MJ_BLEND_FULL && d->offset == 0) {
 		mj_compose_without_mask(m, d, h_offset, v_offset);
@@ -188,7 +188,7 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 }
 
 int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	int c, k, l, i;
 	int width_offset = 0, height_offset = 0;
@@ -213,7 +213,7 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 		width_offset = h_offset * component_m->h_samp_factor;
 		height_offset = v_offset * component_m->v_samp_factor;
 
-		//printf("*component %d (%d,%d) %p\n", c, width_in_blocks, height_in_blocks, imagecomp->blocks);
+		//fprintf(stderr, "*component %d (%d,%d) %p\n", c, width_in_blocks, height_in_blocks, imagecomp->blocks);
 
 		/* Die Werte des Logos in das Bild kopieren */
 		for(l = 0; l < height_in_blocks; l++) {
@@ -223,7 +223,7 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 				coefs_m = blocks_m[0][width_offset + k];
 				imageblock = imagecomp->blocks[width_in_blocks * l + k];
 
-				//printf("*component (%d,%d) %p\n", l, k, imageblock);
+				//fprintf(stderr, "*component (%d,%d) %p\n", l, k, imageblock);
 
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] = (int)imageblock[i + 0];
@@ -245,7 +245,7 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 }
 
 int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset) {
-	printf("entering %s\n", __FUNCTION__);
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	int c, k, l, i;
 	int width_offset = 0, height_offset = 0;
@@ -272,7 +272,7 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 		width_offset = h_offset * component_m->h_samp_factor;
 		height_offset = v_offset * component_m->v_samp_factor;
 
-		printf("component %d: (%d, %d) %d %d\n", c, width_in_blocks, height_in_blocks, width_offset, height_offset);
+		fprintf(stderr, "component %d: (%d, %d) %d %d\n", c, width_in_blocks, height_in_blocks, width_offset, height_offset);
 
 		/* Die Werte des Logos in das Bild kopieren */
 		for(l = 0; l < height_in_blocks; l++) {
@@ -287,13 +287,13 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 
 				for(p = 0; p < DCTSIZE; p++) {
 					for(q = 0; q < DCTSIZE; q++) {
-						printf("%.2f ", imageblock[DCTSIZE * p + q]);
+						fprintf(stderr, "%.2f ", imageblock[DCTSIZE * p + q]);
 					}
-					printf("\n");
+					fprintf(stderr, "\n");
 				}
 */
 				// x = x0 - x1
-				//printf("component %d (%d,%d): x0 - x1 | ", c, l, k);
+				//fprintf(stderr, "component %d (%d,%d): x0 - x1 | ", c, l, k);
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					X[i + 0] = imageblock[i + 0] - coefs_m[i + 0];
 					X[i + 1] = imageblock[i + 1] - coefs_m[i + 1];
@@ -308,7 +308,7 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 				memset(Y, 0, DCTSIZE2 * sizeof(float));
 
 				// y' = w * x (Faltung)
-				//printf("w * x | ");
+				//fprintf(stderr, "w * x | ");
 				for(i = 0; i < DCTSIZE; i++) {
 					mj_convolve(X, Y, alphablock[(i * DCTSIZE) + 0], i, 0);
 					mj_convolve(X, Y, alphablock[(i * DCTSIZE) + 1], i, 1);
@@ -321,7 +321,7 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 				}
 
 				// y = x1 + y'
-				//printf("x1 + y'\n");
+				//fprintf(stderr, "x1 + y'\n");
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] += (int)Y[i + 0];
 					coefs_m[i + 1] += (int)Y[i + 1];
