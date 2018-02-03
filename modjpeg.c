@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2017 Ingo Oppermann
+ * Copyright (c) 2006+ Ingo Oppermann
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,31 +30,33 @@
 #include "libmodjpeg.h"
 
 static struct option longopts[] = {
-	{ "input",	required_argument,	NULL,		'i' },
-	{ "output",	required_argument,	NULL,		'o' },
-	{ "dropon",	required_argument,	NULL,		'd' },
-	{ "position",	required_argument,	NULL,		'p' },
-	{ "offset",	required_argument,	NULL,		'm' },
-	{ "luminance",	required_argument,	NULL,		'y' },
-	{ "tintblue",	required_argument,	NULL,		'b' },
-	{ "tintred",	required_argument,	NULL,		'r' },
-	{ "pixelate",	no_argument,		NULL,		'x' },
-	{ "grayscale",	no_argument,		NULL,		'g' },
-	{ "help",	no_argument,		NULL,		'h' },
-	{ NULL,		0,			NULL,		0 }
+	{ "input",       required_argument, NULL, 'i' },
+	{ "output",      required_argument, NULL, 'o' },
+	{ "dropon",      required_argument, NULL, 'd' },
+	{ "position",    required_argument, NULL, 'p' },
+	{ "offset",      required_argument, NULL, 'm' },
+	{ "luminance",   required_argument, NULL, 'y' },
+	{ "tintblue",    required_argument, NULL, 'b' },
+	{ "tintred",     required_argument, NULL, 'r' },
+	{ "pixelate",    no_argument,       NULL, 'x' },
+	{ "grayscale",   no_argument,       NULL, 'g' },
+	{ "progressive", no_argument,       NULL, 'P' },
+	{ "optimize",    no_argument,       NULL, 'O' },
+	{ "help",        no_argument,       NULL, 'h' },
+	{ NULL,          0,                 NULL,  0  }
 };
 
 void help(void);
 
 int main(int argc, char *argv[]) {
-	int c, opterr, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT, offset_x = 0, offset_y = 0;
+	int c, opterr, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT, offset_x = 0, offset_y = 0, options = 0;
 	char *str;
 	mj_jpeg_t *m = NULL;
 	mj_dropon_t *d = NULL;
 
 	opterr = 1;
 
-	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgh", longopts, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgPOh", longopts, NULL)) != -1) {
 		switch(c) {
 			case 'i':
 				if(m != NULL) {
@@ -75,7 +77,7 @@ int main(int argc, char *argv[]) {
 					exit(1);
 				}
 
-				if(mj_write_jpeg_to_file(m, optarg, MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE) != 0) {
+				if(mj_write_jpeg_to_file(m, optarg, options) != 0) {
 					fprintf(stderr, "Can't write image to '%s'\n", optarg);
 					exit(1);
 				}
@@ -187,6 +189,12 @@ int main(int argc, char *argv[]) {
 				
 				mj_effect_grayscale(m);
 				break;
+			case 'O':
+				options |= MJ_OPTION_OPTIMIZE;
+				break;
+			case 'P':
+				options |= MJ_OPTION_PROGRESSIVE;
+				break;
 			case 'h':
 				help();
 				exit(0);
@@ -236,8 +244,8 @@ void help(void) {
 	fprintf(stderr, "\t\tThe position of the dropon. t = top, b = bottom, l = left, r = right, c = center. Default: center\n");
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--offser, -m [horizontal]x[vertical]\n");
-	fprintf(stderr, "\t\tThe offset to the given position in pixels. Default: 0x0\n");
+	fprintf(stderr, "\t--offset, -m [horizontal],[vertical]\n");
+	fprintf(stderr, "\t\tThe offset to the given position in pixels. Default: 0,0\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "\t--luminance, -y value\n");
