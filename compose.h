@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2017 Ingo Oppermann
+ * Copyright (c) 2006+ Ingo Oppermann
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,9 @@
 #ifndef _LIBMODJPEG_COMPOSE_H_
 #define _LIBMODJPEG_COMPOSE_H_
 
-int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset);
-int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset);
+#include "libmodjpeg.h"
+
+int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset);
+int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset);
 
 #endif

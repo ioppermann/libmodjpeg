@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2017 Ingo Oppermann
+ * Copyright (c) 2006+ Ingo Oppermann
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,8 @@
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
-	int reload = 0;
 	int h_offset = 0, v_offset = 0;
 	int crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
-	jpeg_component_info *component_m = NULL;
 
 	if(m == NULL || d == NULL) {
 		return 0;
@@ -47,30 +45,6 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 
 	if(d->blend == MJ_BLEND_NONE) {
 		return 0;
-	}
-
-	if(d->image != NULL) {
-		// is the colorspace the same?
-		if(m->cinfo.jpeg_color_space != d->image_colorspace) {
-			reload = 1;
-		}
-
-		// is the sampling the same?
-		int c = 0;
-		for(c = 0; c < m->cinfo.num_components; c++) {
-			component_m = &m->cinfo.comp_info[c];
-
-			if(component_m->h_samp_factor != d->image[c].h_samp_factor) {
-				reload = 1;
-			}
-
-			if(component_m->v_samp_factor != d->image[c].v_samp_factor) {
-				reload = 1;
-			}
-		}
-	}
-	else {
-		reload = 1;
 	}
 
 	// calculate crop of dropon
@@ -155,14 +129,12 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	}
 
 	fprintf(stderr, "block offset (%d, %d)\n", block_x, block_y);
+	
+	fprintf(stderr, "compiling dropon\n");
 
-	reload = 1;
+	mj_compileddropon_t cd;
 
-	if(reload == 1) {
-		fprintf(stderr, "reloading dropon\n");
-
-		mj_update_dropon(d, m->cinfo.jpeg_color_space, &m->sampling, block_x, block_y, crop_x, crop_y, crop_w, crop_h);
-	}
+	mj_compile_dropon(&cd, d, m->cinfo.jpeg_color_space, &m->sampling, block_x, block_y, crop_x, crop_y, crop_w, crop_h);
 
 	h_offset /= m->sampling.h_factor;
 	v_offset /= m->sampling.v_factor;
@@ -177,17 +149,14 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 
 	fprintf(stderr, "offset block (%d, %d)\n", h_offset, v_offset);
 
-	if(d->blend == MJ_BLEND_FULL && d->offset == 0) {
-		mj_compose_without_mask(m, d, h_offset, v_offset);
-	}
-	else {
-		mj_compose_with_mask(m, d, h_offset, v_offset);
-	}
+	mj_compose_with_mask(m, &cd, h_offset, v_offset);
+
+	mj_free_compileddropon(&cd);
 
 	return 0;
 }
 
-int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset) {
+int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	int c, k, l, i;
@@ -203,9 +172,9 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 
 	cinfo_m = &m->cinfo;
 
-	for(c = 0; c < d->image_ncomponents; c++) {
+	for(c = 0; c < cd->image_ncomponents; c++) {
 		component_m = &cinfo_m->comp_info[c];
-		imagecomp = &d->image[c];
+		imagecomp = &cd->image[c];
 
 		width_in_blocks = imagecomp->width_in_blocks;
 		height_in_blocks = imagecomp->height_in_blocks;
@@ -244,7 +213,7 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_of
 	return 0;
 }
 
-int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offset) {
+int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	int c, k, l, i;
@@ -261,10 +230,10 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_dropon_t *d, int h_offset, int v_offse
 
 	cinfo_m = &m->cinfo;
 
-	for(c = 0; c < d->image_ncomponents; c++) {
+	for(c = 0; c < cd->image_ncomponents; c++) {
 		component_m = &cinfo_m->comp_info[c];
-		imagecomp = &d->image[c];
-		alphacomp = &d->alpha[c];
+		imagecomp = &cd->image[c];
+		alphacomp = &cd->alpha[c];
 
 		width_in_blocks = imagecomp->width_in_blocks;
 		height_in_blocks = imagecomp->height_in_blocks;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2017 Ingo Oppermann
+ * Copyright (c) 2006+ Ingo Oppermann
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,14 @@
 #ifndef _LIBMODJPEG_DROPON_H_
 #define _LIBMODJPEG_DROPON_H_
 
-int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t len);
-int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t len);
+#include "libmodjpeg.h"
 
-int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *s, int block_x, int block_y, int crop_x, int crop_y, int crop_w, int crop_h);
+int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len);
+int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len);
 
-void mj_destroy_component(mj_component_t *c);
+int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *s, int block_x, int block_y, int crop_x, int crop_y, int crop_w, int crop_h);
+
+void mj_free_compileddropon(mj_compileddropon_t *cd);
+void mj_free_component(mj_component_t *c);
 
 #endif

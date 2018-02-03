@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2017 Ingo Oppermann
+ * Copyright (c) 2006+ Ingo Oppermann
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -95,18 +95,16 @@ typedef struct {
 	int raw_colorspace;
 
 	int blend;
-	unsigned short offset;
+} mj_dropon_t;
 
+typedef struct {
 	int image_ncomponents;
 	int image_colorspace;
-
 	mj_component_t *image;
 
 	int alpha_ncomponents;
-	unsigned short alpha_offset;
-
 	mj_component_t *alpha;
-} mj_dropon_t;
+} mj_compileddropon_t;
 
 mj_dropon_t *mj_read_dropon_from_buffer(const char *rawdata, unsigned int colorspace, size_t width, size_t height, short blend);
 mj_dropon_t *mj_read_dropon_from_jpeg(const char *filename, const char *mask, short blend);

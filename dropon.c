@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2017 Ingo Oppermann
+ * Copyright (c) 2006+ Ingo Oppermann
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -102,32 +102,14 @@ mj_dropon_t *mj_read_dropon_from_jpeg(const char *image_file, const char *alpha_
 	return d;
 }
 
-int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sampling, int block_x, int block_y, int crop_x, int crop_y, int crop_w, int crop_h) {
+int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sampling, int block_x, int block_y, int crop_x, int crop_y, int crop_w, int crop_h) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
-	if(d == NULL) {
+	if(cd == NULL || d == NULL) {
 		return -1;
 	}
 
 	int i, j;
-
-	if(d->image != NULL) {
-		for(i = 0; i < d->image_ncomponents; i++) {
-			mj_destroy_component(&d->image[i]);
-		}
-
-		free(d->image);
-		d->image = NULL;
-	}	
-
-	if(d->alpha != NULL) {
-		for(i = 0; i < d->alpha_ncomponents; i++) {
-			mj_destroy_component(&d->alpha[i]);
-		}
-
-		free(d->alpha);
-		d->alpha = NULL;
-	}
 
 	char *buffer = NULL;
 	size_t len = 0;
@@ -171,7 +153,7 @@ int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sa
 	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, d->raw_colorspace, colorspace, sampling, width, height);
 	fprintf(stderr, "encoded len: %ld\n", len);
 
-	mj_read_droponimage_from_buffer(d, buffer, len);
+	mj_read_droponimage_from_buffer(cd, buffer, len);
 	free(buffer);
 
 	for(i = crop_y; i < (crop_y + crop_h); i++) {
@@ -188,20 +170,18 @@ int mj_update_dropon(mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sa
 	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, MJ_COLORSPACE_YCC, JCS_YCbCr, sampling, width, height);
 	fprintf(stderr, "encoded len: %ld\n", len);
 
-	mj_read_droponalpha_from_buffer(d, buffer, len);
+	mj_read_droponalpha_from_buffer(cd, buffer, len);
+
 	free(buffer);
-
 	free(data);
-
-	d->offset = -1;
 
 	return 0;
 }
 
-int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t len) {
+int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
-	if(d == NULL) {
+	if(cd == NULL) {
 		return 1;
 	}
 
@@ -219,13 +199,13 @@ int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 
 	fprintf(stderr, "dropon image: %dx%dpx, %d components: ", m->cinfo.output_width, m->cinfo.output_height, m->cinfo.num_components);
 
-	d->image_ncomponents = m->cinfo.num_components;
-	d->image_colorspace = m->cinfo.jpeg_color_space;
-	d->image = (mj_component_t *)calloc(d->image_ncomponents, sizeof(mj_component_t));
+	cd->image_ncomponents = m->cinfo.num_components;
+	cd->image_colorspace = m->cinfo.jpeg_color_space;
+	cd->image = (mj_component_t *)calloc(cd->image_ncomponents, sizeof(mj_component_t));
 
 	for(c = 0; c < m->cinfo.num_components; c++) {
 		component = &m->cinfo.comp_info[c];
-		comp = &d->image[c];
+		comp = &cd->image[c];
 
 		fprintf(stderr, "(%d,%d) ", component->h_samp_factor, component->v_samp_factor);
 
@@ -282,10 +262,10 @@ int mj_read_droponimage_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 	return 0;
 }
 
-int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t len) {
+int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
-	if(d == NULL) {
+	if(cd == NULL) {
 		return 1;
 	}
 
@@ -303,12 +283,12 @@ int mj_read_droponalpha_from_buffer(mj_dropon_t *d, const char *buffer, size_t l
 
 	fprintf(stderr, "dropon alpha: %dx%dpx, %d components: ", m->cinfo.output_width, m->cinfo.output_height, m->cinfo.num_components);
 
-	d->alpha_ncomponents = m->cinfo.num_components;
-	d->alpha = (mj_component_t *)calloc(d->alpha_ncomponents, sizeof(mj_component_t));
+	cd->alpha_ncomponents = m->cinfo.num_components;
+	cd->alpha = (mj_component_t *)calloc(cd->alpha_ncomponents, sizeof(mj_component_t));
 
 	for(c = 0; c < m->cinfo.num_components; c++) {
 		component = &m->cinfo.comp_info[c];
-		comp = &d->alpha[c];
+		comp = &cd->alpha[c];
 
 		fprintf(stderr, "(%d,%d) ", component->h_samp_factor, component->v_samp_factor);
 
@@ -528,28 +508,40 @@ void mj_destroy_dropon(mj_dropon_t *d) {
 		d->raw_alpha = NULL;
 	}
 
-	int i;
+	free(d);
 
-	if(d->image != NULL) {
-		for(i = 0; i < d->image_ncomponents; i++) {
-			mj_destroy_component(&d->image[i]);
-		}
-		free(d->image);
-		d->image = NULL;
+	return;
+}
+
+void mj_free_compileddropon(mj_compileddropon_t *cd) {
+	fprintf(stderr, "entering %s\n", __FUNCTION__);
+
+	if(cd == NULL) {
+		return;
 	}
 
-	if(d->alpha != NULL) {
-		for(i = 0; i < d->alpha_ncomponents; i++) {
-			mj_destroy_component(&d->alpha[i]);
+	int i;
+
+	if(cd->image != NULL) {
+		for(i = 0; i < cd->image_ncomponents; i++) {
+			mj_free_component(&cd->image[i]);
 		}
-		free(d->alpha);
-		d->alpha = NULL;
+		free(cd->image);
+		cd->image = NULL;
+	}
+
+	if(cd->alpha != NULL) {
+		for(i = 0; i < cd->alpha_ncomponents; i++) {
+			mj_free_component(&cd->alpha[i]);
+		}
+		free(cd->alpha);
+		cd->alpha = NULL;
 	}
 
 	return;
 }
 
-void mj_destroy_component(mj_component_t *c) {
+void mj_free_component(mj_component_t *c) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(c == NULL) {
