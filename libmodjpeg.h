@@ -87,12 +87,12 @@ typedef struct {
 } mj_jpeg_t;
 
 typedef struct {
-	char *raw_image;
-	char *raw_alpha;
+	char *image;
+	char *alpha;
 
-	size_t raw_width;
-	size_t raw_height;
-	int raw_colorspace;
+	size_t width;
+	size_t height;
+	int colorspace;
 
 	int blend;
 } mj_dropon_t;

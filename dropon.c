@@ -141,7 +141,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	for(i = crop_y; i < (crop_y + crop_h); i++) {
 		p = &data[(i - crop_y + block_y) * width * 3 + (block_x * 3)];
-		q = &d->raw_image[i * d->raw_width * 3 + (crop_x * 3)];
+		q = &d->image[i * d->width * 3 + (crop_x * 3)];
 
 		for(j = crop_x; j < (crop_x + crop_w); j++) {
 			*p++ = *q++;
@@ -150,7 +150,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		}
 	}
 
-	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, d->raw_colorspace, colorspace, sampling, width, height);
+	mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, d->colorspace, colorspace, sampling, width, height);
 	fprintf(stderr, "encoded len: %ld\n", len);
 
 	mj_read_droponimage_from_buffer(cd, buffer, len);
@@ -158,7 +158,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	for(i = crop_y; i < (crop_y + crop_h); i++) {
 		p = &data[(i - crop_y + block_y) * width * 3 + (block_x * 3)];
-		q = &d->raw_alpha[i * d->raw_width * 3 + (crop_x * 3)];
+		q = &d->alpha[i * d->width * 3 + (crop_x * 3)];
 
 		for(j = crop_x; j < (crop_x + crop_w); j++) {
 			*p++ = *q++;
@@ -396,15 +396,15 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 		return NULL;
 	}
 
-	d->raw_width = width;
-	d->raw_height = height;
+	d->width = width;
+	d->height = height;
 	d->blend = blend;
 
 	// image
 	size_t nsamples = 3 * width * height;
 
-	d->raw_image = (char *)calloc(nsamples, sizeof(char));
-	if(d->raw_image == NULL) {
+	d->image = (char *)calloc(nsamples, sizeof(char));
+	if(d->image == NULL) {
 		free(d);
 		fprintf(stderr, "can't allocate buffer");
 		return NULL;
@@ -412,17 +412,17 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 
 	nsamples = 3 * width * height;
 
-	d->raw_alpha = (char *)calloc(nsamples, sizeof(char));
-	if(d->raw_alpha == NULL) {
-		free(d->raw_image);
+	d->alpha = (char *)calloc(nsamples, sizeof(char));
+	if(d->alpha == NULL) {
+		free(d->image);
 		free(d);
 		fprintf(stderr, "can't allocate buffer");
 		return NULL;
 	}
 
 	const char *p = raw_data;
-	char *pimage = d->raw_image;
-	char *palpha = d->raw_alpha;
+	char *pimage = d->image;
+	char *palpha = d->alpha;
 
 	size_t v = 0;
 
@@ -438,10 +438,10 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 		}
 
 		if(colorspace == MJ_COLORSPACE_RGBA) {
-			d->raw_colorspace = MJ_COLORSPACE_RGB;
+			d->colorspace = MJ_COLORSPACE_RGB;
 		}
 		else {
-			d->raw_colorspace = MJ_COLORSPACE_YCC;
+			d->colorspace = MJ_COLORSPACE_YCC;
 		}
 
 		d->blend = MJ_BLEND_NONUNIFORM;
@@ -457,7 +457,7 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 			*palpha++ = (char)d->blend;
 		}
 
-		d->raw_colorspace = colorspace;
+		d->colorspace = colorspace;
 	}
 	else if(colorspace == MJ_COLORSPACE_GRAYSCALEA) {
 		for(v = 0; v < (width * height); v++) {
@@ -470,7 +470,7 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 			*palpha++ = *p++;
 		}
 
-		d->raw_colorspace = MJ_COLORSPACE_GRAYSCALE;
+		d->colorspace = MJ_COLORSPACE_GRAYSCALE;
 
 		d->blend = MJ_BLEND_NONUNIFORM;
 	}
@@ -485,7 +485,7 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 			*palpha++ = (char)d->blend;
 		}
 
-		d->raw_colorspace = MJ_COLORSPACE_GRAYSCALE;
+		d->colorspace = MJ_COLORSPACE_GRAYSCALE;
 	}
 
 	return d;
@@ -498,14 +498,14 @@ void mj_destroy_dropon(mj_dropon_t *d) {
 		return;
 	}
 
-	if(d->raw_image != NULL) {
-		free(d->raw_image);
-		d->raw_image = NULL;
+	if(d->image != NULL) {
+		free(d->image);
+		d->image = NULL;
 	}
 
-	if(d->raw_alpha != NULL) {
-		free(d->raw_alpha);
-		d->raw_alpha = NULL;
+	if(d->alpha != NULL) {
+		free(d->alpha);
+		d->alpha = NULL;
 	}
 
 	free(d);

@@ -55,10 +55,10 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		h_offset = 0;
 	}
 	else if((align & MJ_ALIGN_RIGHT) != 0) {
-		h_offset = m->width - d->raw_width;
+		h_offset = m->width - d->width;
 	}
 	else {
-		h_offset = m->width / 2 - d->raw_width / 2;
+		h_offset = m->width / 2 - d->width / 2;
 	}
 
 	h_offset += x_offset;
@@ -69,9 +69,9 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		crop_x = -h_offset;
 	}
 
-	crop_w = d->raw_width - crop_x;
+	crop_w = d->width - crop_x;
 
-	if(crop_x > d->raw_width) {				// dropon shifted more off the left border than its width
+	if(crop_x > d->width) {				// dropon shifted more off the left border than its width
 		crop_w = 0;
 	}
 	else if(h_offset > m->width) {				// dropon shifted off the right border
@@ -87,10 +87,10 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		v_offset = 0;
 	}
 	else if((align & MJ_ALIGN_BOTTOM) != 0) {
-		v_offset = m->height - d->raw_height;
+		v_offset = m->height - d->height;
 	}
 	else {
-		v_offset = m->height / 2 - d->raw_height / 2;
+		v_offset = m->height / 2 - d->height / 2;
 	}
 
 	v_offset += y_offset;
@@ -101,9 +101,9 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 		crop_y = -v_offset;
 	}
 
-	crop_h = d->raw_height - crop_y;
+	crop_h = d->height - crop_y;
 
-	if(crop_y > d->raw_height) {
+	if(crop_y > d->height) {
 		crop_h = 0;
 	}
 	else if(v_offset > m->height) {
