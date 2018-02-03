@@ -46,7 +46,7 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 			free(dest.buf);
 		}
 
-		return -1;
+		return MJ_ERR;
 	}
 
 	int c, k, l, i;
@@ -114,7 +114,7 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 	*buffer = (char *)dest.buf;
 	*len = dest.size;
 
-	return 0;
+	return MJ_OK;
 }
 
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
@@ -126,13 +126,13 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 
 	if(m == NULL) {
 		fprintf(stderr, "jpegimage not given\n");
-		return -1;
+		return MJ_ERR;
 	}
 
 	fp = fopen(filename, "wb");
 	if(fp == NULL) {
 		fprintf(stderr, "can't open output file\n");
-		return -1;
+		return MJ_ERR;
 	}
 
 	mj_write_jpeg_to_buffer(m, &rebuffer, &relen, options);
@@ -269,7 +269,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 		(*cinfo.err->format_message)((j_common_ptr)&cinfo, jpegerrorbuffer);
 		jpeg_destroy_decompress(&cinfo);
 		fclose(fp);
-		return -1;
+		return MJ_ERR;
 	}
 
 	jpeg_create_decompress(&cinfo);
@@ -277,7 +277,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 	fp = fopen(filename, "rb");
 	if(fp == NULL) {
 		jpeg_destroy_decompress(&cinfo);
-		return -1;
+		return MJ_ERR;
 	}
 
 	jpeg_stdio_src(&cinfo, fp);
@@ -325,7 +325,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 
 	*buffer = (char *)buf;
 
-	return 0;
+	return MJ_OK;
 }
 
 mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
@@ -401,7 +401,7 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 			free(dest.buf);
 		}
 
-		return -1;
+		return MJ_ERR;
 	}
 
 	jpeg_create_compress(&cinfo);
@@ -431,7 +431,7 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 	else {
 		fprintf(stderr, "invalid colorspace\n");
 		jpeg_destroy_compress(&cinfo);
-		return -1;
+		return MJ_ERR;
 	}
 
 	cinfo.jpeg_color_space = jpeg_colorspace;
@@ -474,5 +474,5 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 	*buffer = (char *)dest.buf;
 	*len = dest.size;
 
-	return 0;
+	return MJ_OK;
 }

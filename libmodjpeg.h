@@ -27,26 +27,29 @@
 
 #include "jpeglib.h"
 
-#define MJ_COLORSPACE_RGBA		1
-#define MJ_COLORSPACE_RGB		2
-#define MJ_COLORSPACE_GRAYSCALE 	3
-#define MJ_COLORSPACE_GRAYSCALEA	4
-#define MJ_COLORSPACE_YCC		5
-#define MJ_COLORSPACE_YCCA		6
+#define MJ_COLORSPACE_RGBA              1
+#define MJ_COLORSPACE_RGB               2
+#define MJ_COLORSPACE_GRAYSCALE         3
+#define MJ_COLORSPACE_GRAYSCALEA        4
+#define MJ_COLORSPACE_YCC               5
+#define MJ_COLORSPACE_YCCA              6
 
-#define MJ_ALIGN_LEFT			(1 << 0)
-#define MJ_ALIGN_RIGHT			(1 << 1)
-#define MJ_ALIGN_TOP			(1 << 2)
-#define MJ_ALIGN_BOTTOM			(1 << 3)
-#define MJ_ALIGN_CENTER			(1 << 4)
+#define MJ_ALIGN_LEFT                   (1 << 0)
+#define MJ_ALIGN_RIGHT                  (1 << 1)
+#define MJ_ALIGN_TOP                    (1 << 2)
+#define MJ_ALIGN_BOTTOM                 (1 << 3)
+#define MJ_ALIGN_CENTER                 (1 << 4)
 
-#define MJ_BLEND_NONUNIFORM		-1
-#define MJ_BLEND_NONE			0
-#define MJ_BLEND_FULL			255
+#define MJ_BLEND_NONUNIFORM             -1
+#define MJ_BLEND_NONE                   0
+#define MJ_BLEND_FULL                   255
 
-#define MJ_OPTION_NONE			0
-#define MJ_OPTION_OPTIMIZE		(1 << 0)
-#define MJ_OPTION_PROGRESSIVE		(1 << 1)
+#define MJ_OPTION_NONE                  0
+#define MJ_OPTION_OPTIMIZE              (1 << 0)
+#define MJ_OPTION_PROGRESSIVE           (1 << 1)
+
+#define MJ_OK                           0
+#define MJ_ERR                          1
 
 typedef struct {
 	int h_samp_factor;

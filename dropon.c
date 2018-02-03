@@ -106,7 +106,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(cd == NULL || d == NULL) {
-		return -1;
+		return MJ_ERR;
 	}
 
 	int i, j;
@@ -134,7 +134,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	char *data = (char *)calloc(3 * width * height, sizeof(char));
 	if(data == NULL) {
-		return -1;
+		return MJ_ERR;
 	}
 
 	char *p, *q;
@@ -175,19 +175,19 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	free(buffer);
 	free(data);
 
-	return 0;
+	return MJ_OK;
 }
 
 int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(cd == NULL) {
-		return 1;
+		return MJ_ERR;
 	}
 
 	mj_jpeg_t *m = mj_read_jpeg_from_buffer(buffer, len);
 	if(m == NULL) {
-		return 1;
+		return MJ_ERR;
 	}
 
 	int c, k, l, i;
@@ -259,19 +259,19 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	mj_destroy_jpeg(m);
 
-	return 0;
+	return MJ_OK;
 }
 
 int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(cd == NULL) {
-		return 1;
+		return MJ_ERR;
 	}
 
 	mj_jpeg_t *m = mj_read_jpeg_from_buffer(buffer, len);
 	if(m == NULL) {
-		return 1;
+		return MJ_ERR;
 	}
 
 	int c, k, l, i;
@@ -358,7 +358,7 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	mj_destroy_jpeg(m);
 
-	return 0;
+	return MJ_OK;
 }
 
 mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int colorspace, size_t width, size_t height, short blend) {

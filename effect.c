@@ -31,11 +31,11 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	/* set all color components to 0 */
@@ -61,7 +61,7 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 		}
 	}
 
-	return 0;
+	return MJ_OK;
 }
 
 int mj_effect_pixelate(mj_jpeg_t *m) {
@@ -71,7 +71,7 @@ int mj_effect_pixelate(mj_jpeg_t *m) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	/* Set all the AC coefficients to 0 */
@@ -106,7 +106,7 @@ int mj_effect_pixelate(mj_jpeg_t *m) {
 		}
 	}
 
-	return 0;
+	return MJ_OK;
 }
 
 int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
@@ -116,15 +116,15 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	if(cb_value == 0 && cr_value == 0) {
-		return 0;
+		return MJ_OK;
 	}
 
 	if(cb_value != 0) {
@@ -167,7 +167,7 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 		}
 	}
 
-	return 0;
+	return MJ_OK;
 }
 
 int mj_effect_luminance(mj_jpeg_t *m, int value) {
@@ -177,11 +177,11 @@ int mj_effect_luminance(mj_jpeg_t *m, int value) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	component = &m->cinfo.comp_info[0];
@@ -202,5 +202,5 @@ int mj_effect_luminance(mj_jpeg_t *m, int value) {
 		}
 	}
 
-	return 0;
+	return MJ_OK;
 }

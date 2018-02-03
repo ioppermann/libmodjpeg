@@ -36,7 +36,7 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	int crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
 
 	if(m == NULL || d == NULL) {
-		return 0;
+		return MJ_ERR;
 	}
 
 	fprintf(stderr, "(x_offset, y_offset) = (%d, %d)\n", x_offset, y_offset);
@@ -44,7 +44,7 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	//fprintf(stderr, "blend: %d\n", d->blend);
 
 	if(d->blend == MJ_BLEND_NONE) {
-		return 0;
+		return MJ_OK;
 	}
 
 	// calculate crop of dropon
@@ -116,7 +116,7 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	fprintf(stderr, "crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
 
 	if(crop_w == 0 || crop_h == 0) {
-		return 0;
+		return MJ_OK;
 	}
 
 	int block_x = h_offset % m->sampling.h_factor;
@@ -153,11 +153,15 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 
 	mj_free_compileddropon(&cd);
 
-	return 0;
+	return MJ_OK;
 }
 
-int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
+void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
+
+	if(m == NULL || cd == NULL) {
+		return;
+	}
 
 	int c, k, l, i;
 	int width_offset = 0, height_offset = 0;
@@ -210,11 +214,15 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset,
 		break;
 	}
 
-	return 0;
+	return;
 }
 
-int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
+void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
+
+	if(m == NULL || cd == NULL) {
+		return;
+	}
 
 	int c, k, l, i;
 	int width_offset = 0, height_offset = 0;
@@ -305,6 +313,6 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, in
 		}
 	}
 
-	return 0;
+	return;
 }
 
