@@ -3,7 +3,8 @@
 # 
 # Adjust the following line
 #------------------------------------------------------------------------------
-JPEGDIR = /opt/local
+JPEGDIR = /usr/local
+INSTALLPATH = /usr/local
 
 # Don't change anything below this line
 
@@ -15,13 +16,9 @@ LIBDIR = $(LIBRARYJPEG)
 
 LIBS = -lm -ljpeg
 
-#COMPILERFLAGS_SHARED = -Wall -O2 -fPIC -c
-#COMPILERFLAGS_STATIC = -Wall -O2 -c
-COMPILERFLAGS = -O2 -c -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror
+COMPILERFLAGS = -fPIC -O2 -c -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror
 
-#LINKERFLAGS_SHARED = -shared
-#LINKERFLAGS_STATIC =
-LINKERFLAGS = 
+LINKERFLAGS =
 
 CC = gcc
 CFLAGS = $(COMPILERFLAGS) $(INCLUDE)
@@ -37,13 +34,14 @@ OBJECTS = convolve.o \
 APPS = modjpeg
 
 libmodjpeg: $(OBJECTS)
-#	$(CC) $(LFLAGS) $(OBJECTS) -Wl,-soname -Wl,libmodjpeg.so -o libmodjpeg.so
+	$(CC) $(LFLAGS) $(OBJECTS) -Wl,-dylib -Wl,-install_name,/usr/local/lib/libmodjpeg.so -Wl,-compatibility_version,1.0.0 -Wl,-current_version,1.0.0 -o libmodjpeg.so
 	ar rv libmodjpeg.a $(OBJECTS)
 
 apps: $(APPS)
 
-#install: libmodjpeg.so
-#	cp libmodjpeg.so $(INSTALLPATH)
+install: libmodjpeg.so libmodjpeg.h
+	cp libmodjpeg.so $(INSTALLPATH)/lib
+	cp libmodjpeg.h $(INSTALLPATH)/include
 
 convolve.o: convolve.c libmodjpeg.h convolve.h
 	$(CC) $(CFLAGS) convolve.c
@@ -64,7 +62,7 @@ effect.o: effect.c libmodjpeg.h jpeg.h jpeg.c effect.h
 	$(CC) $(CFLAGS) effect.c
 
 modjpeg: modjpeg.c libmodjpeg.a
-	$(CC) -Wall -O2 -o modjpeg modjpeg.c -L. $(LFLAGS) -lmodjpeg $(INCLUDE)
+	$(CC) -Wall -O2 -o modjpeg modjpeg.c libmodjpeg.a -L. $(LFLAGS) $(INCLUDE)
 
 all: libmodjpeg modjpeg
 
