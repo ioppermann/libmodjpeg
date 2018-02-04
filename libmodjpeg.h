@@ -93,8 +93,8 @@ typedef struct {
 	char *image;
 	char *alpha;
 
-	size_t width;
-	size_t height;
+	int width;
+	int height;
 	int colorspace;
 
 	int blend;

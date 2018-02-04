@@ -108,7 +108,10 @@ int main(int argc, char *argv[]) {
 					exit(1);
 				}
 
-				mj_compose(m, d, position, offset_x, offset_y);
+				if(mj_compose(m, d, position, offset_x, offset_y) != MJ_OK) {
+					fprintf(stderr, "Failed to apply the dropon onto the image\n");
+					exit(1);
+				}
 
 				break;
 			case 'p':
@@ -269,6 +272,14 @@ void help(void) {
 
 	fprintf(stderr, "\t--grayscale, -g\n");
 	fprintf(stderr, "\t\tReduce the image to grayscale.\n");
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "\t--optimize, -O\n");
+	fprintf(stderr, "\t\tOptimize the Huffman tables on storing the output image.\n");
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "\t--progressive, -P\n");
+	fprintf(stderr, "\t\tStore the output image in progressive mode.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Examples:\n");

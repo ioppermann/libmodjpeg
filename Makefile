@@ -17,7 +17,7 @@ LIBS = -lm -ljpeg
 
 #COMPILERFLAGS_SHARED = -Wall -O2 -fPIC -c
 #COMPILERFLAGS_STATIC = -Wall -O2 -c
-COMPILERFLAGS = -Wall -O2 -c
+COMPILERFLAGS = -O2 -c -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror
 
 #LINKERFLAGS_SHARED = -shared
 #LINKERFLAGS_STATIC =

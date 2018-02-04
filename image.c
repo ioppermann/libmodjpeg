@@ -105,7 +105,7 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 
 	dst_coef_arrays = m->coef;
 
-	/* Die neuen Koeffizienten speichern */
+	// save the new coefficients
 	jpeg_write_coefficients(&cinfo, dst_coef_arrays);
 
 	jpeg_finish_compress(&cinfo);
@@ -229,7 +229,7 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 
 		fprintf(stderr, "(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, width_in_blocks, height_in_blocks);
 
-		// de-quant coefficients
+		// de-quantize coefficients
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
 
@@ -297,7 +297,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 		default:
 			fprintf(stderr, "error: unsupported colorspace (%d)\n", want_colorspace);
 			jpeg_destroy_decompress(&cinfo);
-			return -1;
+			return MJ_ERR;
 	}
 
 	jpeg_start_decompress(&cinfo);
@@ -315,7 +315,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 
 	JSAMPROW row_pointer[1];
 
-	while (cinfo.output_scanline < cinfo.output_height) {
+	while(cinfo.output_scanline < cinfo.output_height) {
 		row_pointer[0] = &buf[cinfo.output_scanline * row_stride];
 		jpeg_read_scanlines(&cinfo, row_pointer, 1);
 	}
@@ -360,6 +360,7 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
 
 	m = mj_read_jpeg_from_buffer(buffer, len);
 	free(buffer);
+
 	if(m == NULL) {
 		fprintf(stderr, "reading from buffer failed\n");
 		return NULL;

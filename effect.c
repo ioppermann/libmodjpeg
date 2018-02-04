@@ -25,7 +25,8 @@
 #include "jpeg.h"
 
 int mj_effect_grayscale(mj_jpeg_t *m) {
-	int i, c, k, l;
+	int i, c;
+	JDIMENSION k, l;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
@@ -65,7 +66,8 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 }
 
 int mj_effect_pixelate(mj_jpeg_t *m) {
-	int i, c, k, l;
+	int i, c;
+	JDIMENSION k, l;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
@@ -110,7 +112,7 @@ int mj_effect_pixelate(mj_jpeg_t *m) {
 }
 
 int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
-	int l, k;
+	JDIMENSION k, l;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
@@ -171,7 +173,7 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 }
 
 int mj_effect_luminance(mj_jpeg_t *m, int value) {
-	int l, k;
+	JDIMENSION k, l;
 	jpeg_component_info *component;
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;

@@ -32,9 +32,6 @@
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
-	int h_offset = 0, v_offset = 0;
-	int crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
-
 	if(m == NULL || d == NULL) {
 		return MJ_ERR;
 	}
@@ -48,6 +45,9 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 	}
 
 	// calculate crop of dropon
+
+	int h_offset = 0, v_offset = 0;
+	int crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
 
 	// horizontally
 
@@ -134,7 +134,10 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, i
 
 	mj_compileddropon_t cd;
 
-	mj_compile_dropon(&cd, d, m->cinfo.jpeg_color_space, &m->sampling, block_x, block_y, crop_x, crop_y, crop_w, crop_h);
+	int rv = mj_compile_dropon(&cd, d, m->cinfo.jpeg_color_space, &m->sampling, block_x, block_y, crop_x, crop_y, crop_w, crop_h);
+	if(rv != MJ_OK) {
+		return rv;
+	}
 
 	h_offset /= m->sampling.h_factor;
 	v_offset /= m->sampling.v_factor;
@@ -188,7 +191,7 @@ void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset
 
 		//fprintf(stderr, "*component %d (%d,%d) %p\n", c, width_in_blocks, height_in_blocks, imagecomp->blocks);
 
-		/* Die Werte des Logos in das Bild kopieren */
+		// copy the values from the dropon into the image
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks_m = (*cinfo_m->mem->access_virt_barray)((j_common_ptr)&cinfo_m, m->coef[c], height_offset + l, 1, TRUE);
 
@@ -251,7 +254,7 @@ void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, i
 
 		fprintf(stderr, "component %d: (%d, %d) %d %d\n", c, width_in_blocks, height_in_blocks, width_offset, height_offset);
 
-		/* Die Werte des Logos in das Bild kopieren */
+		// blend the values from the dropon with the image
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks_m = (*cinfo_m->mem->access_virt_barray)((j_common_ptr)&cinfo_m, m->coef[c], height_offset + l, 1, TRUE);
 
