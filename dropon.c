@@ -401,7 +401,7 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	fprintf(stderr, "\n");
 
-	mj_write_jpeg_to_file(m, "./images/dropon_image.jpg", MJ_OPTION_NONE);
+	//mj_write_jpeg_to_file(m, "./images/dropon_image.jpg", MJ_OPTION_NONE);
 
 	mj_destroy_jpeg(m);
 
@@ -500,7 +500,7 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	fprintf(stderr, "\n");
 
-	mj_write_jpeg_to_file(m, "./images/dropon_alpha.jpg", MJ_OPTION_NONE);
+	//mj_write_jpeg_to_file(m, "./images/dropon_alpha.jpg", MJ_OPTION_NONE);
 
 	mj_destroy_jpeg(m);
 
