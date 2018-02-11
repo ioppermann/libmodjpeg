@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-#include "libmodjpeg.h"
+#include "../libmodjpeg.h"
 
 static struct option longopts[] = {
 	{ "input",       required_argument, NULL, 'i' },

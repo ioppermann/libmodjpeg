@@ -15,10 +15,5 @@ set_target_properties(modjpeg PROPERTIES VERSION ${libmodjpeg_VERSION_STRING} SO
 target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
 target_link_libraries(modjpeg jpeg)
 
-add_executable(mdjpeg modjpeg.c)
-target_compile_options(mdjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
-target_link_libraries(mdjpeg modjpeg)
-
-install(TARGETS mdjpeg DESTINATION bin)
 install(TARGETS modjpeg DESTINATION lib)
 install(FILES libmodjpeg.h DESTINATION include)
