@@ -29,137 +29,168 @@
 #include "convolve.h"
 #include "compose.h"
 
-int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset) {
+int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL || d == NULL) {
 		return MJ_ERR;
 	}
 
-	fprintf(stderr, "(x_offset, y_offset) = (%d, %d)\n", x_offset, y_offset);
-
-	//fprintf(stderr, "blend: %d\n", d->blend);
+	fprintf(stderr, "(offset_x, offset_y) = (%d, %d)\n", offset_x, offset_y);
 
 	if(d->blend == MJ_BLEND_NONE) {
 		return MJ_OK;
 	}
 
-	// calculate crop of dropon
+	// depending on the alignment and the offset, we have find out
+	// how much of the dropon will be visible.
 
-	int h_offset = 0, v_offset = 0;
-	int crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
+	// position is the position of the top-left corner of the dropon on the image
+	int position_x = 0, position_y = 0;
 
-	// horizontally
+	// top-left corner of the crop area of the dropon and width and height of the crop area
+	int crop_x = 0, crop_y = 0, crop_w = d->width, crop_h = d->height;
 
+
+	// first we have to calculate the position of the dropon on the image,
+	// then we know how we have to crop the dropon. in most cases the
+	// dropon is small than the image and fully visible.
+
+	// caluclate the horizontal position of the dropon on the image
 	if((align & MJ_ALIGN_LEFT) != 0) {
-		h_offset = 0;
+		position_x = 0;
 	}
 	else if((align & MJ_ALIGN_RIGHT) != 0) {
-		h_offset = m->width - d->width;
+		position_x = m->width - d->width;
 	}
 	else {
-		h_offset = m->width / 2 - d->width / 2;
+		position_x = m->width / 2 - d->width / 2;
 	}
 
-	h_offset += x_offset;
+	// add the horizontal offset to the position
+	position_x += offset_x;
+
+	// calculate the vertival position of the dropon on the image
+	if((align & MJ_ALIGN_TOP) != 0) {
+		position_y = 0;
+	}
+	else if((align & MJ_ALIGN_BOTTOM) != 0) {
+		position_y = m->height - d->height;
+	}
+	else {
+		position_y = m->height / 2 - d->height / 2;
+	}
+
+	// add the vertical offset to the position
+	position_y += offset_y;
+
+	// now that we have the position we can calculate how the
+	// droppon needs to be cropped
 
 	crop_x = 0;
 
-	if(h_offset < 0) {
-		crop_x = -h_offset;
+	// if the dropon is off the left border of the image, we have to
+	// crop this amount of pixel.
+	if(position_x < 0) {
+		crop_x = -position_x;
 	}
 
+	// the width of the crop area
 	crop_w = d->width - crop_x;
 
-	if(crop_x > d->width) {				// dropon shifted more off the left border than its width
+	// is the dropon shifted more off the left border than its width?
+	if(crop_x > d->width) {
 		crop_w = 0;
 	}
-	else if(h_offset > m->width) {				// dropon shifted off the right border
+	// is the dropon shifted off the right border?
+	else if(position_x > m->width) {
 		crop_w = 0;
 	}
-	else if(h_offset + crop_x + crop_w > m->width) {	// dropon partially shifted off the right border
-		crop_w = m->width - crop_x - h_offset;
+	// is the dropon partially shifted off the right border?
+	else if(position_x + crop_x + crop_w > m->width) {
+		crop_w = m->width - crop_x - position_x;
 	}
-
-	// vertically
-
-	if((align & MJ_ALIGN_TOP) != 0) {
-		v_offset = 0;
-	}
-	else if((align & MJ_ALIGN_BOTTOM) != 0) {
-		v_offset = m->height - d->height;
-	}
-	else {
-		v_offset = m->height / 2 - d->height / 2;
-	}
-
-	v_offset += y_offset;
 
 	crop_y = 0;
 
-	if(v_offset < 0) {
-		crop_y = -v_offset;
+	// if the dropon is off the top border of the image, we have to
+	// crop this amount of pixel.
+	if(position_y < 0) {
+		crop_y = -position_y;
 	}
 
+	// the height of the crop area
 	crop_h = d->height - crop_y;
 
+	// is the dropon shifted more off the top border than its height?
 	if(crop_y > d->height) {
 		crop_h = 0;
 	}
-	else if(v_offset > m->height) {
+	// is the dropon shifted off the bottom border?
+	else if(position_y > m->height) {
 		crop_h = 0;
 	}
-	else if(v_offset + crop_y + crop_h > m->height) {
-		crop_h = m->height - crop_y - v_offset;
+	// is the dropon partially shifted off the bottom border?
+	else if(position_y + crop_y + crop_h > m->height) {
+		crop_h = m->height - crop_y - position_y;
 	}
 
 	fprintf(stderr, "crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
 
+	// we don't need to do anything if the crop width and height are zero
 	if(crop_w == 0 || crop_h == 0) {
 		return MJ_OK;
 	}
 
-	int block_x = h_offset % m->sampling.h_factor;
-	if(block_x < 0) {
-		block_x = 0;
+	// the dropon has to align with the blocks of the image. here we calculate the
+	// block offset which means how many pixels the dropon is off from the left and
+	// top border of the block it has its top-left corner in. this area will be masked
+	// out such that the image is not obstructed by the dropon.
+	int blockoffset_x = position_x % m->sampling.h_factor;
+	if(blockoffset_x < 0) {
+		blockoffset_x = 0;
 	}
-	int block_y = v_offset % m->sampling.v_factor;
-	if(block_y < 0) {
-		block_y = 0;
+	int blockoffset_y = position_y % m->sampling.v_factor;
+	if(blockoffset_y < 0) {
+		blockoffset_y = 0;
 	}
 
-	fprintf(stderr, "block offset (%d, %d)\n", block_x, block_y);
+	fprintf(stderr, "block offset (%d, %d)\n", blockoffset_x, blockoffset_y);
 	
 	fprintf(stderr, "compiling dropon\n");
 
+	// with all these information together with the colorspace and sampling setting from the image
+	// we can generate the apropriate dropon.
 	mj_compileddropon_t cd;
 
-	int rv = mj_compile_dropon(&cd, d, m->cinfo.jpeg_color_space, &m->sampling, block_x, block_y, crop_x, crop_y, crop_w, crop_h);
+	int rv = mj_compile_dropon(&cd, d, m->cinfo.jpeg_color_space, &m->sampling, blockoffset_x, blockoffset_y, crop_x, crop_y, crop_w, crop_h);
 	if(rv != MJ_OK) {
 		return rv;
 	}
 
-	h_offset /= m->sampling.h_factor;
-	v_offset /= m->sampling.v_factor;
+	// after the dropon is ready we calculate which block of the image the dropon starts
+	int block_x = position_x / m->sampling.h_factor;
+	int block_y = position_y / m->sampling.v_factor;
 
-	if(h_offset < 0) {
-		h_offset = 0;
+	if(block_x < 0) {
+		block_x = 0;
 	}
 
-	if(v_offset < 0) {
-		v_offset = 0;
+	if(block_y < 0) {
+		block_y = 0;
 	}
 
-	fprintf(stderr, "offset block (%d, %d)\n", h_offset, v_offset);
+	fprintf(stderr, "offset block (%d, %d)\n", block_x, block_y);
 
-	mj_compose_with_mask(m, &cd, h_offset, v_offset);
+	// compoese the dropon and the image
+	mj_compose_with_mask(m, &cd, block_x, block_y);
 
 	mj_free_compileddropon(&cd);
 
 	return MJ_OK;
 }
 
-void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
+void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL || cd == NULL) {
@@ -186,8 +217,8 @@ void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset
 		width_in_blocks = imagecomp->width_in_blocks;
 		height_in_blocks = imagecomp->height_in_blocks;
 
-		width_offset = h_offset * component_m->h_samp_factor;
-		height_offset = v_offset * component_m->v_samp_factor;
+		width_offset = block_x * component_m->h_samp_factor;
+		height_offset = block_y * component_m->v_samp_factor;
 
 		//fprintf(stderr, "*component %d (%d,%d) %p\n", c, width_in_blocks, height_in_blocks, imagecomp->blocks);
 
@@ -220,7 +251,7 @@ void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset
 	return;
 }
 
-void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset) {
+void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL || cd == NULL) {
@@ -249,8 +280,8 @@ void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, i
 		width_in_blocks = imagecomp->width_in_blocks;
 		height_in_blocks = imagecomp->height_in_blocks;
 
-		width_offset = h_offset * component_m->h_samp_factor;
-		height_offset = v_offset * component_m->v_samp_factor;
+		width_offset = block_x * component_m->h_samp_factor;
+		height_offset = block_y * component_m->v_samp_factor;
 
 		fprintf(stderr, "component %d: (%d, %d) %d %d\n", c, width_in_blocks, height_in_blocks, width_offset, height_offset);
 

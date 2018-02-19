@@ -141,7 +141,8 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 	d->height = height;
 	d->blend = blend;
 
-	// image
+	// image and alpha are store with 3 components. this makes it
+	// easier to handle later for compiling the dropon.
 	size_t nsamples = 3 * width * height;
 
 	d->image = (char *)calloc(nsamples, sizeof(char));
@@ -151,8 +152,7 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 		return NULL;
 	}
 
-	nsamples = 3 * width * height;
-
+	// the alpha channel is also stored with 3 component
 	d->alpha = (char *)calloc(nsamples, sizeof(char));
 	if(d->alpha == NULL) {
 		free(d->image);
@@ -232,29 +232,37 @@ mj_dropon_t *mj_read_dropon_from_buffer(const char *raw_data, unsigned int color
 	return d;
 }
 
-int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sampling, int block_x, int block_y, int crop_x, int crop_y, int crop_w, int crop_h) {
+int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sampling, int blockoffset_x, int blockoffset_y, int crop_x, int crop_y, int crop_w, int crop_h) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(cd == NULL || d == NULL) {
 		return MJ_ERR;
 	}
 
+	// crop and or extend the dropon. the dropon needs to cover whole blocks.
+
+	// after that encode it to a jpeg with the same colorspace and sampling as the image.
+	// this gives us the the dropon in frequency space.
+
+	// same for the mask. the mask is required if we extend the dropon such that
+	// the extended area doesn't cover the image.
+
 	int i, j;
 
 	char *buffer = NULL;
 	size_t len = 0;
 
-	// crop the dropon
+	// crop/extend the dropon
 
 	fprintf(stderr, "crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
 
-	int width = crop_w + block_x;
+	int width = crop_w + blockoffset_x;
 	int padding = width % sampling->h_factor;
 	if(padding != 0) {
 		width += sampling->h_factor - padding;
 	}
 
-	int height = crop_h + block_y;
+	int height = crop_h + blockoffset_y;
 	padding = height % sampling->v_factor;
 	if(padding != 0) {
 		height += sampling->v_factor - padding;
@@ -271,7 +279,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	char *p, *q;
 
 	for(i = crop_y; i < (crop_y + crop_h); i++) {
-		p = &data[(i - crop_y + block_y) * width * 3 + (block_x * 3)];
+		p = &data[(i - crop_y + blockoffset_y) * width * 3 + (blockoffset_x * 3)];
 		q = &d->image[i * d->width * 3 + (crop_x * 3)];
 
 		for(j = crop_x; j < (crop_x + crop_w); j++) {
@@ -281,6 +289,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		}
 	}
 
+	// encode the dropon to JPEG
 	rv = mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, d->colorspace, colorspace, sampling, width, height);
 	if(rv != MJ_OK) {
 		free(data);
@@ -289,6 +298,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	fprintf(stderr, "encoded len: %ld\n", len);
 
+	// read the coefficients from the encoded dropon
 	rv = mj_read_droponimage_from_buffer(cd, buffer, len);
 	free(buffer);
 
@@ -298,7 +308,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	}
 
 	for(i = crop_y; i < (crop_y + crop_h); i++) {
-		p = &data[(i - crop_y + block_y) * width * 3 + (block_x * 3)];
+		p = &data[(i - crop_y + blockoffset_y) * width * 3 + (blockoffset_x * 3)];
 		q = &d->alpha[i * d->width * 3 + (crop_x * 3)];
 
 		for(j = crop_x; j < (crop_x + crop_w); j++) {
@@ -308,6 +318,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		}
 	}
 
+	// encode the mask to JPEG. the mask is always in YCC colorspace (i.e. only the Y component is used)
 	rv = mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, MJ_COLORSPACE_YCC, JCS_YCbCr, sampling, width, height);
 	if(rv != MJ_OK) {
 		free(data);
@@ -316,6 +327,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	fprintf(stderr, "encoded len: %ld\n", len);
 
+	// read the coefficients from the encoded dropon mask
 	rv = mj_read_droponalpha_from_buffer(cd, buffer, len);
 
 	free(buffer);
@@ -470,7 +482,7 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 */
 				/*
 				// w'(j, i) = w(j, i) * 1/255 * c(i) * c(j) * 1/4
-				// Der Faktor 1/4 kommt von den V(i) und V(j)
+				// the factor 1/4 comes from V(i) and V(j)
 				// => 1/255 * 1/4 = 1/1020
 				*/
 				b[0] = (float)coefs[0] * (0.3535534 * 0.3535534 / 1020.0);

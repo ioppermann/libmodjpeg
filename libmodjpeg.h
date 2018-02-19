@@ -115,7 +115,7 @@ mj_dropon_t *mj_read_dropon_from_jpeg(const char *filename, const char *mask, sh
 mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len);
 mj_jpeg_t *mj_read_jpeg_from_file(const char *filename);
 
-int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int x_offset, int y_offset);
+int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y);
 
 int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options);
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options);

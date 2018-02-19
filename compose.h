@@ -25,7 +25,7 @@
 
 #include "libmodjpeg.h"
 
-void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset);
-void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int h_offset, int v_offset);
+void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y);
+void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y);
 
 #endif
