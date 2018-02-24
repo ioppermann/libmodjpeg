@@ -99,6 +99,10 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 		cinfo.optimize_coding = TRUE;
 	}
 
+	if((options & MJ_OPTION_ARITHMETRIC) != 0) {
+		cinfo.arith_code = TRUE;
+	}
+
 	if((options & MJ_OPTION_PROGRESSIVE) != 0) {
 		jpeg_simple_progression(&cinfo);
 	}

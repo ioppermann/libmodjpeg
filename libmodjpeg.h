@@ -47,6 +47,7 @@
 #define MJ_OPTION_NONE                  0
 #define MJ_OPTION_OPTIMIZE              (1 << 0)
 #define MJ_OPTION_PROGRESSIVE           (1 << 1)
+#define MJ_OPTION_ARITHMETRIC		(1 << 2)
 
 #define MJ_OK                           0
 #define MJ_ERR                          1

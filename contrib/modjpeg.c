@@ -42,6 +42,7 @@ static struct option longopts[] = {
 	{ "grayscale",   no_argument,       NULL, 'g' },
 	{ "progressive", no_argument,       NULL, 'P' },
 	{ "optimize",    no_argument,       NULL, 'O' },
+	{ "arithmetric", no_argument,       NULL, 'A' },
 	{ "help",        no_argument,       NULL, 'h' },
 	{ NULL,          0,                 NULL,  0  }
 };
@@ -198,6 +199,9 @@ int main(int argc, char *argv[]) {
 			case 'P':
 				options |= MJ_OPTION_PROGRESSIVE;
 				break;
+			case 'A':
+				options |= MJ_OPTION_ARITHMETRIC;
+				break;
 			case 'h':
 				help();
 				exit(0);
@@ -280,6 +284,10 @@ void help(void) {
 
 	fprintf(stderr, "\t--progressive, -P\n");
 	fprintf(stderr, "\t\tStore the output image in progressive mode.\n");
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "\t--arithmetric, -A\n");
+	fprintf(stderr, "\t\tUse arithmetric coding instead of Huffman coding.\n");
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Examples:\n");
