@@ -318,8 +318,22 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		}
 	}
 
-	// encode the mask to JPEG. the mask is always in YCC colorspace (i.e. only the Y component is used)
-	rv = mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, MJ_COLORSPACE_YCC, JCS_YCbCr, sampling, width, height);
+	// encode the mask to JPEG. all components of the mask are the same. depending on the targeted colorspace,
+	// the data of the mask needs to be interpreted differently
+	// for the target colorspaces, we support only GRAYSCALE, RGB, and YCC
+	// the JPEG library supports only these internal color transformations
+	//    RGB => RGB
+	//    RGB => YCC
+	//    RGB => BG_YCC
+	//    RGB => GRAYSCALE
+	//    YCC => YCC
+	//    YCC => BG_YCC
+	//    YCC => GRAYSCALE
+	int alpha_colorspace = MJ_COLORSPACE_YCC;
+	if(colorspace == JCS_RGB) {
+		alpha_colorspace = MJ_COLORSPACE_RGB;
+	}
+	rv = mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, alpha_colorspace, colorspace, sampling, width, height);
 	if(rv != MJ_OK) {
 		free(data);
 		return rv;
@@ -413,7 +427,7 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	fprintf(stderr, "\n");
 
-	//mj_write_jpeg_to_file(m, "./images/dropon_image.jpg", MJ_OPTION_NONE);
+	//mj_write_jpeg_to_file(m, "../images/dropon_image.jpg", MJ_OPTION_NONE);
 
 	mj_destroy_jpeg(m);
 
@@ -512,7 +526,7 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	fprintf(stderr, "\n");
 
-	//mj_write_jpeg_to_file(m, "./images/dropon_alpha.jpg", MJ_OPTION_NONE);
+	//mj_write_jpeg_to_file(m, "../images/dropon_alpha.jpg", MJ_OPTION_NONE);
 
 	mj_destroy_jpeg(m);
 

@@ -190,8 +190,16 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 
 	switch(m->cinfo.jpeg_color_space) {
 		case JCS_GRAYSCALE:
+			fprintf(stderr, "colorspace: GRAYSCALE (%d)\n", JCS_GRAYSCALE);
+			break;
 		case JCS_RGB:
+			fprintf(stderr, "colorspace: RGB (%d)\n", JCS_RGB);
+			break;
 		case JCS_YCbCr:
+			fprintf(stderr, "colorspace: YCbCr (%d)\n", JCS_YCbCr);
+			break;
+		case JCS_BG_YCC:
+			fprintf(stderr, "colorspace: BG_YCC (%d)\n", JCS_BG_YCC);
 			break;
 		default:
 			jpeg_destroy_decompress(&m->cinfo);
@@ -435,9 +443,9 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 		return MJ_ERR;
 	}
 
-	cinfo.jpeg_color_space = jpeg_colorspace;
-
 	jpeg_set_defaults(&cinfo);
+
+	jpeg_set_colorspace(&cinfo, jpeg_colorspace);
 
 	//cinfo.optimize_coding = TRUE;
 
