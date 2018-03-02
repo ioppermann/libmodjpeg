@@ -202,9 +202,6 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 		case JCS_YCbCr:
 			fprintf(stderr, "colorspace: YCbCr (%d)\n", JCS_YCbCr);
 			break;
-		case JCS_BG_YCC:
-			fprintf(stderr, "colorspace: BG_YCC (%d)\n", JCS_BG_YCC);
-			break;
 		default:
 			jpeg_destroy_decompress(&m->cinfo);
 			free(m);

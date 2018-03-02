@@ -35,7 +35,7 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 		return MJ_ERR;
 	}
 
-	if(m->cinfo.jpeg_color_space != JCS_YCbCr && m->cinfo.jpeg_color_space != JCS_BG_YCC) {
+	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
 		return MJ_ERR;
 	}
 
@@ -121,7 +121,7 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 		return MJ_ERR;
 	}
 
-	if(m->cinfo.jpeg_color_space != JCS_YCbCr && m->cinfo.jpeg_color_space != JCS_BG_YCC) {
+	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
 		return MJ_ERR;
 	}
 
@@ -182,7 +182,7 @@ int mj_effect_luminance(mj_jpeg_t *m, int value) {
 		return MJ_ERR;
 	}
 
-	if(m->cinfo.jpeg_color_space != JCS_YCbCr && m->cinfo.jpeg_color_space != JCS_BG_YCC) {
+	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
 		return MJ_ERR;
 	}
 
