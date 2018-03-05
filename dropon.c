@@ -42,7 +42,7 @@ mj_dropon_t *mj_read_dropon_from_jpeg(const char *image_file, const char *alpha_
 		return NULL;
 	}
 
-	fprintf(stderr, "image: %dx%d pixel, %ld bytes (%ld bytes/pixel)\n", image_width, image_height, len, len / (image_width * image_height));
+	fprintf(stderr, "image: %dx%d pixel, %zu bytes (%zu bytes/pixel)\n", image_width, image_height, len, (size_t)(len / (image_width * image_height)));
 
 	if(alpha_file != NULL) {
 		if(mj_decode_jpeg_to_buffer(&alpha_buffer, &len, &alpha_width, &alpha_height, MJ_COLORSPACE_GRAYSCALE, alpha_file) != MJ_OK) {
@@ -52,7 +52,7 @@ mj_dropon_t *mj_read_dropon_from_jpeg(const char *image_file, const char *alpha_
 			return NULL;
 		}
 
-		fprintf(stderr, "alpha: %dx%d pixel, %ld bytes (%ld bytes/pixel)\n", alpha_width, alpha_height, len, len / (alpha_width * alpha_height));
+		fprintf(stderr, "alpha: %dx%d pixel, %zu bytes (%zu bytes/pixel)\n", alpha_width, alpha_height, len, (size_t)(len / (alpha_width * alpha_height)));
 
 		if(image_width != alpha_width || image_height != alpha_height) {
 			fprintf(stderr, "error: dimensions of image and alpha need to be the same!\n");
@@ -296,7 +296,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		return rv;
 	}
 
-	fprintf(stderr, "encoded len: %ld\n", len);
+	fprintf(stderr, "encoded len: %zu\n", len);
 
 	// read the coefficients from the encoded dropon
 	rv = mj_read_droponimage_from_buffer(cd, buffer, len);
@@ -339,7 +339,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		return rv;
 	}
 
-	fprintf(stderr, "encoded len: %ld\n", len);
+	fprintf(stderr, "encoded len: %zu\n", len);
 
 	// read the coefficients from the encoded dropon mask
 	rv = mj_read_droponalpha_from_buffer(cd, buffer, len);
