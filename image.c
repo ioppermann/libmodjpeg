@@ -312,7 +312,7 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 
 	mj_write_jpeg_to_buffer(m, &rebuffer, &relen, options);
 
-	fprintf(stderr, "restored image of len %ld\n", relen);
+	fprintf(stderr, "restored image of len %zu\n", relen);
 
 	fwrite(rebuffer, 1, relen, fp);
 
