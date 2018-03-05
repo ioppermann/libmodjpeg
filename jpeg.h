@@ -26,7 +26,6 @@
 #include <setjmp.h>
 
 #include "libmodjpeg.h"
-#include "jpeglib.h"
 
 #define MJ_DESTBUFFER_CHUNKSIZE		2048
 

@@ -25,7 +25,7 @@
 
 #include <stdio.h>
 
-#include "jpeglib.h"
+#include <jpeglib.h>
 
 #define MJ_COLORSPACE_RGBA              1
 #define MJ_COLORSPACE_RGB               2

@@ -20,13 +20,14 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
 
+#include <jerror.h>
+
 #include "libmodjpeg.h"
 #include "jpeg.h"
-#include "jpeglib.h"
-#include "jerror.h"
 
 /** JPEG reading and writing **/
 
