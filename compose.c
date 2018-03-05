@@ -233,14 +233,14 @@ void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x,
 				//fprintf(stderr, "*component (%d,%d) %p\n", l, k, imageblock);
 
 				for(i = 0; i < DCTSIZE2; i += 8) {
-					coefs_m[i + 0] = (int)imageblock[i + 0];
-					coefs_m[i + 1] = (int)imageblock[i + 1];
-					coefs_m[i + 2] = (int)imageblock[i + 2];
-					coefs_m[i + 3] = (int)imageblock[i + 3];
-					coefs_m[i + 4] = (int)imageblock[i + 4];
-					coefs_m[i + 5] = (int)imageblock[i + 5];
-					coefs_m[i + 6] = (int)imageblock[i + 6];
-					coefs_m[i + 7] = (int)imageblock[i + 7];
+					coefs_m[i + 0] = (int)imageblock[i + 0] / component_m->quant_table->quantval[i + 0];
+					coefs_m[i + 1] = (int)imageblock[i + 1] / component_m->quant_table->quantval[i + 1];
+					coefs_m[i + 2] = (int)imageblock[i + 2] / component_m->quant_table->quantval[i + 2];
+					coefs_m[i + 3] = (int)imageblock[i + 3] / component_m->quant_table->quantval[i + 3];
+					coefs_m[i + 4] = (int)imageblock[i + 4] / component_m->quant_table->quantval[i + 4];
+					coefs_m[i + 5] = (int)imageblock[i + 5] / component_m->quant_table->quantval[i + 5];
+					coefs_m[i + 6] = (int)imageblock[i + 6] / component_m->quant_table->quantval[i + 6];
+					coefs_m[i + 7] = (int)imageblock[i + 7] / component_m->quant_table->quantval[i + 7];
 				}
 			}
 		}
@@ -303,6 +303,18 @@ void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, in
 					fprintf(stderr, "\n");
 				}
 */
+				// de-quantize
+				for(i = 0; i < DCTSIZE2; i += 8) {
+					coefs_m[i + 0] *= component_m->quant_table->quantval[i + 0];
+					coefs_m[i + 1] *= component_m->quant_table->quantval[i + 1];
+					coefs_m[i + 2] *= component_m->quant_table->quantval[i + 2];
+					coefs_m[i + 3] *= component_m->quant_table->quantval[i + 3];
+					coefs_m[i + 4] *= component_m->quant_table->quantval[i + 4];
+					coefs_m[i + 5] *= component_m->quant_table->quantval[i + 5];
+					coefs_m[i + 6] *= component_m->quant_table->quantval[i + 6];
+					coefs_m[i + 7] *= component_m->quant_table->quantval[i + 7];
+				}
+
 				// x = x0 - x1
 				//fprintf(stderr, "component %d (%d,%d): x0 - x1 | ", c, l, k);
 				for(i = 0; i < DCTSIZE2; i += 8) {
@@ -342,6 +354,18 @@ void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, in
 					coefs_m[i + 5] += (int)Y[i + 5];
 					coefs_m[i + 6] += (int)Y[i + 6];
 					coefs_m[i + 7] += (int)Y[i + 7];
+				}
+
+				// quantize
+				for(i = 0; i < DCTSIZE2; i += 8) {
+					coefs_m[i + 0] /= component_m->quant_table->quantval[i + 0];
+					coefs_m[i + 1] /= component_m->quant_table->quantval[i + 1];
+					coefs_m[i + 2] /= component_m->quant_table->quantval[i + 2];
+					coefs_m[i + 3] /= component_m->quant_table->quantval[i + 3];
+					coefs_m[i + 4] /= component_m->quant_table->quantval[i + 4];
+					coefs_m[i + 5] /= component_m->quant_table->quantval[i + 5];
+					coefs_m[i + 6] /= component_m->quant_table->quantval[i + 6];
+					coefs_m[i + 7] /= component_m->quant_table->quantval[i + 7];
 				}
 			}
 		}

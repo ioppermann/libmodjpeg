@@ -106,42 +106,14 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	m->sampling.h_factor = (m->sampling.max_h_samp_factor * DCTSIZE);
 	m->sampling.v_factor = (m->sampling.max_v_samp_factor * DCTSIZE);
 
-	int c, k, l, i;
-	int width_in_blocks, height_in_blocks;
+	int c;
 	jpeg_component_info *component;
-	JBLOCKARRAY blocks;
-	JCOEFPTR coefs;
 
 	for(c = 0; c < m->cinfo.num_components; c++) {
 		component = &m->cinfo.comp_info[c];
 
 		m->sampling.samp_factor[c].h_samp_factor = component->h_samp_factor;
 		m->sampling.samp_factor[c].v_samp_factor = component->v_samp_factor;
-
-		width_in_blocks = component->width_in_blocks;
-		height_in_blocks = component->height_in_blocks;
-
-		fprintf(stderr, "(%d,%d) %dx%d blocks ", component->h_samp_factor, component->v_samp_factor, width_in_blocks, height_in_blocks);
-
-		// de-quantize coefficients
-		for(l = 0; l < height_in_blocks; l++) {
-			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
-
-			for(k = 0; k < width_in_blocks; k++) {
-				coefs = blocks[0][k];
-
-				for(i = 0; i < DCTSIZE2; i += 8) {
-					coefs[i + 0] *= component->quant_table->quantval[i + 0];
-					coefs[i + 1] *= component->quant_table->quantval[i + 1];
-					coefs[i + 2] *= component->quant_table->quantval[i + 2];
-					coefs[i + 3] *= component->quant_table->quantval[i + 3];
-					coefs[i + 4] *= component->quant_table->quantval[i + 4];
-					coefs[i + 5] *= component->quant_table->quantval[i + 5];
-					coefs[i + 6] *= component->quant_table->quantval[i + 6];
-					coefs[i + 7] *= component->quant_table->quantval[i + 7];
-				}
-			}
-		}
 	}
 
 	fprintf(stderr, "\n");
@@ -209,41 +181,6 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 		}
 
 		return MJ_ERR;
-	}
-
-	int c, k, l, i;
-	int width_in_blocks, height_in_blocks;
-	jpeg_component_info *component;
-	JBLOCKARRAY blocks;
-	JCOEFPTR coefs;
-
-	for(c = 0; c < m->cinfo.num_components; c++) {
-		component = &m->cinfo.comp_info[c];
-
-		//fprintf(stderr, "(%d,%d)", component->h_samp_factor, component->v_samp_factor);
-
-		width_in_blocks = component->width_in_blocks;
-		height_in_blocks = component->height_in_blocks;
-
-		// quantize coefficients
-		for(l = 0; l < height_in_blocks; l++) {
-			blocks = (*m->cinfo.mem->access_virt_barray)((j_common_ptr)&m->cinfo, m->coef[c], l, 1, TRUE);
-
-			for(k = 0; k < width_in_blocks; k++) {
-				coefs = blocks[0][k];
-
-				for(i = 0; i < DCTSIZE2; i += 8) {
-					coefs[i + 0] /= component->quant_table->quantval[i + 0];
-					coefs[i + 1] /= component->quant_table->quantval[i + 1];
-					coefs[i + 2] /= component->quant_table->quantval[i + 2];
-					coefs[i + 3] /= component->quant_table->quantval[i + 3];
-					coefs[i + 4] /= component->quant_table->quantval[i + 4];
-					coefs[i + 5] /= component->quant_table->quantval[i + 5];
-					coefs[i + 6] /= component->quant_table->quantval[i + 6];
-					coefs[i + 7] /= component->quant_table->quantval[i + 7];
-				}
-			}
-		}
 	}
 
 	jpeg_create_compress(&cinfo);

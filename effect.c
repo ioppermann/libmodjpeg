@@ -137,6 +137,8 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 
 			for(k = 0; k < component->width_in_blocks; k++) {
 				coefs = blocks[0][k];
+
+				coefs[0] *= component->quant_table->quantval[0];
 				coefs[0] += cb_value;
 
 				if(coefs[0] > 2047) {
@@ -145,6 +147,8 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 				else if(coefs[0] < -2047) {
 					coefs[0] = -2047;
 				}
+
+				coefs[0] /= component->quant_table->quantval[0];
 			}
 		}
 	}
@@ -157,6 +161,8 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 
 			for(k = 0; k < component->width_in_blocks; k++) {
 				coefs = blocks[0][k];
+
+				coefs[0] *= component->quant_table->quantval[0];
 				coefs[0] += cr_value;
 
 				if(coefs[0] > 2047) {
@@ -165,6 +171,8 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 				else if(coefs[0] < -2047) {
 					coefs[0] = -2047;
 				}
+
+				coefs[0] /= component->quant_table->quantval[0];
 			}
 		}
 	}
@@ -193,7 +201,9 @@ int mj_effect_luminance(mj_jpeg_t *m, int value) {
 
 		for(k = 0; k < component->width_in_blocks; k++) {
 			coefs = blocks[0][k];
-			coefs[0] +=  value;
+
+			coefs[0] *= component->quant_table->quantval[0];
+			coefs[0] += value;
 
 			if(coefs[0] > 2047) {
 				coefs[0] = 2047;
@@ -201,6 +211,8 @@ int mj_effect_luminance(mj_jpeg_t *m, int value) {
 			else if(coefs[0] < -2047) {
 				coefs[0] = -2047;
 			}
+
+			coefs[0] /= component->quant_table->quantval[0];
 		}
 	}
 
