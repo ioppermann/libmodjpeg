@@ -10,20 +10,9 @@ find_package(JPEG REQUIRED)
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(include_path " ")
-if(NOT $ENV{CMAKE_INCLUDE_PATH} STREQUAL "")
-   set(include_path "-I$ENV{CMAKE_INCLUDE_PATH}")
-endif()
-
-set(library_path " ")
-if(NOT $ENV{CMAKE_LIBRARY_PATH} STREQUAL "")
-   set(library_path "-L$ENV{CMAKE_LIBRARY_PATH}")
-endif()
-
 add_library(modjpeg SHARED compose.c convolve.c dropon.c effect.c image.c jpeg.c)
-set_target_properties(modjpeg PROPERTIES VERSION ${libmodjpeg_VERSION_STRING} SOVERSION ${libmodjpeg_VERSION_MAJOR} LINK_FLAGS ${library_path})
-target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror ${include_path})
-target_link_libraries(modjpeg jpeg)
+target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror -I${JPEG_INCLUDE_DIR})
+set_target_properties(modjpeg PROPERTIES VERSION ${libmodjpeg_VERSION_STRING} SOVERSION ${libmodjpeg_VERSION_MAJOR} LINK_LIBRARIES ${JPEG_LIBRARIES})
 
 install(TARGETS modjpeg DESTINATION lib)
 install(FILES libmodjpeg.h DESTINATION include)

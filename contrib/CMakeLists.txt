@@ -4,7 +4,7 @@ project(modjpeg)
 find_package(JPEG REQUIRED)
 
 add_executable(modjpeg modjpeg.c ../compose.c ../convolve.c ../dropon.c ../effect.c ../image.c ../jpeg.c)
-target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
-target_link_libraries(modjpeg jpeg)
+target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror -I${JPEG_INCLUDE_DIR})
+target_link_libraries(modjpeg ${JPEG_LIBRARIES})
 
 install(TARGETS modjpeg DESTINATION bin)
