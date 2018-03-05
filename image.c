@@ -65,6 +65,14 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	src.buf = (JOCTET *)buffer;
 	src.size = len;
 
+	// save markers (must be before jpeg_read_header)
+	jpeg_save_markers(&m->cinfo, JPEG_COM, 0xFFFF);
+
+	int i = 0;
+	for(i = 0; i < 16; i++) {
+		jpeg_save_markers(&m->cinfo, JPEG_APP0 + i, 0xFFFF);
+	}
+
 	jpeg_read_header(&m->cinfo, TRUE);
 
 	m->width = m->cinfo.image_width;
@@ -219,6 +227,12 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 
 	// save the new coefficients
 	jpeg_write_coefficients(&cinfo, dst_coef_arrays);
+
+	// copy the saved markers
+	jpeg_saved_marker_ptr marker;
+	for(marker = m->cinfo.marker_list; marker != NULL; marker = marker->next) {
+		jpeg_write_marker(&cinfo, marker->marker, marker->data, marker->data_length);
+	}
 
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
