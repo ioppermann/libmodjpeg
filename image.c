@@ -22,35 +22,36 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #include "libmodjpeg.h"
 #include "image.h"
 #include "jpeg.h"
 
-mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
+int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
-	mj_jpeg_t *m;
-	struct mj_jpeg_error_mgr jerr;
-	struct mj_jpeg_src_mgr src;
+	if(m == NULL) {
+		fprintf(stderr, "jpegimage not given\n");
+		return MJ_ERR;
+	}
 
 	if(buffer == NULL || len == 0) {
 		fprintf(stderr, "empty buffer\n");
-		return NULL;
+		return MJ_ERR;
 	}
 
-	m = (mj_jpeg_t *)calloc(1, sizeof(mj_jpeg_t));
-	if(m == NULL) {
-		return NULL;
-	}
+	mj_free_jpeg(m);
+
+	struct mj_jpeg_error_mgr jerr;
+	struct mj_jpeg_src_mgr src;
 
 	m->cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = mj_jpeg_error_exit;
 	if(setjmp(jerr.setjmp_buffer)) {
 		jpeg_destroy_decompress(&m->cinfo);
-		free(m);
-		return NULL;
+		return MJ_ERR;
 	}
 
 	jpeg_create_decompress(&m->cinfo);
@@ -65,7 +66,7 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	src.buf = (JOCTET *)buffer;
 	src.size = len;
 
-	// save markers (must be before jpeg_read_header)
+	// save markers (must happen before jpeg_read_header)
 	jpeg_save_markers(&m->cinfo, JPEG_COM, 0xFFFF);
 
 	int i = 0;
@@ -93,7 +94,7 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 		default:
 			jpeg_destroy_decompress(&m->cinfo);
 			free(m);
-			return NULL;
+			return MJ_ERR;
 	}
 
 	fprintf(stderr, "baseline: %s\n", m->cinfo.is_baseline == TRUE ? "TRUE" : "FALSE");
@@ -102,9 +103,6 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 	fprintf(stderr, "block size: %d\n", m->cinfo.block_size);
 
 	m->coef = jpeg_read_coefficients(&m->cinfo);
-
-	m->width = m->cinfo.output_width;
-	m->height = m->cinfo.output_height;
 
 	fprintf(stderr, "%dx%dpx, %d components: ", m->width, m->height, m->cinfo.num_components);
 
@@ -126,11 +124,16 @@ mj_jpeg_t *mj_read_jpeg_from_buffer(const char *buffer, size_t len) {
 
 	fprintf(stderr, "\n");
 
-	return m;
+	return MJ_OK;
 }
 
-mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
+int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
+
+	if(m == NULL) {
+		fprintf(stderr, "jpegimage not given\n");
+		return MJ_ERR;
+	}
 
 	FILE *fp;
 	struct stat s;
@@ -140,7 +143,7 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
 	fp = fopen(filename, "rb");
 	if(fp == NULL) {
 		fprintf(stderr, "can't open input file\n");
-		return NULL;
+		return MJ_ERR;
 	}
 
 	fstat(fileno(fp), &s);
@@ -150,28 +153,27 @@ mj_jpeg_t *mj_read_jpeg_from_file(const char *filename) {
 	buffer = (char *)calloc(len + 1, sizeof(char));
 	if(buffer == NULL) {
 		fprintf(stderr, "can't allocate memory for filedata\n");
-		return NULL;
+		return MJ_ERR;
 	}
 
 	fread(buffer, 1, len, fp);
 
 	fclose(fp);
 
-	mj_jpeg_t *m;
-
-	m = mj_read_jpeg_from_buffer(buffer, len);
+	int rv;
+	rv = mj_read_jpeg_from_buffer(m, buffer, len);
 	free(buffer);
 
-	if(m == NULL) {
-		fprintf(stderr, "reading from buffer failed\n");
-		return NULL;
-	}
-
-	return m;
+	return rv;
 }
 
 int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
+
+	if(m == NULL) {
+		fprintf(stderr, "jpegimage not given\n");
+		return MJ_ERR;
+	}
 
 	struct jpeg_compress_struct cinfo;
 	jvirt_barray_ptr *dst_coef_arrays;
@@ -274,7 +276,15 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 	return 0;
 }
 
-void mj_destroy_jpeg(mj_jpeg_t *m) {
+void mj_init_jpeg(mj_jpeg_t *m) {
+	if(m == NULL) {
+		return;
+	}
+
+	memset(m, 0, sizeof(mj_jpeg_t));
+}
+
+void mj_free_jpeg(mj_jpeg_t *m) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL) {
@@ -283,9 +293,7 @@ void mj_destroy_jpeg(mj_jpeg_t *m) {
 
 	jpeg_destroy_decompress(&m->cinfo);
 
-	m->coef = NULL;
-
-	free(m);
+	mj_init_jpeg(m);
 
 	return;
 }
@@ -352,15 +360,15 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 		cinfo.comp_info[0].h_samp_factor = s->samp_factor[0].h_samp_factor;
 		cinfo.comp_info[0].v_samp_factor = s->samp_factor[0].v_samp_factor;
 
-		cinfo.comp_info[1].h_samp_factor = s->samp_factor[1].h_samp_factor;;
-		cinfo.comp_info[1].v_samp_factor = s->samp_factor[1].v_samp_factor;;
+		cinfo.comp_info[1].h_samp_factor = s->samp_factor[1].h_samp_factor;
+		cinfo.comp_info[1].v_samp_factor = s->samp_factor[1].v_samp_factor;
 
-		cinfo.comp_info[2].h_samp_factor = s->samp_factor[2].h_samp_factor;;
-		cinfo.comp_info[2].v_samp_factor = s->samp_factor[2].v_samp_factor;;
+		cinfo.comp_info[2].h_samp_factor = s->samp_factor[2].h_samp_factor;
+		cinfo.comp_info[2].v_samp_factor = s->samp_factor[2].v_samp_factor;
 	}
 	else {
-		cinfo.comp_info[0].h_samp_factor = s->samp_factor[0].h_samp_factor;;
-		cinfo.comp_info[0].v_samp_factor = s->samp_factor[0].v_samp_factor;;
+		cinfo.comp_info[0].h_samp_factor = s->samp_factor[0].h_samp_factor;
+		cinfo.comp_info[0].v_samp_factor = s->samp_factor[0].v_samp_factor;
 	}
 
 	jpeg_set_quality(&cinfo, 100, TRUE);

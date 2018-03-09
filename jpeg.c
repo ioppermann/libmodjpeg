@@ -34,6 +34,8 @@
 void mj_jpeg_error_exit(j_common_ptr cinfo) {
 	mj_jpeg_error_ptr myerr = (mj_jpeg_error_ptr)cinfo->err;
 
+	(*cinfo->err->output_message) (cinfo);
+
 	longjmp(myerr->setjmp_buffer, 1);
 }
 

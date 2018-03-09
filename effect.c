@@ -36,7 +36,7 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
-		return MJ_ERR;
+		return MJ_OK;
 	}
 
 	/* set all color components to 0 */
@@ -48,6 +48,7 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 
 			for(k = 0; k < component->width_in_blocks; k++) {
 				coefs = blocks[0][k];
+
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs[i + 0] = 0;
 					coefs[i + 1] = 0;
@@ -122,7 +123,7 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
-		return MJ_ERR;
+		return MJ_OK;
 	}
 
 	if(cb_value == 0 && cr_value == 0) {
@@ -191,7 +192,7 @@ int mj_effect_luminance(mj_jpeg_t *m, int value) {
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
-		return MJ_ERR;
+		return MJ_OK;
 	}
 
 	component = &m->cinfo.comp_info[0];
