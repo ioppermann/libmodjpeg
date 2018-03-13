@@ -32,25 +32,27 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	char *image_buffer = NULL, *alpha_buffer = NULL, *buffer = NULL;
-	int colorspace;
+	int colorspace, rv;
 	int image_width = 0, alpha_width = 0;
 	int image_height = 0, alpha_height = 0;
 	size_t len = 0;
 
-	if(mj_decode_jpeg_to_buffer(&image_buffer, &len, &image_width, &image_height, MJ_COLORSPACE_RGB, image_file) != MJ_OK) {
+	rv = mj_decode_jpeg_to_buffer(&image_buffer, &len, &image_width, &image_height, MJ_COLORSPACE_RGB, image_file);
+	if(rv != MJ_OK) {
 		fprintf(stderr, "can't decode jpeg from %s\n", image_file);
 
-		return MJ_ERR;
+		return rv;
 	}
 
 	fprintf(stderr, "image: %dx%d pixel, %zu bytes (%zu bytes/pixel)\n", image_width, image_height, len, (size_t)(len / (image_width * image_height)));
 
 	if(alpha_file != NULL) {
-		if(mj_decode_jpeg_to_buffer(&alpha_buffer, &len, &alpha_width, &alpha_height, MJ_COLORSPACE_GRAYSCALE, alpha_file) != MJ_OK) {
+		rv = mj_decode_jpeg_to_buffer(&alpha_buffer, &len, &alpha_width, &alpha_height, MJ_COLORSPACE_GRAYSCALE, alpha_file);
+		if(rv != MJ_OK) {
 			fprintf(stderr, "can't decode jpeg from %s\n", alpha_file);
 
 			free(image_buffer);
-			return MJ_ERR;
+			return rv;
 		}
 
 		fprintf(stderr, "alpha: %dx%d pixel, %zu bytes (%zu bytes/pixel)\n", alpha_width, alpha_height, len, (size_t)(len / (alpha_width * alpha_height)));
@@ -61,7 +63,7 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 			free(image_buffer);
 			free(alpha_buffer);
 
-			return MJ_ERR;
+			return MJ_ERR_DROPON_DIMENSIONS;
 		}
 
 		buffer = (char *)calloc(4 * image_width * image_height, sizeof(char));
@@ -71,7 +73,7 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 			free(image_buffer);
 			free(alpha_buffer);
 
-			return MJ_ERR;
+			return MJ_ERR_MEMORY;
 		}
 
 		int v;
@@ -91,7 +93,6 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 		colorspace = MJ_COLORSPACE_RGB;
 	}
 
-	int rv;
 	rv = mj_read_dropon_from_buffer(d, buffer, colorspace, image_width, image_height, blend);
 
 	free(image_buffer);
@@ -108,13 +109,13 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(d == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	mj_free_dropon(d);
 
 	if(raw_data == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	if(blend < MJ_BLEND_NONE) {
@@ -134,7 +135,7 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 			break;
 		default:
 			fprintf(stderr, "unsupported colorspace");
-			return MJ_ERR;
+			return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
 
 	d->width = width;
@@ -149,7 +150,7 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 	if(d->image == NULL) {
 		mj_free_dropon(d);
 		fprintf(stderr, "can't allocate buffer");
-		return MJ_ERR;
+		return MJ_ERR_MEMORY;
 	}
 
 	// the alpha channel is also stored with 3 component
@@ -157,7 +158,7 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 	if(d->alpha == NULL) {
 		mj_free_dropon(d);
 		fprintf(stderr, "can't allocate buffer");
-		return MJ_ERR;
+		return MJ_ERR_MEMORY;
 	}
 
 	const char *p = raw_data;
@@ -235,7 +236,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(cd == NULL || d == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	// crop and or extend the dropon. the dropon needs to cover whole blocks.
@@ -271,7 +272,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	char *data = (char *)calloc(3 * width * height, sizeof(char));
 	if(data == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_MEMORY;
 	}
 
 	int rv;
@@ -351,7 +352,7 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(cd == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	mj_jpeg_t m;
@@ -440,7 +441,7 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(cd == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	mj_jpeg_t m;

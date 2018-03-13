@@ -32,7 +32,7 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
@@ -74,7 +74,7 @@ int mj_effect_pixelate(mj_jpeg_t *m) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	/* Set all the AC coefficients to 0 */
@@ -119,7 +119,7 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {
@@ -188,7 +188,7 @@ int mj_effect_luminance(mj_jpeg_t *m, int value) {
 	JCOEFPTR coefs;
 
 	if(m == NULL || m->coef == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	if(m->cinfo.jpeg_color_space != JCS_YCbCr) {

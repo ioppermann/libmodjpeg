@@ -50,7 +50,13 @@
 #define MJ_OPTION_ARITHMETRIC		(1 << 2)
 
 #define MJ_OK                           0
-#define MJ_ERR                          1
+#define MJ_ERR_MEMORY                   1
+#define MJ_ERR_NULL_DATA                2
+#define MJ_ERR_DROPON_DIMENSIONS        3
+#define MJ_ERR_UNSUPPORTED_COLORSPACE   4
+#define MJ_ERR_DECODE_JPEG              5
+#define MJ_ERR_ENCODE_JPEG              6
+#define MJ_ERR_FILEIO                   7
 
 typedef struct {
 	int h_samp_factor;

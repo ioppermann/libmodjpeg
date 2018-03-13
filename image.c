@@ -34,12 +34,12 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 
 	if(m == NULL) {
 		fprintf(stderr, "jpegimage not given\n");
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	if(buffer == NULL || len == 0) {
 		fprintf(stderr, "empty buffer\n");
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	mj_free_jpeg(m);
@@ -51,7 +51,7 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 	jerr.pub.error_exit = mj_jpeg_error_exit;
 	if(setjmp(jerr.setjmp_buffer)) {
 		jpeg_destroy_decompress(&m->cinfo);
-		return MJ_ERR;
+		return MJ_ERR_DECODE_JPEG;
 	}
 
 	jpeg_create_decompress(&m->cinfo);
@@ -94,7 +94,7 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 		default:
 			jpeg_destroy_decompress(&m->cinfo);
 			free(m);
-			return MJ_ERR;
+			return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
 
 	fprintf(stderr, "baseline: %s\n", m->cinfo.is_baseline == TRUE ? "TRUE" : "FALSE");
@@ -132,7 +132,7 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 
 	if(m == NULL) {
 		fprintf(stderr, "jpegimage not given\n");
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	FILE *fp;
@@ -143,7 +143,7 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 	fp = fopen(filename, "rb");
 	if(fp == NULL) {
 		fprintf(stderr, "can't open input file\n");
-		return MJ_ERR;
+		return MJ_ERR_FILEIO;
 	}
 
 	fstat(fileno(fp), &s);
@@ -153,7 +153,7 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 	buffer = (char *)calloc(len + 1, sizeof(char));
 	if(buffer == NULL) {
 		fprintf(stderr, "can't allocate memory for filedata\n");
-		return MJ_ERR;
+		return MJ_ERR_MEMORY;
 	}
 
 	fread(buffer, 1, len, fp);
@@ -172,7 +172,7 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 
 	if(m == NULL) {
 		fprintf(stderr, "jpegimage not given\n");
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	struct jpeg_compress_struct cinfo;
@@ -190,7 +190,7 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 			free(dest.buf);
 		}
 
-		return MJ_ERR;
+		return MJ_ERR_ENCODE_JPEG;
 	}
 
 	jpeg_create_compress(&cinfo);
@@ -254,13 +254,13 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 
 	if(m == NULL) {
 		fprintf(stderr, "jpegimage not given\n");
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	fp = fopen(filename, "wb");
 	if(fp == NULL) {
 		fprintf(stderr, "can't open output file\n");
-		return MJ_ERR;
+		return MJ_ERR_FILEIO;
 	}
 
 	mj_write_jpeg_to_buffer(m, &rebuffer, &relen, options);
@@ -315,7 +315,7 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 			free(dest.buf);
 		}
 
-		return MJ_ERR;
+		return MJ_ERR_ENCODE_JPEG;
 	}
 
 	jpeg_create_compress(&cinfo);
@@ -345,7 +345,7 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 	else {
 		fprintf(stderr, "invalid colorspace\n");
 		jpeg_destroy_compress(&cinfo);
-		return MJ_ERR;
+		return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
 
 	jpeg_set_defaults(&cinfo);
@@ -407,7 +407,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 		(*cinfo.err->format_message)((j_common_ptr)&cinfo, jpegerrorbuffer);
 		jpeg_destroy_decompress(&cinfo);
 		fclose(fp);
-		return MJ_ERR;
+		return MJ_ERR_DECODE_JPEG;
 	}
 
 	jpeg_create_decompress(&cinfo);
@@ -415,7 +415,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 	fp = fopen(filename, "rb");
 	if(fp == NULL) {
 		jpeg_destroy_decompress(&cinfo);
-		return MJ_ERR;
+		return MJ_ERR_FILEIO;
 	}
 
 	jpeg_stdio_src(&cinfo, fp);
@@ -435,7 +435,7 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 		default:
 			fprintf(stderr, "error: unsupported colorspace (%d)\n", want_colorspace);
 			jpeg_destroy_decompress(&cinfo);
-			return MJ_ERR;
+			return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
 
 	jpeg_start_decompress(&cinfo);

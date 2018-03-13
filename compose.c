@@ -33,7 +33,7 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL || d == NULL) {
-		return MJ_ERR;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	fprintf(stderr, "(offset_x, offset_y) = (%d, %d)\n", offset_x, offset_y);
@@ -183,18 +183,18 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
 	fprintf(stderr, "offset block (%d, %d)\n", block_x, block_y);
 
 	// compoese the dropon and the image
-	mj_compose_with_mask(m, &cd, block_x, block_y);
+	rv = mj_compose_with_mask(m, &cd, block_x, block_y);
 
 	mj_free_compileddropon(&cd);
 
-	return MJ_OK;
+	return rv;
 }
 
-void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
+int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL || cd == NULL) {
-		return;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	int c, k, l, i;
@@ -248,14 +248,14 @@ void mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x,
 		break;
 	}
 
-	return;
+	return MJ_OK;
 }
 
-void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
+int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
 	fprintf(stderr, "entering %s\n", __FUNCTION__);
 
 	if(m == NULL || cd == NULL) {
-		return;
+		return MJ_ERR_NULL_DATA;
 	}
 
 	int c, k, l, i;
@@ -371,6 +371,6 @@ void mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, in
 		}
 	}
 
-	return;
+	return MJ_OK;
 }
 
