@@ -275,7 +275,16 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
-````
+```
+
+In the [contrib](tree/master/contrib) directory you find an example program that implements all described functionality.
+
+```
+# cd contrib
+# cmake .
+# make
+```
+In case the jpeglib (or compatible) is installed in a non-standard location, use the same environment variable for cmake as described above.
 
 ## License
 
