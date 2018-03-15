@@ -238,13 +238,13 @@ This only works if the image was stored in YCbCr color space.
 All non-void functions return `MJ_OK` if everything went fine. If something went wrong the return value indicates the source
 of error:
 
-* MJ_ERR_MEMORY - failed to allocate enough memory
-* MJ_ERR_NULL_DATA - some provided pointers are NULL
-* MJ_ERR_DROPON_DIMENSIONS - the dimensions of the dropon image and alpha do not correspond
-* MJ_ERR_UNSUPPORTED_COLORSPACE - the JPEG is in an unsupported color space
-* MJ_ERR_DECODE_JPEG - error during decoding the JPEG
-* MJ_ERR_ENCODE_JPEG - error during encoding the JPEG
-* MJ_ERR_FILEIO - error while reading/writing from/to a file
+* `MJ_ERR_MEMORY` - failed to allocate enough memory
+* `MJ_ERR_NULL_DATA` - some provided pointers are NULL
+* `MJ_ERR_DROPON_DIMENSIONS` - the dimensions of the dropon image and alpha do not correspond
+* `MJ_ERR_UNSUPPORTED_COLORSPACE` - the JPEG is in an unsupported color space
+* `MJ_ERR_DECODE_JPEG` - error during decoding the JPEG
+* `MJ_ERR_ENCODE_JPEG` - error during encoding the JPEG
+* `MJ_ERR_FILEIO` - error while reading/writing from/to a file
 
 ### Supported color spaces
 
