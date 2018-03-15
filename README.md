@@ -2,6 +2,21 @@
 
 A library for JPEG masking and composition in the DCT domain.
 
+- [Background](#background)
+- [Compiling and installing](#compiling-and-installing)
+- [Synopsis](#synopsis)
+  - [Header](#header)
+  - [Dropon](#dropon)
+  - [Image](#image)
+  - [Composition](#composition)
+  - [Effect](#effect)
+  - [Return values](#return-values)
+  - [Supported color spaces](#supported-color-spaces)
+- [Example](#example)
+- [License](#license)
+- [Acknowledgement](#acknowledgement)
+- [References](#references)
+
 
 ## Background
 
@@ -43,7 +58,7 @@ values are used as in step 2.
 Only the overlay itself will experience a loss of quality because it needs to be transformed into the DCT domain
 with the same colorspace and sampling as the image it will be applied to.
 
-## Compiling and installing libmodjpeg
+## Compiling and installing
 
 libmodjpeg requires the [libjpeg](http://www.ijg.org/) v9 6? 7? 8? or compatible ([libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
 or [mozjpeg](https://github.com/mozilla/mozjpeg)), however the IJG libjpeg or
@@ -251,6 +266,7 @@ of error:
 
 libmodjpeg only supports the "basic" and most common color spaces in JPEG files: `JCS_RGB`, `JCS_GRAYSCALE`, and `JCS_YCbCr`
 
+
 ## Example
 
 ```C
@@ -287,9 +303,15 @@ In the [contrib](../../tree/master/contrib) directory you find an example progra
 ```
 In case the jpeglib (or compatible) is installed in a non-standard location, use the same environment variable for cmake as described above.
 
+
 ## License
 
 libmodjpeg is covered by the MIT license. Refer to [LICENSE](/blob/master/LICENSE).
+
+
+## Acknowledgement
+
+Made with :pizza: and :beers: in :ch:
 
 
 ## References
