@@ -111,60 +111,110 @@ channel is available or wanted. `blend` is a value for the translucency for the 
 void mj_free_dropon(mj_dropon_t *d);
 ```
 
-Free the memory consumed by the dropon. The dropon struct can be reused by applying `mj_init_dropon` to it.
+Free the memory consumed by the dropon. The dropon struct can be reused for another dropon.
 
 
 ```C
 struct mj_jpeg_t;
+```
+The `mj_jpeg_t` holds the JPEG the dropon will be applied to.
 
+```C
 void mj_init_jpeg(mj_jpeg_t *m);
+```
+Initialize the image in order to be ready to use.
+
+```C
 int  mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len);
+```
+Read a JPEG from a buffer. The buffer holds the JPEG bitstream of length `len` bytes.
+
+```C
 int  mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename);
+```
+Read a JPEG from a file denoted by `filename`.
 
+```C
 int  mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options);
+```
+Write an image to a buffer as a JPEG bitstream. The required memory for the buffer will be allocated and must be free'd after use. `len` holds
+the length of the buffer in bytes. `options` are encoding features that can be OR'ed:
+
+* `MJ_OPTION_NONE` - baseline encoding
+* `MJ_OPTION_OPTIMIZE` - optimize Huffman tables
+* `MJ_OPTION_PROGRESSIVE` - progressive encoding
+* `MJ_OPTION_ARITHMETRIC` - arithmetric encoding (overrules Huffman optimizations)
+
+```C
 int  mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options);
+```
+Write an image to ba file as a JPEG bitstream. The options are the same as for `mj_write_jpeg_to_buffer()`.
 
+```C
 void mj_free_jpeg(mj_jpeg_t *m);
+```
+Free the memory consumed by the JPEG. The jpeg struct can be reused for another image.
 
+```C
 int  mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y);
+```
+Compose an image with a dropon. Use these OR'ed values for `align`:
 
+* `MJ_ALIGN_LEFT` - align the dropon to the left border of the image
+* `MJ_ALIGN_RIGHT` - align the dropon to the right border of the image
+* `MJ_ALIGN_TOP` - align the dropon to the top border of the image
+* `MJ_ALIGN_BOTTOM` - align the dropon to the bottom border of the image
+* `MJ_ALIGN_CENTER` - align the dropon to the center of the image
+
+Use `offset_x` and `offset_y` to move the dropon relative to the alignment.
+
+```C
 int  mj_effect_grayscale(mj_jpeg_t *m);
+```
+Convert the image to grayscale. This only works if the image was stored in YCbCr color space. It will keep all three components.
+
+```C
 int  mj_effect_pixelate(mj_jpeg_t *m);
+```
+Keep only the DC coefficients from the components. This will remove the details from the image and keep only the "base" color of each block.
+
+```C
 int  mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value);
+```
+Colorize the image. Use `cb_value` to colorize in blue (positive value) or yellow (negative value). Use `cr_value` to colorize in
+red (positive value) or green (negative value). This only works if the image was stored in YCbCr color space.
+
+```C
 int  mj_effect_luminance(mj_jpeg_t *m, int value);
 ```
+Change the brightness of the image. Use a positive value to brighten or a negative value to darken then image.
+This only works if the image was stored in YCbCr color space.
 
-## Using libmodjpeg
-
-```C
-struct mj_dropon_t d;
-
-mj_init_dropon(&d);
-mj_read_dropon_from_jpeg(&d, "logo.jpg", NULL, 50);
-```
+## Example
 
 ```C
-struct mj_jpeg_t m;
+#include <libmodjpeg.h>
 
-mj_init_jpeg(&m);
-mj_read_jpeg_from_file(&m, "in.jpg");
-```
+int main(int argc, char **argv) {
+	struct mj_dropon_t d;
 
-```C
-mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
-```
+	mj_init_dropon(&d);
+	mj_read_dropon_from_jpeg(&d, "logo.jpg", NULL, 50);
 
-`MJ_ALIGN_LEFT`, `MJ_ALIGN_RIGHT`, `MJ_ALIGN_TOP`, `MJ_ALIGN_BOTTOM`, `MJ_ALIGN_CENTER`
+	struct mj_jpeg_t m;
 
-```C
-mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
-```
+	mj_init_jpeg(&m);
+	mj_read_jpeg_from_file(&m, "in.jpg");
 
-`MJ_OPTION_NONE`, `MJ_OPTION_OPTIMIZE`, `MJ_OPTION_PROGRESSIVE`, `MJ_OPTION_ARITHMETRIC`
+	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
 
-```C
-mj_free_jpeg(&m);
-mj_free_dropon(&d);
+	mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
+
+	mj_free_jpeg(&m);
+	mj_free_dropon(&d);
+
+	return 0;
+}
 ````
 
 ## References
