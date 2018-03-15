@@ -311,7 +311,7 @@ libmodjpeg is covered by the MIT license. Refer to [LICENSE](/blob/master/LICENS
 
 ## Acknowledgement
 
-Made with :pizza: and :beers: in :ch:
+Made with :pizza: and :beers: in Switzerland.
 
 
 ## References
