@@ -2,6 +2,7 @@
 
 A library for JPEG masking and composition in the DCT domain.
 
+
 ## Background
 
 With libmodjpeg you can overlay a (masked) image onto an existing JPEG as lossless as possible. Changes in the JPEG only
@@ -56,7 +57,7 @@ libjpeg-turbo are recommended because mozjpeg will always produce progressive JP
 ```
 
 In case libjpeg (or compatible) are installed in a non-standard location you can set the environment variable `CMAKE_PREFIX_PATH`
-to the location where libjpeg is installed:
+to the location where the libjpeg is installed, e.g.:
 
 ```
 # env CMAKE_PREFIX_PATH=/usr/local/opt/jpeg-turbo/ cmake .
@@ -64,11 +65,15 @@ to the location where libjpeg is installed:
 
 ## Synopsis
 
+### Header
+
 ```C
 #include <libmodjpeg.h>
 ```
 
 Include the header file in order to have access to the library.
+
+### Dropon
 
 ```C
 struct mj_dropon_t;
@@ -80,10 +85,16 @@ A "dropon" denotes the overlay that will be applied to an image and is defined b
 void mj_init_dropon(mj_dropon_t *d);
 ```
 
-Initialize the dropon in order to be ready for use.
+Initialize the dropon in order to make it ready for use.
 
 ```C
-int  mj_read_dropon_from_buffer(mj_dropon_t *d, const char *rawdata, unsigned int colorspace, size_t width, size_t height, short blend);
+int mj_read_dropon_from_buffer(
+	mj_dropon_t *d,
+	const char *rawdata,
+	unsigned int colorspace,
+	size_t width,
+	size_t height,
+	short blend);
 ```
 
 Read a dropon from a buffer. The buffer is an array of chars holding the raw image data in the given color space
@@ -97,14 +108,18 @@ Read a dropon from a buffer. The buffer is an array of chars holding the raw ima
 #define MJ_COLORSPACE_YCCA              6  // [0] = Y0, [1] = Cb0, [2] = Cr0, [3] = A0, [4] = Y1, ...
 ```
 
-`width` and `height` are dimensions of the raw image. `blend` is a value in [0, 255] for the translucency for the dropon if no alpha
+`width` and `height` are the dimensions of the raw image. `blend` is a value in [0, 255] for the translucency for the dropon if no alpha
 channel is given, where 0 is fully transparent (the dropon will not be applied) and 255 is fully opaque.
 
 ```C
-int  mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *filename, const char *mask, short blend);
+int mj_read_dropon_from_jpeg(
+	mj_dropon_t *d,
+	const char *filename,
+	const char *mask,
+	short blend);
 ```
 
-Read a dropon from a JPEG file (`filename`). The alpha channel is given by the second JPEG file (`mask`). Use `NULL` is no alpha
+Read a dropon from a JPEG file (`filename`). The alpha channel is given by the second JPEG file (`mask`). Use `NULL` if no alpha
 channel is available or wanted. `blend` is a value for the translucency for the dropon if no alpha channel is given.
 
 ```C
@@ -113,29 +128,39 @@ void mj_free_dropon(mj_dropon_t *d);
 
 Free the memory consumed by the dropon. The dropon struct can be reused for another dropon.
 
+### Image
 
 ```C
 struct mj_jpeg_t;
 ```
-The `mj_jpeg_t` holds the JPEG the dropon will be applied to.
+The `mj_jpeg_t` holds the JPEG a dropon can be applied to.
 
 ```C
 void mj_init_jpeg(mj_jpeg_t *m);
 ```
-Initialize the image in order to be ready to use.
+Initialize the image in order to make it ready for use.
 
 ```C
-int  mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len);
+int mj_read_jpeg_from_buffer(
+	mj_jpeg_t *m,
+	const char *buffer,
+	size_t len);
 ```
 Read a JPEG from a buffer. The buffer holds the JPEG bitstream of length `len` bytes.
 
 ```C
-int  mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename);
+int mj_read_jpeg_from_file(
+	mj_jpeg_t *m,
+	const char *filename);
 ```
 Read a JPEG from a file denoted by `filename`.
 
 ```C
-int  mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options);
+int mj_write_jpeg_to_buffer(
+	mj_jpeg_t *m,
+	char **buffer,
+	size_t *len,
+	int options);
 ```
 Write an image to a buffer as a JPEG bitstream. The required memory for the buffer will be allocated and must be free'd after use. `len` holds
 the length of the buffer in bytes. `options` are encoding features that can be OR'ed:
@@ -146,17 +171,27 @@ the length of the buffer in bytes. `options` are encoding features that can be O
 * `MJ_OPTION_ARITHMETRIC` - arithmetric encoding (overrules Huffman optimizations)
 
 ```C
-int  mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options);
+int mj_write_jpeg_to_file(
+	mj_jpeg_t *m,
+	char *filename,
+	int options);
 ```
-Write an image to ba file as a JPEG bitstream. The options are the same as for `mj_write_jpeg_to_buffer()`.
+Write an image to a file as a JPEG bitstream. The options are the same as for `mj_write_jpeg_to_buffer()`.
 
 ```C
 void mj_free_jpeg(mj_jpeg_t *m);
 ```
 Free the memory consumed by the JPEG. The jpeg struct can be reused for another image.
 
+### Composition
+
 ```C
-int  mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y);
+int  mj_compose(
+	mj_jpeg_t *m,
+	mj_dropon_t *d,
+	unsigned int align,
+	int offset_x,
+	int offset_y);
 ```
 Compose an image with a dropon. Use these OR'ed values for `align`:
 
@@ -166,29 +201,54 @@ Compose an image with a dropon. Use these OR'ed values for `align`:
 * `MJ_ALIGN_BOTTOM` - align the dropon to the bottom border of the image
 * `MJ_ALIGN_CENTER` - align the dropon to the center of the image
 
-Use `offset_x` and `offset_y` to move the dropon relative to the alignment.
+Use `offset_x` and `offset_y` to move the dropon relative to the alignment. If parts of the dropon will be outside of the area
+of the image, it will be cropped accordingly, e.g. you can apply a dropon that is bigger than the image.
+
+### Effects
 
 ```C
-int  mj_effect_grayscale(mj_jpeg_t *m);
+int mj_effect_grayscale(mj_jpeg_t *m);
 ```
 Convert the image to grayscale. This only works if the image was stored in YCbCr color space. It will keep all three components.
 
 ```C
-int  mj_effect_pixelate(mj_jpeg_t *m);
+int mj_effect_pixelate(mj_jpeg_t *m);
 ```
 Keep only the DC coefficients from the components. This will remove the details from the image and keep only the "base" color of each block.
 
 ```C
-int  mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value);
+int mj_effect_tint(
+	mj_jpeg_t *m,
+	int cb_value,
+	int cr_value);
 ```
 Colorize the image. Use `cb_value` to colorize in blue (positive value) or yellow (negative value). Use `cr_value` to colorize in
 red (positive value) or green (negative value). This only works if the image was stored in YCbCr color space.
 
 ```C
-int  mj_effect_luminance(mj_jpeg_t *m, int value);
+int mj_effect_luminance(
+	mj_jpeg_t *m,
+	int value);
 ```
 Change the brightness of the image. Use a positive value to brighten or a negative value to darken then image.
 This only works if the image was stored in YCbCr color space.
+
+### Return values
+
+All non-void functions return `MJ_OK` if everything went fine. If something went wrong the return value indicates the source
+of error:
+
+* MJ_ERR_MEMORY - failed to allocate enough memory
+* MJ_ERR_NULL_DATA - some provided pointers are NULL
+* MJ_ERR_DROPON_DIMENSIONS - the dimensions of the dropon image and alpha do not correspond
+* MJ_ERR_UNSUPPORTED_COLORSPACE - the JPEG is in an unsupported color space
+* MJ_ERR_DECODE_JPEG - error during decoding the JPEG
+* MJ_ERR_ENCODE_JPEG - error during encoding the JPEG
+* MJ_ERR_FILEIO - error while reading/writing from/to a file
+
+### Supported color spaces
+
+libmodjpeg only supports the "basic" and most common color spaces in JPEG files: `JCS_RGB`, `JCS_GRAYSCALE`, and `JCS_YCbCr`
 
 ## Example
 
@@ -216,6 +276,11 @@ int main(int argc, char **argv) {
 	return 0;
 }
 ````
+
+## License
+
+libmodjpeg is covered by the MIT license. Refer to [LICENSE](/blob/master/LICENSE).
+
 
 ## References
 
