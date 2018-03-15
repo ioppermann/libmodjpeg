@@ -277,7 +277,7 @@ int main(int argc, char **argv) {
 }
 ```
 
-In the [contrib](tree/master/contrib) directory you find an example program that implements all described functionality.
+In the [contrib](../../tree/master/contrib) directory you find an example program that implements all described functionality.
 
 ```
 # cd contrib
