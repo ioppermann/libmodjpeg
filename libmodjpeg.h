@@ -27,8 +27,8 @@
 
 #include <jpeglib.h>
 
-#define MJ_COLORSPACE_RGBA              1
-#define MJ_COLORSPACE_RGB               2
+#define MJ_COLORSPACE_RGB               1
+#define MJ_COLORSPACE_RGBA              2
 #define MJ_COLORSPACE_GRAYSCALE         3
 #define MJ_COLORSPACE_GRAYSCALEA        4
 #define MJ_COLORSPACE_YCC               5
