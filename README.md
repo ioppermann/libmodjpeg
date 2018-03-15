@@ -45,8 +45,9 @@ with the same colorspace and sampling as the image it will be applied to.
 
 ## Compiling and installing libmodjpeg
 
-libmodjpeg requires the libjpeg v9 6? 7? 8? or compatible (libjpeg-turbo or mozjpeg), however the IJG libjpeg or
-libjpeg-turbo are recommended because mozjpeg will always produce progressive JPEGs which may not be desired.
+libmodjpeg requires the [libjpeg](http://www.ijg.org/) v9 6? 7? 8? or compatible ([libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
+or [mozjpeg](https://github.com/mozilla/mozjpeg)), however the IJG libjpeg or
+libjpeg-turbo are recommended because mozjpeg will always produce progressive JPEGs which is slower and may not be desired.
 
 ```
 # git clone https://github.com/ioppermann/libmodjpeg.git
@@ -295,5 +296,3 @@ libmodjpeg is covered by the MIT license. Refer to [LICENSE](/blob/master/LICENS
 
 [1] R. Jonsson, "Efficient DCT Domain Implementation of Picture Masking
     and Composition and Compositing", ICIP (2) 1997, pp. 366-369
-
-[2] jpeglib http://www.ijg.org/
