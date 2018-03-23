@@ -30,15 +30,11 @@
 #include "jpeg.h"
 
 int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(m == NULL) {
-		fprintf(stderr, "jpegimage not given\n");
 		return MJ_ERR_NULL_DATA;
 	}
 
 	if(buffer == NULL || len == 0) {
-		fprintf(stderr, "empty buffer\n");
 		return MJ_ERR_NULL_DATA;
 	}
 
@@ -79,17 +75,10 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 	m->width = m->cinfo.image_width;
 	m->height = m->cinfo.image_height;
 
-	fprintf(stderr, "%dx%dpx, %d components, color_space: %d\n", m->width, m->height, m->cinfo.num_components, m->cinfo.jpeg_color_space);
-
 	switch(m->cinfo.jpeg_color_space) {
 		case JCS_GRAYSCALE:
-			fprintf(stderr, "colorspace: GRAYSCALE (%d)\n", JCS_GRAYSCALE);
-			break;
 		case JCS_RGB:
-			fprintf(stderr, "colorspace: RGB (%d)\n", JCS_RGB);
-			break;
 		case JCS_YCbCr:
-			fprintf(stderr, "colorspace: YCbCr (%d)\n", JCS_YCbCr);
 			break;
 		default:
 			jpeg_destroy_decompress(&m->cinfo);
@@ -97,14 +86,7 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 			return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
 
-	fprintf(stderr, "baseline: %s\n", m->cinfo.is_baseline == TRUE ? "TRUE" : "FALSE");
-	fprintf(stderr, "progressive: %s\n", m->cinfo.progressive_mode == TRUE ? "TRUE" : "FALSE");
-	fprintf(stderr, "arithmetric: %s\n", m->cinfo.arith_code == TRUE ? "TRUE" : "FALSE");
-	fprintf(stderr, "block size: %d\n", m->cinfo.block_size);
-
 	m->coef = jpeg_read_coefficients(&m->cinfo);
-
-	fprintf(stderr, "%dx%dpx, %d components: ", m->width, m->height, m->cinfo.num_components);
 
 	m->sampling.max_h_samp_factor = m->cinfo.max_h_samp_factor;
 	m->sampling.max_v_samp_factor = m->cinfo.max_v_samp_factor;
@@ -122,16 +104,11 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 		m->sampling.samp_factor[c].v_samp_factor = component->v_samp_factor;
 	}
 
-	fprintf(stderr, "\n");
-
 	return MJ_OK;
 }
 
 int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(m == NULL) {
-		fprintf(stderr, "jpegimage not given\n");
 		return MJ_ERR_NULL_DATA;
 	}
 
@@ -142,7 +119,6 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 
 	fp = fopen(filename, "rb");
 	if(fp == NULL) {
-		fprintf(stderr, "can't open input file\n");
 		return MJ_ERR_FILEIO;
 	}
 
@@ -152,7 +128,6 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 
 	buffer = (char *)calloc(len + 1, sizeof(char));
 	if(buffer == NULL) {
-		fprintf(stderr, "can't allocate memory for filedata\n");
 		return MJ_ERR_MEMORY;
 	}
 
@@ -168,10 +143,7 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 }
 
 int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(m == NULL) {
-		fprintf(stderr, "jpegimage not given\n");
 		return MJ_ERR_NULL_DATA;
 	}
 
@@ -246,29 +218,22 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 }
 
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	FILE *fp;
 	char *rebuffer = NULL;
 	size_t relen = 0;
 
 	if(m == NULL) {
-		fprintf(stderr, "jpegimage not given\n");
 		return MJ_ERR_NULL_DATA;
 	}
 
 	fp = fopen(filename, "wb");
 	if(fp == NULL) {
-		fprintf(stderr, "can't open output file\n");
 		return MJ_ERR_FILEIO;
 	}
 
 	mj_write_jpeg_to_buffer(m, &rebuffer, &relen, options);
 
-	fprintf(stderr, "restored image of len %zu\n", relen);
-
 	fwrite(rebuffer, 1, relen, fp);
-
 	fclose(fp);
 
 	free(rebuffer);
@@ -285,8 +250,6 @@ void mj_init_jpeg(mj_jpeg_t *m) {
 }
 
 void mj_free_jpeg(mj_jpeg_t *m) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(m == NULL) {
 		return;
 	}
@@ -299,8 +262,6 @@ void mj_free_jpeg(mj_jpeg_t *m) {
 }
 
 int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	struct jpeg_compress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
 	struct mj_jpeg_dest_mgr dest;
@@ -343,7 +304,6 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 		cinfo.in_color_space = JCS_GRAYSCALE;
 	}
 	else {
-		fprintf(stderr, "invalid colorspace\n");
 		jpeg_destroy_compress(&cinfo);
 		return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
@@ -394,8 +354,6 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 }
 
 int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int want_colorspace, const char *filename) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	FILE *fp;
 	struct jpeg_decompress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
@@ -433,7 +391,6 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 			cinfo.out_color_space = JCS_GRAYSCALE;
 			break;
 		default:
-			fprintf(stderr, "error: unsupported colorspace (%d)\n", want_colorspace);
 			jpeg_destroy_decompress(&cinfo);
 			return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
@@ -442,8 +399,6 @@ int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height
 
 	*width = cinfo.output_width;
 	*height = cinfo.output_height;
-
-	fprintf(stderr, "decode jpeg: %dx%dpx with %d components\n", *width, *height, cinfo.output_components);
 
 	int row_stride = cinfo.output_width * cinfo.output_components;
 

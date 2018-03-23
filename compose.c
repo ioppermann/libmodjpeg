@@ -30,13 +30,9 @@
 #include "compose.h"
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(m == NULL || d == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
-
-	fprintf(stderr, "(offset_x, offset_y) = (%d, %d)\n", offset_x, offset_y);
 
 	if(d->blend == MJ_BLEND_NONE) {
 		return MJ_OK;
@@ -135,8 +131,6 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
 		crop_h = m->height - crop_y - position_y;
 	}
 
-	fprintf(stderr, "crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
-
 	// we don't need to do anything if the crop width and height are zero
 	if(crop_w == 0 || crop_h == 0) {
 		return MJ_OK;
@@ -154,10 +148,6 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
 	if(blockoffset_y < 0) {
 		blockoffset_y = 0;
 	}
-
-	fprintf(stderr, "block offset (%d, %d)\n", blockoffset_x, blockoffset_y);
-	
-	fprintf(stderr, "compiling dropon\n");
 
 	// with all these information together with the colorspace and sampling setting from the image
 	// we can generate the apropriate dropon.
@@ -180,8 +170,6 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
 		block_y = 0;
 	}
 
-	fprintf(stderr, "offset block (%d, %d)\n", block_x, block_y);
-
 	// compoese the dropon and the image
 	rv = mj_compose_with_mask(m, &cd, block_x, block_y);
 
@@ -191,8 +179,6 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
 }
 
 int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(m == NULL || cd == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -220,8 +206,6 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, 
 		width_offset = block_x * component_m->h_samp_factor;
 		height_offset = block_y * component_m->v_samp_factor;
 
-		//fprintf(stderr, "*component %d (%d,%d) %p\n", c, width_in_blocks, height_in_blocks, imagecomp->blocks);
-
 		// copy the values from the dropon into the image
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks_m = (*cinfo_m->mem->access_virt_barray)((j_common_ptr)&cinfo_m, m->coef[c], height_offset + l, 1, TRUE);
@@ -229,8 +213,6 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, 
 			for(k = 0; k < width_in_blocks; k++) {
 				coefs_m = blocks_m[0][width_offset + k];
 				imageblock = imagecomp->blocks[width_in_blocks * l + k];
-
-				//fprintf(stderr, "*component (%d,%d) %p\n", l, k, imageblock);
 
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] = (int)imageblock[i + 0] / component_m->quant_table->quantval[i + 0];
@@ -252,8 +234,6 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, 
 }
 
 int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int block_y) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(m == NULL || cd == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -283,8 +263,6 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int
 		width_offset = block_x * component_m->h_samp_factor;
 		height_offset = block_y * component_m->v_samp_factor;
 
-		fprintf(stderr, "component %d: (%d, %d) %d %d\n", c, width_in_blocks, height_in_blocks, width_offset, height_offset);
-
 		// blend the values from the dropon with the image
 		for(l = 0; l < height_in_blocks; l++) {
 			blocks_m = (*cinfo_m->mem->access_virt_barray)((j_common_ptr)&cinfo_m, m->coef[c], height_offset + l, 1, TRUE);
@@ -293,16 +271,7 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int
 				coefs_m = blocks_m[0][width_offset + k];
 				imageblock = imagecomp->blocks[width_in_blocks * l + k];
 				alphablock = alphacomp->blocks[width_in_blocks * l + k];
-/*
-				int p, q;
 
-				for(p = 0; p < DCTSIZE; p++) {
-					for(q = 0; q < DCTSIZE; q++) {
-						fprintf(stderr, "%.2f ", imageblock[DCTSIZE * p + q]);
-					}
-					fprintf(stderr, "\n");
-				}
-*/
 				// de-quantize
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] *= component_m->quant_table->quantval[i + 0];
@@ -316,7 +285,6 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int
 				}
 
 				// x = x0 - x1
-				//fprintf(stderr, "component %d (%d,%d): x0 - x1 | ", c, l, k);
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					X[i + 0] = imageblock[i + 0] - coefs_m[i + 0];
 					X[i + 1] = imageblock[i + 1] - coefs_m[i + 1];
@@ -331,7 +299,6 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int
 				memset(Y, 0, DCTSIZE2 * sizeof(float));
 
 				// y' = w * x (Faltung)
-				//fprintf(stderr, "w * x | ");
 				for(i = 0; i < DCTSIZE; i++) {
 					mj_convolve(X, Y, alphablock[(i * DCTSIZE) + 0], i, 0);
 					mj_convolve(X, Y, alphablock[(i * DCTSIZE) + 1], i, 1);
@@ -344,7 +311,6 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int
 				}
 
 				// y = x1 + y'
-				//fprintf(stderr, "x1 + y'\n");
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					coefs_m[i + 0] += (int)Y[i + 0];
 					coefs_m[i + 1] += (int)Y[i + 1];
@@ -373,4 +339,3 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int
 
 	return MJ_OK;
 }
-

@@ -29,8 +29,6 @@
 #include "dropon.h"
 
 int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char *alpha_file, short blend) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	char *image_buffer = NULL, *alpha_buffer = NULL, *buffer = NULL;
 	int colorspace, rv;
 	int image_width = 0, alpha_width = 0;
@@ -39,27 +37,17 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 
 	rv = mj_decode_jpeg_to_buffer(&image_buffer, &len, &image_width, &image_height, MJ_COLORSPACE_RGB, image_file);
 	if(rv != MJ_OK) {
-		fprintf(stderr, "can't decode jpeg from %s\n", image_file);
-
 		return rv;
 	}
-
-	fprintf(stderr, "image: %dx%d pixel, %zu bytes (%zu bytes/pixel)\n", image_width, image_height, len, (size_t)(len / (image_width * image_height)));
 
 	if(alpha_file != NULL) {
 		rv = mj_decode_jpeg_to_buffer(&alpha_buffer, &len, &alpha_width, &alpha_height, MJ_COLORSPACE_GRAYSCALE, alpha_file);
 		if(rv != MJ_OK) {
-			fprintf(stderr, "can't decode jpeg from %s\n", alpha_file);
-
 			free(image_buffer);
 			return rv;
 		}
 
-		fprintf(stderr, "alpha: %dx%d pixel, %zu bytes (%zu bytes/pixel)\n", alpha_width, alpha_height, len, (size_t)(len / (alpha_width * alpha_height)));
-
 		if(image_width != alpha_width || image_height != alpha_height) {
-			fprintf(stderr, "error: dimensions of image and alpha need to be the same!\n");
-
 			free(image_buffer);
 			free(alpha_buffer);
 
@@ -68,8 +56,6 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 
 		buffer = (char *)calloc(4 * image_width * image_height, sizeof(char));
 		if(buffer == NULL) {
-			fprintf(stderr, "can't allocate memory for buffer\n");
-
 			free(image_buffer);
 			free(alpha_buffer);
 
@@ -106,8 +92,6 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 }
 
 int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned int colorspace, size_t width, size_t height, short blend) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(d == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -134,7 +118,6 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 		case MJ_COLORSPACE_GRAYSCALEA:
 			break;
 		default:
-			fprintf(stderr, "unsupported colorspace");
 			return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
 
@@ -149,7 +132,6 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 	d->image = (char *)calloc(nsamples, sizeof(char));
 	if(d->image == NULL) {
 		mj_free_dropon(d);
-		fprintf(stderr, "can't allocate buffer");
 		return MJ_ERR_MEMORY;
 	}
 
@@ -157,7 +139,6 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 	d->alpha = (char *)calloc(nsamples, sizeof(char));
 	if(d->alpha == NULL) {
 		mj_free_dropon(d);
-		fprintf(stderr, "can't allocate buffer");
 		return MJ_ERR_MEMORY;
 	}
 
@@ -233,8 +214,6 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 }
 
 int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *sampling, int blockoffset_x, int blockoffset_y, int crop_x, int crop_y, int crop_w, int crop_h) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(cd == NULL || d == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -254,8 +233,6 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	// crop/extend the dropon
 
-	fprintf(stderr, "crop (%d, %d, %d, %d)\n", crop_x, crop_y, crop_w, crop_h);
-
 	int width = crop_w + blockoffset_x;
 	int padding = width % sampling->h_factor;
 	if(padding != 0) {
@@ -267,8 +244,6 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	if(padding != 0) {
 		height += sampling->v_factor - padding;
 	}
-
-	fprintf(stderr, "(width, height) = (%d, %d)\n", width, height);
 
 	char *data = (char *)calloc(3 * width * height, sizeof(char));
 	if(data == NULL) {
@@ -295,8 +270,6 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		free(data);
 		return rv;
 	}
-
-	fprintf(stderr, "encoded len: %zu\n", len);
 
 	// read the coefficients from the encoded dropon
 	rv = mj_read_droponimage_from_buffer(cd, buffer, len);
@@ -337,8 +310,6 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		return rv;
 	}
 
-	fprintf(stderr, "encoded len: %zu\n", len);
-
 	// read the coefficients from the encoded dropon mask
 	rv = mj_read_droponalpha_from_buffer(cd, buffer, len);
 
@@ -349,8 +320,6 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 }
 
 int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(cd == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -372,8 +341,6 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
 
-	fprintf(stderr, "dropon image: %dx%dpx, %d components: ", m.cinfo.output_width, m.cinfo.output_height, m.cinfo.num_components);
-
 	cd->image_ncomponents = m.cinfo.num_components;
 	cd->image_colorspace = m.cinfo.jpeg_color_space;
 	cd->image = (mj_component_t *)calloc(cd->image_ncomponents, sizeof(mj_component_t));
@@ -381,8 +348,6 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 	for(c = 0; c < m.cinfo.num_components; c++) {
 		component = &m.cinfo.comp_info[c];
 		comp = &cd->image[c];
-
-		fprintf(stderr, "(%d,%d) ", component->h_samp_factor, component->v_samp_factor);
 
 		comp->h_samp_factor = component->h_samp_factor;
 		comp->v_samp_factor = component->v_samp_factor;
@@ -393,25 +358,13 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 		comp->nblocks = comp->width_in_blocks * comp->height_in_blocks;
 		comp->blocks = (mj_block_t **)calloc(comp->nblocks, sizeof(mj_block_t *));
 
-		fprintf(stderr, "%dx%d blocks ", comp->width_in_blocks, comp->height_in_blocks);
-
 		for(l = 0; l < comp->height_in_blocks; l++) {
 			blocks = (*m.cinfo.mem->access_virt_barray)((j_common_ptr)&m.cinfo, m.coef[c], l, 1, TRUE);
 
 			for(k = 0; k < comp->width_in_blocks; k++) {
 				b = (mj_block_t *)calloc(64, sizeof(mj_block_t));
 				coefs = blocks[0][k];
-/*
-				fprintf(stderr, "\ncomponent %d (%d,%d) %p\n", c, l, k, b);
 
-				int p, q;
-				for(p = 0; p < DCTSIZE; p++) {
-					for(q = 0; q < DCTSIZE; q++) {
-						fprintf(stderr, "%5d ", coefs[DCTSIZE * p + q]);
-					}
-					fprintf(stderr, "\n");
-				}
-*/
 				for(i = 0; i < DCTSIZE2; i += 8) {
 					b[i + 0] = (float)coefs[i + 0];
 					b[i + 1] = (float)coefs[i + 1];
@@ -428,18 +381,12 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 		}
 	}
 
-	fprintf(stderr, "\n");
-
-	//mj_write_jpeg_to_file(m, "../images/dropon_image.jpg", MJ_OPTION_NONE);
-
 	mj_free_jpeg(&m);
 
 	return MJ_OK;
 }
 
 int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(cd == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -461,16 +408,12 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 	JBLOCKARRAY blocks;
 	JCOEFPTR coefs;
 
-	fprintf(stderr, "dropon alpha: %dx%dpx, %d components: ", m.cinfo.output_width, m.cinfo.output_height, m.cinfo.num_components);
-
 	cd->alpha_ncomponents = m.cinfo.num_components;
 	cd->alpha = (mj_component_t *)calloc(cd->alpha_ncomponents, sizeof(mj_component_t));
 
 	for(c = 0; c < m.cinfo.num_components; c++) {
 		component = &m.cinfo.comp_info[c];
 		comp = &cd->alpha[c];
-
-		fprintf(stderr, "(%d,%d) ", component->h_samp_factor, component->v_samp_factor);
 
 		comp->h_samp_factor = component->h_samp_factor;
 		comp->v_samp_factor = component->v_samp_factor;
@@ -481,8 +424,6 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 		comp->nblocks = comp->width_in_blocks * comp->height_in_blocks;
 		comp->blocks = (mj_block_t **)calloc(comp->nblocks, sizeof(mj_block_t *));
 
-		fprintf(stderr, "%dx%d blocks ", comp->width_in_blocks, comp->height_in_blocks);
-
 		for(l = 0; l < comp->height_in_blocks; l++) {
 			blocks = (*m.cinfo.mem->access_virt_barray)((j_common_ptr)&m.cinfo, m.coef[c], l, 1, TRUE);
 
@@ -491,22 +432,11 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 				coefs = blocks[0][k];
 
 				coefs[0] += 1024;
-/*
-				fprintf(stderr, "component %d (%d,%d)\n", c, l, k);
 
-				int p, q;
-				for(p = 0; p < DCTSIZE; p++) {
-					for(q = 0; q < DCTSIZE; q++) {
-						fprintf(stderr, "%4d ", coefs[DCTSIZE * p + q]);
-					}
-					fprintf(stderr, "\n");
-				}
-*/
-				/*
 				// w'(j, i) = w(j, i) * 1/255 * c(i) * c(j) * 1/4
 				// the factor 1/4 comes from V(i) and V(j)
 				// => 1/255 * 1/4 = 1/1020
-				*/
+
 				b[0] = (float)coefs[0] * (0.3535534 * 0.3535534 / 1020.0);
 				b[1] = (float)coefs[1] * (0.3535534 * 0.5 / 1020.0);
 				b[2] = (float)coefs[2] * (0.3535534 * 0.5 / 1020.0);
@@ -532,10 +462,6 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 		}
 	}
 
-	fprintf(stderr, "\n");
-
-	//mj_write_jpeg_to_file(m, "../images/dropon_alpha.jpg", MJ_OPTION_NONE);
-
 	mj_free_jpeg(&m);
 
 	return MJ_OK;
@@ -552,8 +478,6 @@ void mj_init_dropon(mj_dropon_t *d) {
 }
 
 void mj_free_dropon(mj_dropon_t *d) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(d == NULL) {
 		return;
 	}
@@ -572,8 +496,6 @@ void mj_free_dropon(mj_dropon_t *d) {
 }
 
 void mj_free_compileddropon(mj_compileddropon_t *cd) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(cd == NULL) {
 		return;
 	}
@@ -600,8 +522,6 @@ void mj_free_compileddropon(mj_compileddropon_t *cd) {
 }
 
 void mj_free_component(mj_component_t *c) {
-	fprintf(stderr, "entering %s\n", __FUNCTION__);
-
 	if(c == NULL) {
 		return;
 	}
