@@ -273,20 +273,28 @@ libmodjpeg only supports the "basic" and most common color spaces in JPEG files:
 #include <libmodjpeg.h>
 
 int main(int argc, char **argv) {
+	// Initialize dropon struct
 	struct mj_dropon_t d;
-
 	mj_init_dropon(&d);
+
+	// Read a dropon from a JPEG, without mask and with 50% translucency
 	mj_read_dropon_from_jpeg(&d, "logo.jpg", NULL, 50);
 
+	// Initialize JPEG image struct
 	struct mj_jpeg_t m;
-
 	mj_init_jpeg(&m);
+
+	// Read a JPEG image from a file
 	mj_read_jpeg_from_file(&m, "in.jpg");
 
+	// Place the dropon in the bottom right corner of the JPEG image
+	// with 10px distance to the bottom and left border
 	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
 
+	// Write the JPEG image to a file with optimzed Hufman tables and progressive mode
 	mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
 
+	// Free the dropon and JPEG image structs
 	mj_free_jpeg(&m);
 	mj_free_dropon(&d);
 
