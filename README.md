@@ -265,6 +265,7 @@ of error:
 * `MJ_ERR_DECODE_JPEG` - error during decoding the JPEG
 * `MJ_ERR_ENCODE_JPEG` - error during encoding the JPEG
 * `MJ_ERR_FILEIO` - error while reading/writing from/to a file
+* `MJ_ERR_IMAGE_SIZE` - the dimensions of the provided image are too large 
 
 ### Supported color spaces
 
