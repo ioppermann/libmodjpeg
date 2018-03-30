@@ -62,10 +62,10 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 			return MJ_ERR_MEMORY;
 		}
 
-		int v;
+		size_t v;
 		char *t = buffer, *p = image_buffer, *q = alpha_buffer;
 
-		for(v = 0; v < (image_width * image_height); v++) {
+		for(v = 0; v < ((size_t)image_width * (size_t)image_height); v++) {
 			*t++ = *p++;
 			*t++ = *p++;
 			*t++ = *p++;
@@ -91,7 +91,7 @@ int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *image_file, const char 
 	return rv;
 }
 
-int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned int colorspace, size_t width, size_t height, short blend) {
+int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned int colorspace, int width, int height, short blend) {
 	if(d == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -149,7 +149,7 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 	size_t v = 0;
 
 	if(colorspace == MJ_COLORSPACE_RGBA || colorspace == MJ_COLORSPACE_YCCA) {
-		for(v = 0; v < (width * height); v++) {
+		for(v = 0; v < ((size_t)width * (size_t)height); v++) {
 			*pimage++ = *p++;
 			*pimage++ = *p++;
 			*pimage++ = *p++;
@@ -169,7 +169,7 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 		d->blend = MJ_BLEND_NONUNIFORM;
 	}
 	else if(colorspace == MJ_COLORSPACE_RGB || colorspace == MJ_COLORSPACE_YCC) {
-		for(v = 0; v < (width * height); v++) {
+		for(v = 0; v < ((size_t)width * (size_t)height); v++) {
 			*pimage++ = *p++;
 			*pimage++ = *p++;
 			*pimage++ = *p++;
@@ -182,7 +182,7 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 		d->colorspace = colorspace;
 	}
 	else if(colorspace == MJ_COLORSPACE_GRAYSCALEA) {
-		for(v = 0; v < (width * height); v++) {
+		for(v = 0; v < ((size_t)width * (size_t)height); v++) {
 			*pimage++ = *p;
 			*pimage++ = *p;
 			*pimage++ = *p++;
@@ -197,7 +197,7 @@ int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *raw_data, unsigned in
 		d->blend = MJ_BLEND_NONUNIFORM;
 	}
 	else {
-		for(v = 0; v < (width * height); v++) {
+		for(v = 0; v < ((size_t)width * (size_t)height); v++) {
 			*pimage++ = *p;
 			*pimage++ = *p;
 			*pimage++ = *p++;
@@ -220,13 +220,11 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 
 	// crop and or extend the dropon. the dropon needs to cover whole blocks.
 
-	// after that encode it to a jpeg with the same colorspace and sampling as the image.
+	// after that, encode it to a jpeg with the same colorspace and sampling as the image.
 	// this gives us the the dropon in frequency space.
 
 	// same for the mask. the mask is required if we extend the dropon such that
 	// the extended area doesn't cover the image.
-
-	int i, j;
 
 	char *buffer = NULL;
 	size_t len = 0;
@@ -250,7 +248,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		return MJ_ERR_MEMORY;
 	}
 
-	int rv;
+	int i, j;
 	char *p, *q;
 
 	for(i = crop_y; i < (crop_y + crop_h); i++) {
@@ -263,6 +261,8 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 			*p++ = *q++;
 		}
 	}
+
+	int rv;
 
 	// encode the dropon to JPEG
 	rv = mj_encode_jpeg_to_buffer(&buffer, &len, (unsigned char *)data, d->colorspace, colorspace, sampling, width, height);
@@ -329,7 +329,7 @@ int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	mj_init_jpeg(&m);
 
-	rv = mj_read_jpeg_from_buffer(&m, buffer, len);
+	rv = mj_read_jpeg_from_buffer(&m, buffer, len, 0);
 	if(rv != MJ_OK) {
 		return rv;
 	}
@@ -396,7 +396,7 @@ int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer,
 
 	mj_init_jpeg(&m);
 
-	rv = mj_read_jpeg_from_buffer(&m, buffer, len);
+	rv = mj_read_jpeg_from_buffer(&m, buffer, len, 0);
 	if(rv != MJ_OK) {
 		return rv;
 	}

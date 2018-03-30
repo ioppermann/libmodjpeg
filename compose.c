@@ -45,12 +45,13 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
 	int position_x = 0, position_y = 0;
 
 	// top-left corner of the crop area of the dropon and width and height of the crop area
+	// initially the whole dropon
 	int crop_x = 0, crop_y = 0, crop_w = d->width, crop_h = d->height;
 
 
 	// first we have to calculate the position of the dropon on the image,
 	// then we know how we have to crop the dropon. in most cases the
-	// dropon is small than the image and fully visible.
+	// dropon is smaller than the image and fully visible.
 
 	// caluclate the horizontal position of the dropon on the image
 	if((align & MJ_ALIGN_LEFT) != 0) {

@@ -160,16 +160,20 @@ Initialize the image in order to make it ready for use.
 int mj_read_jpeg_from_buffer(
 	mj_jpeg_t *m,
 	const char *buffer,
-	size_t len);
+	size_t len,
+	size_t max_pixel);
 ```
-Read a JPEG from a buffer. The buffer holds the JPEG bitstream of length `len` bytes.
+Read a JPEG from a buffer. The buffer holds the JPEG bitstream of length `len` bytes. `max_pixel` is the maximum number of pixel allowed in the image
+to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
 int mj_read_jpeg_from_file(
 	mj_jpeg_t *m,
-	const char *filename);
+	const char *filename,
+	size_t max_pixel);
 ```
-Read a JPEG from a file denoted by `filename`.
+Read a JPEG from a file denoted by `filename`. `max_pixel` is the maximum number of pixel allowed in the image
+to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
 int mj_write_jpeg_to_buffer(
@@ -285,7 +289,7 @@ int main(int argc, char **argv) {
 	mj_init_jpeg(&m);
 
 	// Read a JPEG image from a file
-	mj_read_jpeg_from_file(&m, "in.jpg");
+	mj_read_jpeg_from_file(&m, "in.jpg", 0);
 
 	// Place the dropon in the bottom right corner of the JPEG image
 	// with 10px distance to the bottom and left border

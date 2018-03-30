@@ -29,12 +29,12 @@
 #include "image.h"
 #include "jpeg.h"
 
-int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
+int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *bitstream, size_t len, size_t max_pixel) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
 
-	if(buffer == NULL || len == 0) {
+	if(bitstream == NULL || len == 0) {
 		return MJ_ERR_NULL_DATA;
 	}
 
@@ -59,7 +59,7 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 	src.pub.resync_to_restart = jpeg_resync_to_restart;
 	src.pub.term_source = mj_jpeg_term_source;
 
-	src.buf = (JOCTET *)buffer;
+	src.buf = (JOCTET *)bitstream;
 	src.size = len;
 
 	// save markers (must happen before jpeg_read_header)
@@ -75,6 +75,11 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 	m->width = m->cinfo.image_width;
 	m->height = m->cinfo.image_height;
 
+	if(max_pixel != 0 && ((size_t)m->width * (size_t)m->height) > max_pixel) {
+		jpeg_destroy_decompress(&m->cinfo);
+		return MJ_ERR_IMAGE_SIZE;
+	}
+
 	switch(m->cinfo.jpeg_color_space) {
 		case JCS_GRAYSCALE:
 		case JCS_RGB:
@@ -82,7 +87,6 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 			break;
 		default:
 			jpeg_destroy_decompress(&m->cinfo);
-			free(m);
 			return MJ_ERR_UNSUPPORTED_COLORSPACE;
 	}
 
@@ -107,7 +111,7 @@ int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *buffer, size_t len) {
 	return MJ_OK;
 }
 
-int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
+int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -136,13 +140,13 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename) {
 	fclose(fp);
 
 	int rv;
-	rv = mj_read_jpeg_from_buffer(m, buffer, len);
+	rv = mj_read_jpeg_from_buffer(m, buffer, len, max_pixel);
 	free(buffer);
 
 	return rv;
 }
 
-int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int options) {
+int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **bitstream, size_t *len, int options) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -211,7 +215,7 @@ int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **buffer, size_t *len, int option
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
-	*buffer = (char *)dest.buf;
+	*bitstream = (char *)dest.buf;
 	*len = dest.size;
 
 	return MJ_OK;

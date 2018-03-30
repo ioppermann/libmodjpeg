@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgPOh", longopts, NULL)) != -1) {
 		switch(c) {
 			case 'i':
-				if(mj_read_jpeg_from_file(&m, optarg) != MJ_OK) {
+				if(mj_read_jpeg_from_file(&m, optarg, 0) != MJ_OK) {
 					fprintf(stderr, "Can't read image from '%s'\n", optarg);
 					exit(1);
 				}
