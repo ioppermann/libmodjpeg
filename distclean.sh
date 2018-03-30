@@ -8,7 +8,7 @@ for dir in ${DIRS}; do
 		if [ ! -e ${dir}${file} ]; then
 			continue
 		fi
-		
+
 		rm -rf ${dir}${file}
 	done
 done 
