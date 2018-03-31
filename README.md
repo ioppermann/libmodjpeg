@@ -104,7 +104,7 @@ void mj_init_dropon(mj_dropon_t *d);
 Initialize the dropon in order to make it ready for use.
 
 ```C
-int mj_read_dropon_from_buffer(
+int mj_read_dropon_from_raw(
 	mj_dropon_t *d,
 	const char *rawdata,
 	unsigned int colorspace,
@@ -113,7 +113,7 @@ int mj_read_dropon_from_buffer(
 	short blend);
 ```
 
-Read a dropon from a buffer. The buffer is an array of chars holding the raw image data in the given color space
+Read a dropon from raw data. The raw data is a pointer to an array of chars holding the raw image data in the given color space
 
 ```C
 #define MJ_COLORSPACE_RGB            1  // [0] = R0, [1] = G0, [2] = B0, [3] = R1, ...
@@ -128,15 +128,28 @@ Read a dropon from a buffer. The buffer is an array of chars holding the raw ima
 channel is given, where 0 is fully transparent (the dropon will not be applied) and 255 is fully opaque.
 
 ```C
-int mj_read_dropon_from_jpeg(
+int mj_read_dropon_from_jpeg_file(
 	mj_dropon_t *d,
 	const char *filename,
-	const char *mask,
+	const char *maskfilename,
 	short blend);
 ```
 
 Read a dropon from a JPEG file (`filename`). The alpha channel is given by the second JPEG file (`mask`). Use `NULL` if no alpha
 channel is available or wanted. `blend` is a value for the translucency for the dropon if no alpha channel is given.
+
+```C
+int mj_read_dropon_from_jpeg_bistream(
+	mj_dropon_t *d,
+	const char *bitstream,
+	size_t len,
+	const char *maskbitstream,
+	size_t masklen,
+	short blend);
+```
+
+Read a dropon from a JPEG bistream (`bitstream` of `len` bytes length). The alpha channel is given by the second JPEG bitstream (`maskbitstream` of `masklen` bytes length).
+Use `NULL` for `maskbitstream` or `0` for `masklen` if no alpha channel is available or wanted. `blend` is a value for the translucency for the dropon if no alpha channel is given.
 
 ```C
 void mj_free_dropon(mj_dropon_t *d);
@@ -157,9 +170,9 @@ void mj_init_jpeg(mj_jpeg_t *m);
 Initialize the image in order to make it ready for use.
 
 ```C
-int mj_read_jpeg_from_buffer(
+int mj_read_jpeg_from_bitstream(
 	mj_jpeg_t *m,
-	const char *buffer,
+	const char *bitstream,
 	size_t len,
 	size_t max_pixel);
 ```
@@ -176,9 +189,9 @@ Read a JPEG from a file denoted by `filename`. `max_pixel` is the maximum number
 to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
-int mj_write_jpeg_to_buffer(
+int mj_write_jpeg_to_bitstream(
 	mj_jpeg_t *m,
-	char **buffer,
+	char **bitstream,
 	size_t *len,
 	int options);
 ```
@@ -293,7 +306,7 @@ int main(int argc, char **argv) {
 	mj_read_jpeg_from_file(&m, "in.jpg", 0);
 
 	// Place the dropon in the bottom right corner of the JPEG image
-	// with 10px distance to the bottom and left border
+	// with 10px distance to the bottom and right border
 	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
 
 	// Write the JPEG image to a file with optimzed Hufman tables and progressive mode

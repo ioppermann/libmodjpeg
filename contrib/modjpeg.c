@@ -80,10 +80,10 @@ int main(int argc, char *argv[]) {
 				str = strchr(optarg, ',');
 				if(str != NULL) {
 					*str = '\0';
-					rv = mj_read_dropon_from_jpeg(&d, optarg, str + 1, MJ_BLEND_FULL);
+					rv = mj_read_dropon_from_jpeg_file(&d, optarg, str + 1, MJ_BLEND_FULL);
 				}
 				else {
-					rv = mj_read_dropon_from_jpeg(&d, optarg, NULL, MJ_BLEND_FULL);
+					rv = mj_read_dropon_from_jpeg_file(&d, optarg, NULL, MJ_BLEND_FULL);
 				}
 
 				if(rv != MJ_OK) {

@@ -25,7 +25,8 @@
 
 #include "libmodjpeg.h"
 
-int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *raw_data, int raw_colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height);
-int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int want_colorspace, const char *filename);
+int mj_encode_raw_to_jpeg_bitstream(char **bitstream, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height);
+int mj_decode_jpeg_file_to_raw(char **data, int *width, int *height, int want_colorspace, const char *filename);
+int mj_decode_jpeg_bitstream_to_raw(char **data, int *width, int *height, int want_colorspace, const char *bitstram, size_t blen);
 
 #endif

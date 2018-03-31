@@ -25,8 +25,8 @@
 
 #include "libmodjpeg.h"
 
-int mj_read_droponimage_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len);
-int mj_read_droponalpha_from_buffer(mj_compileddropon_t *cd, const char *buffer, size_t len);
+int mj_read_droponimage_from_bitstream(mj_compileddropon_t *cd, const char *bitstream, size_t len);
+int mj_read_droponalpha_from_bitstream(mj_compileddropon_t *cd, const char *bitstream, size_t len);
 
 int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE colorspace, mj_sampling_t *s, int blockoffset_x, int blockoffset_y, int crop_x, int crop_y, int crop_w, int crop_h);
 

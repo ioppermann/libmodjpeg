@@ -29,7 +29,9 @@
 #include "image.h"
 #include "jpeg.h"
 
-int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *bitstream, size_t len, size_t max_pixel) {
+int mj_decode_jpeg_to_raw(char **data, int *width, int *height, int want_colorspace, struct jpeg_decompress_struct *cinfo);
+
+int mj_read_jpeg_from_bitstream(mj_jpeg_t *m, const char *bitstream, size_t len, size_t max_pixel) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -140,13 +142,13 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel)
 	fclose(fp);
 
 	int rv;
-	rv = mj_read_jpeg_from_buffer(m, buffer, len, max_pixel);
+	rv = mj_read_jpeg_from_bitstream(m, buffer, len, max_pixel);
 	free(buffer);
 
 	return rv;
 }
 
-int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **bitstream, size_t *len, int options) {
+int mj_write_jpeg_to_bitstream(mj_jpeg_t *m, char **bitstream, size_t *len, int options) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -235,7 +237,7 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 		return MJ_ERR_FILEIO;
 	}
 
-	mj_write_jpeg_to_buffer(m, &rebuffer, &relen, options);
+	mj_write_jpeg_to_bitstream(m, &rebuffer, &relen, options);
 
 	fwrite(rebuffer, 1, relen, fp);
 	fclose(fp);
@@ -265,7 +267,7 @@ void mj_free_jpeg(mj_jpeg_t *m) {
 	return;
 }
 
-int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
+int mj_encode_raw_to_jpeg_bitstream(char **bitstream, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
 	struct jpeg_compress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
 	struct mj_jpeg_dest_mgr dest;
@@ -351,77 +353,112 @@ int mj_encode_jpeg_to_buffer(char **buffer, size_t *len, unsigned char *data, in
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
-	*buffer = (char *)dest.buf;
+	*bitstream = (char *)dest.buf;
 	*len = dest.size;
 
 	return MJ_OK;
 }
 
-int mj_decode_jpeg_to_buffer(char **buffer, size_t *len, int *width, int *height, int want_colorspace, const char *filename) {
+int mj_decode_jpeg_file_to_raw(char **data, int *width, int *height, int want_colorspace, const char *filename) {
 	FILE *fp;
 	struct jpeg_decompress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
-	char jpegerrorbuffer[JMSG_LENGTH_MAX];
 
 	cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = mj_jpeg_error_exit;
 	if(setjmp(jerr.setjmp_buffer)) {
-		(*cinfo.err->format_message)((j_common_ptr)&cinfo, jpegerrorbuffer);
 		jpeg_destroy_decompress(&cinfo);
 		fclose(fp);
 		return MJ_ERR_DECODE_JPEG;
 	}
 
-	jpeg_create_decompress(&cinfo);
-
 	fp = fopen(filename, "rb");
 	if(fp == NULL) {
-		jpeg_destroy_decompress(&cinfo);
 		return MJ_ERR_FILEIO;
 	}
 
+	jpeg_create_decompress(&cinfo);
 	jpeg_stdio_src(&cinfo, fp);
 
-	jpeg_read_header(&cinfo, TRUE);
-
-	switch(want_colorspace) {
-		case MJ_COLORSPACE_RGB:
-			cinfo.out_color_space = JCS_RGB;
-			break;
-		case MJ_COLORSPACE_YCC:
-			cinfo.out_color_space = JCS_YCbCr;
-			break;
-		case MJ_COLORSPACE_GRAYSCALE:
-			cinfo.out_color_space = JCS_GRAYSCALE;
-			break;
-		default:
-			jpeg_destroy_decompress(&cinfo);
-			return MJ_ERR_UNSUPPORTED_COLORSPACE;
-	}
-
-	jpeg_start_decompress(&cinfo);
-
-	*width = cinfo.output_width;
-	*height = cinfo.output_height;
-
-	int row_stride = cinfo.output_width * cinfo.output_components;
-
-	*len = row_stride * cinfo.output_height;
-
-	unsigned char *buf = (unsigned char *)calloc(row_stride * cinfo.output_height, sizeof(unsigned char));
-
-	JSAMPROW row_pointer[1];
-
-	while(cinfo.output_scanline < cinfo.output_height) {
-		row_pointer[0] = &buf[cinfo.output_scanline * row_stride];
-		jpeg_read_scanlines(&cinfo, row_pointer, 1);
-	}
+	int rv;
+	rv = mj_decode_jpeg_to_raw(data, width, height, want_colorspace, &cinfo);
 
 	jpeg_finish_decompress(&cinfo);
 	jpeg_destroy_decompress(&cinfo);
 
-	*buffer = (char *)buf;
+	return rv;
+}
+
+int mj_decode_jpeg_bitstream_to_raw(char **data, int *width, int *height, int want_colorspace, const char *bitstream, size_t blen) {
+	struct jpeg_decompress_struct cinfo;
+	struct mj_jpeg_error_mgr jerr;
+	struct mj_jpeg_src_mgr src;
+
+	cinfo.err = jpeg_std_error(&jerr.pub);
+	jerr.pub.error_exit = mj_jpeg_error_exit;
+	if(setjmp(jerr.setjmp_buffer)) {
+		jpeg_destroy_decompress(&cinfo);
+		return MJ_ERR_DECODE_JPEG;
+	}
+
+	jpeg_create_decompress(&cinfo);
+
+	cinfo.src = &src.pub;
+	src.pub.init_source = mj_jpeg_init_source;
+	src.pub.fill_input_buffer = mj_jpeg_fill_input_buffer;
+	src.pub.skip_input_data = mj_jpeg_skip_input_data;
+	src.pub.resync_to_restart = jpeg_resync_to_restart;
+	src.pub.term_source = mj_jpeg_term_source;
+
+	src.buf = (JOCTET *)bitstream;
+	src.size = blen;
+
+	int rv;
+	rv = mj_decode_jpeg_to_raw(data, width, height, want_colorspace, &cinfo);
+
+	jpeg_finish_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
+
+	return rv;
+}
+
+int mj_decode_jpeg_to_raw(char **data, int *width, int *height, int want_colorspace, struct jpeg_decompress_struct *cinfo) {
+	jpeg_read_header(cinfo, TRUE);
+
+	switch(want_colorspace) {
+		case MJ_COLORSPACE_RGB:
+			cinfo->out_color_space = JCS_RGB;
+			break;
+		case MJ_COLORSPACE_YCC:
+			cinfo->out_color_space = JCS_YCbCr;
+			break;
+		case MJ_COLORSPACE_GRAYSCALE:
+			cinfo->out_color_space = JCS_GRAYSCALE;
+			break;
+		default:
+			return MJ_ERR_UNSUPPORTED_COLORSPACE;
+	}
+
+	jpeg_start_decompress(cinfo);
+
+	*width = cinfo->output_width;
+	*height = cinfo->output_height;
+
+	int row_stride = cinfo->output_width * cinfo->output_components;
+
+	unsigned char *buf = (unsigned char *)calloc(row_stride * cinfo->output_height, sizeof(unsigned char));
+	if(buf == NULL) {
+		return MJ_ERR_MEMORY;
+	}
+
+	JSAMPROW row_pointer[1];
+
+	while(cinfo->output_scanline < cinfo->output_height) {
+		row_pointer[0] = &buf[cinfo->output_scanline * row_stride];
+		jpeg_read_scanlines(cinfo, row_pointer, 1);
+	}
+
+	*data = (char *)buf;
 
 	return MJ_OK;
 }
-

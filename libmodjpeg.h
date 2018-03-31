@@ -118,16 +118,17 @@ typedef struct {
 } mj_compileddropon_t;
 
 void mj_init_dropon(mj_dropon_t *d);
-int mj_read_dropon_from_buffer(mj_dropon_t *d, const char *rawdata, unsigned int colorspace, int width, int height, short blend);
-int mj_read_dropon_from_jpeg(mj_dropon_t *d, const char *filename, const char *mask, short blend);
+int mj_read_dropon_from_raw(mj_dropon_t *d, const char *rawdata, unsigned int colorspace, int width, int height, short blend);
+int mj_read_dropon_from_jpeg_bitstream(mj_dropon_t *d, const char *bitstream, size_t len, const char *maskbitstream, size_t masklen, short blend);
+int mj_read_dropon_from_jpeg_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend);
 
 void mj_init_jpeg(mj_jpeg_t *m);
-int mj_read_jpeg_from_buffer(mj_jpeg_t *m, const char *bitstream, size_t len, size_t max_pixel);
+int mj_read_jpeg_from_bitstream(mj_jpeg_t *m, const char *bitstream, size_t len, size_t max_pixel);
 int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel);
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y);
 
-int mj_write_jpeg_to_buffer(mj_jpeg_t *m, char **bitstream, size_t *len, int options);
+int mj_write_jpeg_to_bitstream(mj_jpeg_t *m, char **bitstream, size_t *len, int options);
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options);
 
 void mj_free_jpeg(mj_jpeg_t *m);
