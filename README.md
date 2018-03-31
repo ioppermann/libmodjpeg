@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
 	mj_init_dropon(&d);
 
 	// Read a dropon from a JPEG, without mask and with 50% translucency
-	mj_read_dropon_from_jpeg(&d, "logo.jpg", NULL, 50);
+	mj_read_dropon_from_jpeg_file(&d, "logo.jpg", NULL, 50);
 
 	// Initialize JPEG image struct
 	struct mj_jpeg_t m;
