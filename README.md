@@ -135,7 +135,7 @@ int mj_read_dropon_from_jpeg_file(
 	short blend);
 ```
 
-Read a dropon from a JPEG file (`filename`). The alpha channel is given by the second JPEG file (`mask`). Use `NULL` if no alpha
+Read a dropon from a JPEG file (`filename`). The alpha channel is given by the second JPEG file (`maskfilename`). Use `NULL` if no alpha
 channel is available or wanted. `blend` is a value for the translucency for the dropon if no alpha channel is given.
 
 ```C
