@@ -332,7 +332,7 @@ In case the jpeglib (or compatible) is installed in a non-standard location, use
 
 ## License
 
-libmodjpeg is covered by the MIT license. Refer to [LICENSE](/blob/master/LICENSE).
+libmodjpeg is covered by the MIT license. Refer to [LICENSE](../../tree/master/LICENSE).
 
 
 ## Acknowledgement
