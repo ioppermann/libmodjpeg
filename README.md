@@ -64,6 +64,8 @@ libmodjpeg requires the [libjpeg](http://www.ijg.org/) v9 6? 7? 8? or compatible
 or [mozjpeg](https://github.com/mozilla/mozjpeg)), however the IJG libjpeg or
 libjpeg-turbo are recommended because mozjpeg will always produce progressive JPEGs which is slower and may not be desired.
 
+Optionally it is checked for [libpng-1.6.x](https://libpng.sourceforge.io/) in order to support overlays in PNG format.
+
 ```
 # git clone https://github.com/ioppermann/libmodjpeg.git
 # cd libmodjpeg
@@ -128,28 +130,39 @@ Read a dropon from raw data. The raw data is a pointer to an array of chars hold
 channel is given, where 0 is fully transparent (the dropon will not be applied) and 255 is fully opaque.
 
 ```C
-int mj_read_dropon_from_jpeg_file(
+int mj_read_dropon_from_file(
 	mj_dropon_t *d,
 	const char *filename,
 	const char *maskfilename,
 	short blend);
 ```
 
-Read a dropon from a JPEG file (`filename`). The alpha channel is given by the second JPEG file (`maskfilename`). Use `NULL` if no alpha
-channel is available or wanted. `blend` is a value for the translucency for the dropon if no alpha channel is given.
+Read a dropon from a file (`filename`). The file can be a JPEG or a PNG.
+
+If the file is a JPEG, then the alpha channel can be given by a second JPEG file (`maskfilename`).
+Use `NULL` if no alpha channel is available or wanted. `blend` is a value for the translucency for the dropon if no alpha channel is given.
+
+If the file is a PNG, then use `NULL` for `maskfilename` and any value for `blend` because they will be ignored. The alpha channel is taken
+from the PNG, if available. PNG files are only supported if the library is compiled with PNG support.
 
 ```C
-int mj_read_dropon_from_jpeg_bistream(
+int mj_read_dropon_from_memory(
 	mj_dropon_t *d,
-	const char *bitstream,
+	const char *memory,
 	size_t len,
-	const char *maskbitstream,
+	const char *maskmemory,
 	size_t masklen,
 	short blend);
 ```
 
-Read a dropon from a JPEG bistream (`bitstream` of `len` bytes length). The alpha channel is given by the second JPEG bitstream (`maskbitstream` of `masklen` bytes length).
-Use `NULL` for `maskbitstream` or `0` for `masklen` if no alpha channel is available or wanted. `blend` is a value for the translucency for the dropon if no alpha channel is given.
+Read a dropon from a JPEG or PNG bytestream (`memory` of `len` bytes length).
+
+If the bytestream is a JPEG, then the alpha channel is given by a second JPEG bytestream (`maskmemory` of `masklen` bytes length).
+Use `NULL` for `maskmemory` or `0` for `masklen` if no alpha channel is available or wanted. `blend` is a value for the translucency for
+the dropon if no alpha channel is given.
+
+If the bytestream is a PNG, then use `NULL` for `maskmemory` or `0` for `masklen` and any value for `blend`. The alpha channel is taken
+from the PNG, if available. PNG files are only supported if the library is compiled with PNG support.
 
 ```C
 void mj_free_dropon(mj_dropon_t *d);
@@ -170,13 +183,13 @@ void mj_init_jpeg(mj_jpeg_t *m);
 Initialize the image in order to make it ready for use.
 
 ```C
-int mj_read_jpeg_from_bitstream(
+int mj_read_jpeg_from_memory(
 	mj_jpeg_t *m,
-	const char *bitstream,
+	const char *memory,
 	size_t len,
 	size_t max_pixel);
 ```
-Read a JPEG from a buffer. The buffer holds the JPEG bitstream of length `len` bytes. `max_pixel` is the maximum number of pixel allowed in the image
+Read a JPEG from a buffer. The buffer holds the JPEG bytestream of length `len` bytes. `max_pixel` is the maximum number of pixel allowed in the image
 to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
@@ -189,13 +202,13 @@ Read a JPEG from a file denoted by `filename`. `max_pixel` is the maximum number
 to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
-int mj_write_jpeg_to_bitstream(
+int mj_write_jpeg_to_memory(
 	mj_jpeg_t *m,
-	char **bitstream,
+	char **memory,
 	size_t *len,
 	int options);
 ```
-Write an image to a buffer as a JPEG bitstream. The required memory for the buffer will be allocated and must be free'd after use. `len` holds
+Write an image to a buffer as a JPEG bytestream. The required memory for the buffer will be allocated and must be free'd after use. `len` holds
 the length of the buffer in bytes. `options` are encoding features that can be OR'ed:
 
 * `MJ_OPTION_NONE` - baseline encoding
@@ -209,7 +222,7 @@ int mj_write_jpeg_to_file(
 	char *filename,
 	int options);
 ```
-Write an image to a file as a JPEG bitstream. The options are the same as for `mj_write_jpeg_to_buffer()`.
+Write an image to a file (`filename`) as a JPEG bytestream. The options are the same as for `mj_write_jpeg_to_memory()`.
 
 ```C
 void mj_free_jpeg(mj_jpeg_t *m);
@@ -278,7 +291,8 @@ of error:
 * `MJ_ERR_DECODE_JPEG` - error during decoding the JPEG
 * `MJ_ERR_ENCODE_JPEG` - error during encoding the JPEG
 * `MJ_ERR_FILEIO` - error while reading/writing from/to a file
-* `MJ_ERR_IMAGE_SIZE` - the dimensions of the provided image are too large 
+* `MJ_ERR_IMAGE_SIZE` - the dimensions of the provided image are too large
+* `MJ_ERR_UNSUPPORTED_FILETYPE` - the file type of the dropon is unsupported
 
 ### Supported color spaces
 
@@ -296,7 +310,7 @@ int main(int argc, char **argv) {
 	mj_init_dropon(&d);
 
 	// Read a dropon from a JPEG, without mask and with 50% translucency
-	mj_read_dropon_from_jpeg_file(&d, "logo.jpg", NULL, 50);
+	mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
 
 	// Initialize JPEG image struct
 	struct mj_jpeg_t m;
