@@ -119,16 +119,21 @@ typedef struct {
 
 void mj_init_dropon(mj_dropon_t *d);
 int mj_read_dropon_from_raw(mj_dropon_t *d, const char *rawdata, unsigned int colorspace, int width, int height, short blend);
-int mj_read_dropon_from_jpeg_bitstream(mj_dropon_t *d, const char *bitstream, size_t len, const char *maskbitstream, size_t masklen, short blend);
+int mj_read_dropon_from_jpeg_memory(mj_dropon_t *d, const char *memory, size_t len, const char *maskmemory, size_t masklen, short blend);
 int mj_read_dropon_from_jpeg_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend);
 
+#ifdef WITH_LIBPNG
+int mj_read_dropon_from_png_memory(mj_dropon_t *d, const char *memory, size_t len);
+int mj_read_dropon_from_png_file(mj_dropon_t *d, const char *filename);
+#endif
+
 void mj_init_jpeg(mj_jpeg_t *m);
-int mj_read_jpeg_from_bitstream(mj_jpeg_t *m, const char *bitstream, size_t len, size_t max_pixel);
+int mj_read_jpeg_from_memory(mj_jpeg_t *m, const char *data, size_t len, size_t max_pixel);
 int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel);
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y);
 
-int mj_write_jpeg_to_bitstream(mj_jpeg_t *m, char **bitstream, size_t *len, int options);
+int mj_write_jpeg_to_memory(mj_jpeg_t *m, char **data, size_t *len, int options);
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options);
 
 void mj_free_jpeg(mj_jpeg_t *m);

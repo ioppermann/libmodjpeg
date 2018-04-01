@@ -29,14 +29,12 @@
 #include "image.h"
 #include "jpeg.h"
 
-int mj_decode_jpeg_to_raw(char **data, int *width, int *height, int want_colorspace, struct jpeg_decompress_struct *cinfo);
-
-int mj_read_jpeg_from_bitstream(mj_jpeg_t *m, const char *bitstream, size_t len, size_t max_pixel) {
+int mj_read_jpeg_from_memory(mj_jpeg_t *m, const char *memory, size_t len, size_t max_pixel) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
 
-	if(bitstream == NULL || len == 0) {
+	if(memory == NULL || len == 0) {
 		return MJ_ERR_NULL_DATA;
 	}
 
@@ -61,7 +59,7 @@ int mj_read_jpeg_from_bitstream(mj_jpeg_t *m, const char *bitstream, size_t len,
 	src.pub.resync_to_restart = jpeg_resync_to_restart;
 	src.pub.term_source = mj_jpeg_term_source;
 
-	src.buf = (JOCTET *)bitstream;
+	src.buf = (JOCTET *)memory;
 	src.size = len;
 
 	// save markers (must happen before jpeg_read_header)
@@ -142,13 +140,13 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel)
 	fclose(fp);
 
 	int rv;
-	rv = mj_read_jpeg_from_bitstream(m, buffer, len, max_pixel);
+	rv = mj_read_jpeg_from_memory(m, buffer, len, max_pixel);
 	free(buffer);
 
 	return rv;
 }
 
-int mj_write_jpeg_to_bitstream(mj_jpeg_t *m, char **bitstream, size_t *len, int options) {
+int mj_write_jpeg_to_memory(mj_jpeg_t *m, char **memory, size_t *len, int options) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -217,7 +215,7 @@ int mj_write_jpeg_to_bitstream(mj_jpeg_t *m, char **bitstream, size_t *len, int 
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
-	*bitstream = (char *)dest.buf;
+	*memory = (char *)dest.buf;
 	*len = dest.size;
 
 	return MJ_OK;
@@ -237,7 +235,7 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 		return MJ_ERR_FILEIO;
 	}
 
-	mj_write_jpeg_to_bitstream(m, &rebuffer, &relen, options);
+	mj_write_jpeg_to_memory(m, &rebuffer, &relen, options);
 
 	fwrite(rebuffer, 1, relen, fp);
 	fclose(fp);
@@ -267,7 +265,7 @@ void mj_free_jpeg(mj_jpeg_t *m) {
 	return;
 }
 
-int mj_encode_raw_to_jpeg_bitstream(char **bitstream, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
+int mj_encode_raw_to_jpeg_memory(char **memory, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
 	struct jpeg_compress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
 	struct mj_jpeg_dest_mgr dest;
@@ -353,7 +351,7 @@ int mj_encode_raw_to_jpeg_bitstream(char **bitstream, size_t *len, unsigned char
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
-	*bitstream = (char *)dest.buf;
+	*memory = (char *)dest.buf;
 	*len = dest.size;
 
 	return MJ_OK;
@@ -389,7 +387,7 @@ int mj_decode_jpeg_file_to_raw(char **data, int *width, int *height, int want_co
 	return rv;
 }
 
-int mj_decode_jpeg_bitstream_to_raw(char **data, int *width, int *height, int want_colorspace, const char *bitstream, size_t blen) {
+int mj_decode_jpeg_memory_to_raw(char **data, int *width, int *height, int want_colorspace, const char *memory, size_t blen) {
 	struct jpeg_decompress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
 	struct mj_jpeg_src_mgr src;
@@ -410,7 +408,7 @@ int mj_decode_jpeg_bitstream_to_raw(char **data, int *width, int *height, int wa
 	src.pub.resync_to_restart = jpeg_resync_to_restart;
 	src.pub.term_source = mj_jpeg_term_source;
 
-	src.buf = (JOCTET *)bitstream;
+	src.buf = (JOCTET *)memory;
 	src.size = blen;
 
 	int rv;
