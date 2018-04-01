@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #ifdef WITH_LIBPNG
 	#include <png.h>
@@ -32,70 +33,77 @@
 #include "image.h"
 #include "dropon.h"
 
-int mj_read_dropon_from_jpeg_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend) {
-	char *image_buffer = NULL, *alpha_buffer = NULL, *buffer = NULL;
-	int colorspace, rv;
-	int image_width = 0, alpha_width = 0;
-	int image_height = 0, alpha_height = 0;
+int mj_read_dropon_from_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend) {
+	if(d == NULL) {
+		return MJ_ERR_NULL_DATA;
+	}
 
-	rv = mj_decode_jpeg_file_to_raw(&image_buffer, &image_width, &image_height, MJ_COLORSPACE_RGB, filename);
+	int rv;
+	unsigned char *memory = NULL, *maskmemory = NULL;
+	size_t len = 0, masklen = 0;
+
+	rv = mj_read_file(&memory, &len, filename);
 	if(rv != MJ_OK) {
 		return rv;
 	}
 
 	if(maskfilename != NULL) {
-		rv = mj_decode_jpeg_file_to_raw(&alpha_buffer, &alpha_width, &alpha_height, MJ_COLORSPACE_GRAYSCALE, maskfilename);
+		rv = mj_read_file(&maskmemory, &masklen, maskfilename);
 		if(rv != MJ_OK) {
-			free(image_buffer);
+			free(memory);
 			return rv;
 		}
-
-		if(image_width != alpha_width || image_height != alpha_height) {
-			free(image_buffer);
-			free(alpha_buffer);
-
-			return MJ_ERR_DROPON_DIMENSIONS;
-		}
-
-		buffer = (char *)calloc(4 * image_width * image_height, sizeof(char));
-		if(buffer == NULL) {
-			free(image_buffer);
-			free(alpha_buffer);
-
-			return MJ_ERR_MEMORY;
-		}
-
-		size_t v;
-		char *t = buffer, *p = image_buffer, *q = alpha_buffer;
-
-		for(v = 0; v < ((size_t)image_width * (size_t)image_height); v++) {
-			*t++ = *p++;
-			*t++ = *p++;
-			*t++ = *p++;
-			*t++ = *q++;
-		}
-
-		colorspace = MJ_COLORSPACE_RGBA; 
-	}
-	else {
-		buffer = image_buffer;
-		colorspace = MJ_COLORSPACE_RGB;
 	}
 
-	rv = mj_read_dropon_from_raw(d, buffer, colorspace, image_width, image_height, blend);
-
-	free(image_buffer);
-
-	if(alpha_buffer != NULL) {
-		free(alpha_buffer);
-		free(buffer);
+	rv = mj_read_dropon_from_memory(d, memory, len, maskmemory, masklen, blend);
+	
+	free(memory);
+	if(maskmemory != NULL) {
+		free(maskmemory);
 	}
 
 	return rv;
 }
 
-int mj_read_dropon_from_jpeg_memory(mj_dropon_t *d, const char *memory, size_t len, const char *maskmemory, size_t masklen, short blend) {
-	char *image_buffer = NULL, *alpha_buffer = NULL, *buffer = NULL;
+int mj_read_dropon_from_memory(mj_dropon_t *d, const unsigned char *memory, size_t len, const unsigned char *maskmemory, size_t masklen, short blend) {
+	if(d == NULL || memory == NULL || len < 8) {
+		return MJ_ERR_NULL_DATA;
+	}
+
+	int rv = MJ_OK;
+
+	// Test for JPEG
+	if(
+		memory[0] == 0xff &&
+		memory[1] == 0xd8 &&
+		memory[2] == 0xff
+	) {
+		rv = mj_read_dropon_from_jpeg_memory(d, memory, len, maskmemory, masklen, blend);
+	}
+#ifdef WITH_LIBPNG
+	// Test for PNG
+	else if(
+		memory[0] == 0x89 &&
+		memory[1] == 'P'  &&
+		memory[2] == 'N'  &&
+		memory[3] == 'G'  &&
+		memory[4] == 0x0d &&
+		memory[5] == 0x0a &&
+		memory[6] == 0x1a &&
+		memory[7] == 0x0a
+		) {
+		rv = mj_read_dropon_from_png_memory(d, memory, len);
+	}
+#endif
+	else {
+		return MJ_ERR_UNSUPPORTED_FILETYPE;
+	}
+
+	return rv;
+}
+
+int mj_read_dropon_from_jpeg_memory(mj_dropon_t *d, const unsigned char *memory, size_t len, const unsigned char *maskmemory, size_t masklen, short blend) {
+	unsigned char *image_buffer = NULL, *alpha_buffer = NULL, *buffer = NULL;
 	int colorspace, rv;
 	int image_width = 0, alpha_width = 0;
 	int image_height = 0, alpha_height = 0;
@@ -119,7 +127,7 @@ int mj_read_dropon_from_jpeg_memory(mj_dropon_t *d, const char *memory, size_t l
 			return MJ_ERR_DROPON_DIMENSIONS;
 		}
 
-		buffer = (char *)calloc(4 * image_width * image_height, sizeof(char));
+		buffer = (unsigned char *)calloc(4 * image_width * image_height, sizeof(unsigned char));
 		if(buffer == NULL) {
 			free(image_buffer);
 			free(alpha_buffer);
@@ -128,7 +136,7 @@ int mj_read_dropon_from_jpeg_memory(mj_dropon_t *d, const char *memory, size_t l
 		}
 
 		size_t v;
-		char *t = buffer, *p = image_buffer, *q = alpha_buffer;
+		unsigned char *t = buffer, *p = image_buffer, *q = alpha_buffer;
 
 		for(v = 0; v < ((size_t)image_width * (size_t)image_height); v++) {
 			*t++ = *p++;
@@ -157,33 +165,10 @@ int mj_read_dropon_from_jpeg_memory(mj_dropon_t *d, const char *memory, size_t l
 }
 
 #ifdef WITH_LIBPNG
-int mj_read_dropon_from_png_file(mj_dropon_t *d, const char *filename) {
+int mj_read_dropon_from_png_memory(mj_dropon_t *d, const unsigned char *memory, size_t len) {
 	png_image image;
 
-	memset(&image, 0, (sizeof image));
-	image.version = PNG_IMAGE_VERSION;
-
-	if(png_image_begin_read_from_file(&image, filename) == 0) {
-		return MJ_ERR_FILEIO;
-	}
-
-	if(image.width >= (2 << 16) || image.height >= (2 << 16)) {
-		png_image_free(&image);
-		return MJ_ERR_DROPON_DIMENSIONS;
-	}
-
-	int rv;
-	rv = mj_read_dropon_from_png(d, &image);
-
-	png_image_free(&image);
-
-	return rv;
-}
-
-int mj_read_dropon_from_png_memory(mj_dropon_t *d, const char *memory, size_t len) {
-	png_image image;
-
-	memset(&image, 0, (sizeof image));
+	memset(&image, 0, sizeof(png_image));
 	image.version = PNG_IMAGE_VERSION;
 
 	if(png_image_begin_read_from_memory(&image, memory, len) == 0) {
@@ -195,38 +180,31 @@ int mj_read_dropon_from_png_memory(mj_dropon_t *d, const char *memory, size_t le
 		return MJ_ERR_DROPON_DIMENSIONS;
 	}
 
-	int rv;
-	rv = mj_read_dropon_from_png(d, &image);
-
-	png_image_free(&image);
-
-	return rv;
-}
-
-int mj_read_dropon_from_png(mj_dropon_t *d, png_image *image) {
 	png_bytep buffer;
-	image->format = PNG_FORMAT_RGBA;
+	image.format = PNG_FORMAT_RGBA;
 
-	buffer = malloc(PNG_IMAGE_SIZE(*image));
+	buffer = malloc(PNG_IMAGE_SIZE(image));
 	if(buffer == NULL) {
 		return MJ_ERR_MEMORY;
 	}
 
-	if(png_image_finish_read(image, NULL, buffer, 0, NULL) == 0) {
+	if(png_image_finish_read(&image, NULL, buffer, 0, NULL) == 0) {
 		free(buffer);
 		return MJ_ERR_FILEIO;
 	}
 
 	int rv;
-	rv = mj_read_dropon_from_raw(d, (char *)buffer, MJ_COLORSPACE_RGBA, image->width, image->height, MJ_BLEND_NONUNIFORM);
+	rv = mj_read_dropon_from_raw(d, buffer, MJ_COLORSPACE_RGBA, image.width, image.height, MJ_BLEND_NONUNIFORM);
 
 	free(buffer);
+
+	png_image_free(&image);
 
 	return rv;
 }
 #endif
 
-int mj_read_dropon_from_raw(mj_dropon_t *d, const char *rawdata, unsigned int colorspace, int width, int height, short blend) {
+int mj_read_dropon_from_raw(mj_dropon_t *d, const unsigned char *rawdata, unsigned int colorspace, int width, int height, short blend) {
 	if(d == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -264,22 +242,22 @@ int mj_read_dropon_from_raw(mj_dropon_t *d, const char *rawdata, unsigned int co
 	// easier to handle later for compiling the dropon.
 	size_t nsamples = 3 * width * height;
 
-	d->image = (char *)calloc(nsamples, sizeof(char));
+	d->image = (unsigned char *)calloc(nsamples, sizeof(unsigned char));
 	if(d->image == NULL) {
 		mj_free_dropon(d);
 		return MJ_ERR_MEMORY;
 	}
 
 	// the alpha channel is also stored with 3 component
-	d->alpha = (char *)calloc(nsamples, sizeof(char));
+	d->alpha = (unsigned char *)calloc(nsamples, sizeof(unsigned char));
 	if(d->alpha == NULL) {
 		mj_free_dropon(d);
 		return MJ_ERR_MEMORY;
 	}
 
-	const char *p = rawdata;
-	char *pimage = d->image;
-	char *palpha = d->alpha;
+	const unsigned char *p = rawdata;
+	unsigned char *pimage = d->image;
+	unsigned char *palpha = d->alpha;
 
 	size_t v = 0;
 
@@ -361,9 +339,6 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	// same for the mask. the mask is required if we extend the dropon such that
 	// the extended area doesn't cover the image.
 
-	char *buffer = NULL;
-	size_t len = 0;
-
 	// crop/extend the dropon
 
 	int width = crop_w + blockoffset_x;
@@ -378,13 +353,13 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 		height += sampling->v_factor - padding;
 	}
 
-	char *data = (char *)calloc(3 * width * height, sizeof(char));
+	unsigned char *data = (unsigned char *)calloc(3 * width * height, sizeof(unsigned char));
 	if(data == NULL) {
 		return MJ_ERR_MEMORY;
 	}
 
 	int i, j;
-	char *p, *q;
+	unsigned char *p, *q;
 
 	for(i = crop_y; i < (crop_y + crop_h); i++) {
 		p = &data[(i - crop_y + blockoffset_y) * width * 3 + (blockoffset_x * 3)];
@@ -398,9 +373,11 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	}
 
 	int rv;
+	unsigned char *buffer = NULL;
+	size_t len = 0;
 
 	// encode the dropon to JPEG
-	rv = mj_encode_raw_to_jpeg_memory(&buffer, &len, (unsigned char *)data, d->colorspace, colorspace, sampling, width, height);
+	rv = mj_encode_raw_to_jpeg_memory(&buffer, &len, data, d->colorspace, colorspace, sampling, width, height);
 	if(rv != MJ_OK) {
 		free(data);
 		return rv;
@@ -439,7 +416,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	if(colorspace == JCS_RGB) {
 		alpha_colorspace = MJ_COLORSPACE_RGB;
 	}
-	rv = mj_encode_raw_to_jpeg_memory(&buffer, &len, (unsigned char *)data, alpha_colorspace, colorspace, sampling, width, height);
+	rv = mj_encode_raw_to_jpeg_memory(&buffer, &len, data, alpha_colorspace, colorspace, sampling, width, height);
 	if(rv != MJ_OK) {
 		free(data);
 		return rv;
@@ -454,7 +431,7 @@ int mj_compile_dropon(mj_compileddropon_t *cd, mj_dropon_t *d, J_COLOR_SPACE col
 	return rv;
 }
 
-int mj_read_droponimage_from_memory(mj_compileddropon_t *cd, const char *memory, size_t len) {
+int mj_read_droponimage_from_memory(mj_compileddropon_t *cd, const unsigned char *memory, size_t len) {
 	if(cd == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -521,7 +498,7 @@ int mj_read_droponimage_from_memory(mj_compileddropon_t *cd, const char *memory,
 	return MJ_OK;
 }
 
-int mj_read_droponalpha_from_memory(mj_compileddropon_t *cd, const char *memory, size_t len) {
+int mj_read_droponalpha_from_memory(mj_compileddropon_t *cd, const unsigned char *memory, size_t len) {
 	if(cd == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}

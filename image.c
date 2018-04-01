@@ -29,7 +29,7 @@
 #include "image.h"
 #include "jpeg.h"
 
-int mj_read_jpeg_from_memory(mj_jpeg_t *m, const char *memory, size_t len, size_t max_pixel) {
+int mj_read_jpeg_from_memory(mj_jpeg_t *m, const unsigned char *memory, size_t len, size_t max_pixel) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -116,37 +116,23 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel)
 		return MJ_ERR_NULL_DATA;
 	}
 
-	FILE *fp;
-	struct stat s;
-	char *buffer;
+	int rv;
+	unsigned char *buffer;
 	size_t len;
 
-	fp = fopen(filename, "rb");
-	if(fp == NULL) {
-		return MJ_ERR_FILEIO;
+	rv = mj_read_file(&buffer, &len, filename);
+	if(rv != MJ_OK) {
+		return rv;
 	}
 
-	fstat(fileno(fp), &s);
-
-	len = (size_t)s.st_size;
-
-	buffer = (char *)calloc(len + 1, sizeof(char));
-	if(buffer == NULL) {
-		return MJ_ERR_MEMORY;
-	}
-
-	fread(buffer, 1, len, fp);
-
-	fclose(fp);
-
-	int rv;
 	rv = mj_read_jpeg_from_memory(m, buffer, len, max_pixel);
+
 	free(buffer);
 
 	return rv;
 }
 
-int mj_write_jpeg_to_memory(mj_jpeg_t *m, char **memory, size_t *len, int options) {
+int mj_write_jpeg_to_memory(mj_jpeg_t *m, unsigned char **memory, size_t *len, int options) {
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
 	}
@@ -215,7 +201,7 @@ int mj_write_jpeg_to_memory(mj_jpeg_t *m, char **memory, size_t *len, int option
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
-	*memory = (char *)dest.buf;
+	*memory = (unsigned char *)dest.buf;
 	*len = dest.size;
 
 	return MJ_OK;
@@ -223,8 +209,8 @@ int mj_write_jpeg_to_memory(mj_jpeg_t *m, char **memory, size_t *len, int option
 
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 	FILE *fp;
-	char *rebuffer = NULL;
-	size_t relen = 0;
+	unsigned char *buffer = NULL;
+	size_t len = 0;
 
 	if(m == NULL) {
 		return MJ_ERR_NULL_DATA;
@@ -235,14 +221,14 @@ int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
 		return MJ_ERR_FILEIO;
 	}
 
-	mj_write_jpeg_to_memory(m, &rebuffer, &relen, options);
+	mj_write_jpeg_to_memory(m, &buffer, &len, options);
 
-	fwrite(rebuffer, 1, relen, fp);
+	fwrite(buffer, 1, len, fp);
 	fclose(fp);
 
-	free(rebuffer);
+	free(buffer);
 
-	return 0;
+	return MJ_OK;
 }
 
 void mj_init_jpeg(mj_jpeg_t *m) {
@@ -251,6 +237,8 @@ void mj_init_jpeg(mj_jpeg_t *m) {
 	}
 
 	memset(m, 0, sizeof(mj_jpeg_t));
+
+	return;
 }
 
 void mj_free_jpeg(mj_jpeg_t *m) {
@@ -265,7 +253,7 @@ void mj_free_jpeg(mj_jpeg_t *m) {
 	return;
 }
 
-int mj_encode_raw_to_jpeg_memory(char **memory, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
+int mj_encode_raw_to_jpeg_memory(unsigned char **memory, size_t *len, unsigned char *rawdata, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
 	struct jpeg_compress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
 	struct mj_jpeg_dest_mgr dest;
@@ -344,20 +332,20 @@ int mj_encode_raw_to_jpeg_memory(char **memory, size_t *len, unsigned char *data
 	JSAMPROW row_pointer[1];
 
 	while(cinfo.next_scanline < cinfo.image_height) {
-		row_pointer[0] = &data[cinfo.next_scanline * row_stride];
+		row_pointer[0] = &rawdata[cinfo.next_scanline * row_stride];
 		jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}
 
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
-	*memory = (char *)dest.buf;
+	*memory = (unsigned char *)dest.buf;
 	*len = dest.size;
 
 	return MJ_OK;
 }
 
-int mj_decode_jpeg_file_to_raw(char **data, int *width, int *height, int want_colorspace, const char *filename) {
+int mj_decode_jpeg_file_to_raw(unsigned char **rawdata, int *width, int *height, int want_colorspace, const char *filename) {
 	FILE *fp;
 	struct jpeg_decompress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
@@ -379,7 +367,7 @@ int mj_decode_jpeg_file_to_raw(char **data, int *width, int *height, int want_co
 	jpeg_stdio_src(&cinfo, fp);
 
 	int rv;
-	rv = mj_decode_jpeg_to_raw(data, width, height, want_colorspace, &cinfo);
+	rv = mj_decode_jpeg_to_raw(rawdata, width, height, want_colorspace, &cinfo);
 
 	jpeg_finish_decompress(&cinfo);
 	jpeg_destroy_decompress(&cinfo);
@@ -387,7 +375,7 @@ int mj_decode_jpeg_file_to_raw(char **data, int *width, int *height, int want_co
 	return rv;
 }
 
-int mj_decode_jpeg_memory_to_raw(char **data, int *width, int *height, int want_colorspace, const char *memory, size_t blen) {
+int mj_decode_jpeg_memory_to_raw(unsigned char **rawdata, int *width, int *height, int want_colorspace, const unsigned char *memory, size_t blen) {
 	struct jpeg_decompress_struct cinfo;
 	struct mj_jpeg_error_mgr jerr;
 	struct mj_jpeg_src_mgr src;
@@ -412,7 +400,7 @@ int mj_decode_jpeg_memory_to_raw(char **data, int *width, int *height, int want_
 	src.size = blen;
 
 	int rv;
-	rv = mj_decode_jpeg_to_raw(data, width, height, want_colorspace, &cinfo);
+	rv = mj_decode_jpeg_to_raw(rawdata, width, height, want_colorspace, &cinfo);
 
 	jpeg_finish_decompress(&cinfo);
 	jpeg_destroy_decompress(&cinfo);
@@ -420,7 +408,7 @@ int mj_decode_jpeg_memory_to_raw(char **data, int *width, int *height, int want_
 	return rv;
 }
 
-int mj_decode_jpeg_to_raw(char **data, int *width, int *height, int want_colorspace, struct jpeg_decompress_struct *cinfo) {
+int mj_decode_jpeg_to_raw(unsigned char **rawdata, int *width, int *height, int want_colorspace, struct jpeg_decompress_struct *cinfo) {
 	jpeg_read_header(cinfo, TRUE);
 
 	switch(want_colorspace) {
@@ -456,7 +444,37 @@ int mj_decode_jpeg_to_raw(char **data, int *width, int *height, int want_colorsp
 		jpeg_read_scanlines(cinfo, row_pointer, 1);
 	}
 
-	*data = (char *)buf;
+	*rawdata = (unsigned char *)buf;
 
 	return MJ_OK;
 }
+
+int mj_read_file(unsigned char **buffer, size_t *len, const char *filename) {
+	if(filename == NULL) {
+		return MJ_ERR_NULL_DATA;
+	}
+
+	FILE *fp;
+	struct stat s;
+
+	fp = fopen(filename, "rb");
+	if(fp == NULL) {
+		return MJ_ERR_FILEIO;
+	}
+
+	fstat(fileno(fp), &s);
+
+	*len = (size_t)s.st_size;
+
+	*buffer = (unsigned char *)calloc(*len + 1, sizeof(unsigned char));
+	if(*buffer == NULL) {
+		return MJ_ERR_MEMORY;
+	}
+
+	fread(*buffer, 1, *len, fp);
+
+	fclose(fp);
+
+	return MJ_OK;
+}
+

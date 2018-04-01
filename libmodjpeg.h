@@ -58,6 +58,7 @@
 #define MJ_ERR_ENCODE_JPEG              6
 #define MJ_ERR_FILEIO                   7
 #define MJ_ERR_IMAGE_SIZE               8
+#define MJ_ERR_UNSUPPORTED_FILETYPE     9
 
 typedef struct {
 	int h_samp_factor;
@@ -98,8 +99,8 @@ typedef struct {
 } mj_jpeg_t;
 
 typedef struct {
-	char *image;
-	char *alpha;
+	unsigned char *image;
+	unsigned char *alpha;
 
 	int width;
 	int height;
@@ -118,22 +119,17 @@ typedef struct {
 } mj_compileddropon_t;
 
 void mj_init_dropon(mj_dropon_t *d);
-int mj_read_dropon_from_raw(mj_dropon_t *d, const char *rawdata, unsigned int colorspace, int width, int height, short blend);
-int mj_read_dropon_from_jpeg_memory(mj_dropon_t *d, const char *memory, size_t len, const char *maskmemory, size_t masklen, short blend);
-int mj_read_dropon_from_jpeg_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend);
-
-#ifdef WITH_LIBPNG
-int mj_read_dropon_from_png_memory(mj_dropon_t *d, const char *memory, size_t len);
-int mj_read_dropon_from_png_file(mj_dropon_t *d, const char *filename);
-#endif
+int mj_read_dropon_from_raw(mj_dropon_t *d, const unsigned char *rawdata, unsigned int colorspace, int width, int height, short blend);
+int mj_read_dropon_from_memory(mj_dropon_t *d, const unsigned char *memory, size_t len, const unsigned char *maskmemory, size_t masklen, short blend);
+int mj_read_dropon_from_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend);
 
 void mj_init_jpeg(mj_jpeg_t *m);
-int mj_read_jpeg_from_memory(mj_jpeg_t *m, const char *data, size_t len, size_t max_pixel);
+int mj_read_jpeg_from_memory(mj_jpeg_t *m, const unsigned char *memory, size_t len, size_t max_pixel);
 int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel);
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y);
 
-int mj_write_jpeg_to_memory(mj_jpeg_t *m, char **data, size_t *len, int options);
+int mj_write_jpeg_to_memory(mj_jpeg_t *m, unsigned char **memory, size_t *len, int options);
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options);
 
 void mj_free_jpeg(mj_jpeg_t *m);

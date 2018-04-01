@@ -25,10 +25,12 @@
 
 #include "libmodjpeg.h"
 
-int mj_encode_raw_to_jpeg_memory(char **memory, size_t *len, unsigned char *data, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height);
+int mj_encode_raw_to_jpeg_memory(unsigned char **memory, size_t *len, unsigned char *rawdata, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height);
 
-int mj_decode_jpeg_file_to_raw(char **rawdata, int *width, int *height, int want_colorspace, const char *filename);
-int mj_decode_jpeg_memory_to_raw(char **rawdata, int *width, int *height, int want_colorspace, const char *memory, size_t blen);
-int mj_decode_jpeg_to_raw(char **data, int *width, int *height, int want_colorspace, struct jpeg_decompress_struct *cinfo);
+int mj_decode_jpeg_file_to_raw(unsigned char **rawdata, int *width, int *height, int want_colorspace, const char *filename);
+int mj_decode_jpeg_memory_to_raw(unsigned char **rawdata, int *width, int *height, int want_colorspace, const unsigned char *memory, size_t blen);
+int mj_decode_jpeg_to_raw(unsigned char **data, int *width, int *height, int want_colorspace, struct jpeg_decompress_struct *cinfo);
+
+int mj_read_file(unsigned char **buffer, size_t *len, const char *filename);
 
 #endif
