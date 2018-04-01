@@ -108,7 +108,7 @@ Initialize the dropon in order to make it ready for use.
 ```C
 int mj_read_dropon_from_raw(
 	mj_dropon_t *d,
-	const char *rawdata,
+	const unsigned char *rawdata,
 	unsigned int colorspace,
 	size_t width,
 	size_t height,
@@ -148,9 +148,9 @@ from the PNG, if available. PNG files are only supported if the library is compi
 ```C
 int mj_read_dropon_from_memory(
 	mj_dropon_t *d,
-	const char *memory,
+	const unsigned char *memory,
 	size_t len,
-	const char *maskmemory,
+	const unsigned char *maskmemory,
 	size_t masklen,
 	short blend);
 ```
@@ -185,7 +185,7 @@ Initialize the image in order to make it ready for use.
 ```C
 int mj_read_jpeg_from_memory(
 	mj_jpeg_t *m,
-	const char *memory,
+	const unsigned char *memory,
 	size_t len,
 	size_t max_pixel);
 ```
@@ -204,7 +204,7 @@ to prevent processing too big images. Set it to `0` to allow any sized images.
 ```C
 int mj_write_jpeg_to_memory(
 	mj_jpeg_t *m,
-	char **memory,
+	unsigned char **memory,
 	size_t *len,
 	int options);
 ```
