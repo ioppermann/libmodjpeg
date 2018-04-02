@@ -4,6 +4,7 @@ A library for JPEG masking and composition in the DCT domain.
 
 - [Background](#background)
 - [Compiling and installing](#compiling-and-installing)
+- [Compatibility](#compatibility)
 - [Synopsis](#synopsis)
   - [Header](#header)
   - [Dropon](#dropon)
