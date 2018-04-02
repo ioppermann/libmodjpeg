@@ -60,26 +60,37 @@ with the same colorspace and sampling as the image it will be applied to.
 
 ## Compiling and installing
 
-libmodjpeg requires the [libjpeg](http://www.ijg.org/) v9 6? 7? 8? or compatible ([libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
+libmodjpeg requires the [libjpeg](http://www.ijg.org/) or compatible ([libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
 or [mozjpeg](https://github.com/mozilla/mozjpeg)), however the IJG libjpeg or
 libjpeg-turbo are recommended because mozjpeg will always produce progressive JPEGs which is slower and may not be desired.
 
 Optionally it is checked for [libpng-1.6.x](https://libpng.sourceforge.io/) in order to support overlays in PNG format.
 
-```
-# git clone https://github.com/ioppermann/libmodjpeg.git
-# cd libmodjpeg
-# cmake .
-# make
-# make install
+```bash
+git clone https://github.com/ioppermann/libmodjpeg.git
+cd libmodjpeg
+cmake .
+make
+make install
 ```
 
 In case libjpeg (or compatible) are installed in a non-standard location you can set the environment variable `CMAKE_PREFIX_PATH`
 to the location where the libjpeg is installed, e.g.:
 
+```bash
+env CMAKE_PREFIX_PATH=/usr/local/opt/jpeg-turbo/ cmake .
 ```
-# env CMAKE_PREFIX_PATH=/usr/local/opt/jpeg-turbo/ cmake .
-```
+
+## Compatibility
+
+libmodjpeg has been tested with the following versions of libjpeg (and compatibles):
+
+- libjpeg v6b (arithmetric coding will not work)
+- libjpeg v7
+- libjpeg v8d
+- libjpeg v9c
+- libjpeg-turbo v1.5.3
+- mozjpeg v3.3.1
 
 ## Synopsis
 
