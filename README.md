@@ -22,7 +22,7 @@ A library for JPEG masking and composition in the DCT domain.
 ## Background
 
 With libmodjpeg you can overlay a (masked) image onto an existing JPEG as lossless as possible. Changes in the JPEG only
-take place where the overlayed image is applied. All modifications happen in the DCT domain [1](#references), thus the JPEG is decoded and
+take place where the overlayed image is applied. All modifications happen in the [DCT domain](#references), thus the JPEG is decoded and
 encoded losslessly.
 
 Adding an overlay (e.g. logo, watermark, ...) to an existing JPEG image usually will result in loss of quality because the JPEG
