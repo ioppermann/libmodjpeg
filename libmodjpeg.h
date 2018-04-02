@@ -23,12 +23,13 @@
 #ifndef _LIBMODJPEG_H_
 #define _LIBMODJPEG_H_
 
+#include <stdio.h>
+#include <jpeglib.h>
+
 #define MJ_LIB_VERSION_MAJOR     1
 #define MJ_LIB_VERSION_MINOR     0
 #define MJ_LIB_VERSION_RELEASE   0
 #define MJ_LIB_VERSION           10000
-
-#include <jpeglib.h>
 
 #define MJ_COLORSPACE_RGB               1
 #define MJ_COLORSPACE_RGBA              2

@@ -20,10 +20,8 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 
 #ifdef WITH_LIBPNG
 	#include <png.h>
