@@ -349,9 +349,9 @@ int main(int argc, char **argv) {
 In the [contrib](../../tree/master/contrib) directory you find an example program that implements all described functionality.
 
 ```bash
-# cd contrib
-# cmake .
-# make
+cd contrib
+cmake .
+make
 ```
 In case the jpeglib (or compatible) is installed in a non-standard location, use the same environment variable for cmake as described above.
 
