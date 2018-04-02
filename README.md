@@ -22,7 +22,7 @@ A library for JPEG masking and composition in the DCT domain.
 ## Background
 
 With libmodjpeg you can overlay a (masked) image onto an existing JPEG as lossless as possible. Changes in the JPEG only
-take place where the overlayed image is applied. All modifications happen in the DCT domain, thus the JPEG is decoded and
+take place where the overlayed image is applied. All modifications happen in the DCT domain [1](#references), thus the JPEG is decoded and
 encoded losslessly.
 
 Adding an overlay (e.g. logo, watermark, ...) to an existing JPEG image usually will result in loss of quality because the JPEG
@@ -348,7 +348,7 @@ int main(int argc, char **argv) {
 
 In the [contrib](../../tree/master/contrib) directory you find an example program that implements all described functionality.
 
-```
+```bash
 # cd contrib
 # cmake .
 # make
@@ -358,15 +358,18 @@ In case the jpeglib (or compatible) is installed in a non-standard location, use
 
 ## License
 
-libmodjpeg is covered by the MIT license. Refer to [LICENSE](../../tree/master/LICENSE).
+libmodjpeg is released under the [MIT license](../../tree/master/LICENSE).
 
 
 ## Acknowledgement
 
 Made with :pizza: and :beers: in Switzerland.
 
+This software is based in part on the work of the Independent JPEG Group.
+
+PNG support is provided by [libpng](http://www.libpng.org/pub/png/libpng.html)
+
 
 ## References
 
-[1] R. Jonsson, "Efficient DCT Domain Implementation of Picture Masking
-    and Composition and Compositing", ICIP (2) 1997, pp. 366-369
+[1] R. Jonsson, "Efficient DCT Domain Implementation of Picture Masking and Composition and Compositing", ICIP (2) 1997, pp. 366-369
