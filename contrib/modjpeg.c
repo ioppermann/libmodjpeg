@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
 	opterr = 1;
 
-	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgPOh", longopts, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgPOAh", longopts, NULL)) != -1) {
 		switch(c) {
 			case 'i':
 				if(mj_read_jpeg_from_file(&m, optarg, 0) != MJ_OK) {
