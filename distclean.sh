@@ -11,4 +11,8 @@ for dir in ${DIRS}; do
 
 		rm -rf ${dir}${file}
 	done
-done 
+done
+
+if [ -e ./contrib/modjpeg ]; then
+	rm ./contrib/modjpeg
+fi
