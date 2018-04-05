@@ -1,7 +1,11 @@
 /contrib/modjpeg
-/images/out.jpg
-/images/dropon_image.jpg
-/images/dropon_alpha.jpg
+
+# cmake files
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+install_manifest.txt
 
 # Object files
 *.o
