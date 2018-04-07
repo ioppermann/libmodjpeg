@@ -44,12 +44,10 @@ The steps marked with a * will lead to loss of quality.
 
 Original | Overlay | Result | Difference
 ---------|---------|--------|-----------
-![Original](../master/contrib/images/imge.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed.jpg)|![Overlay](../master/contrib/images/image_composed_diff.png)
+![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed.jpg)|![Overlay](../master/contrib/images/image_composed_diff.png)
 
-libmodjpeg avoids the decoding and re-encoding of the JPEG image by applying the overlay directly on the un-transformed DCT
-coefficients. Only the area where the overlay is applied to is affected by changes and the rest of the image will remain untouched.
-
-libmodjpeg avoids all lossy steps by applying the (masked) overlay directly in the DCT domain:
+libmodjpeg avoids the lossy decoding and re-encoding of the JPEG image by applying the overlay directly on the un-transformed DCT
+coefficients:
 
 1. Huffman decode
 2. de-quantize
@@ -60,12 +58,14 @@ libmodjpeg avoids all lossy steps by applying the (masked) overlay directly in t
 In step 4, the quantization is lossless compared to the usual process because the same DCT and quantization
 values are used as in step 2.
 
+Only the area where the overlay is applied to is affected by changes and the rest of the image will remain untouched.
+
 Original | Overlay | Result | Difference
 ---------|---------|--------|-----------
-![Original](../master/contrib/images/imge.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_dropon.jpg)|![Overlay](../master/contrib/images/image_dropon_diff.png)
+![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_dropon.jpg)|![Overlay](../master/contrib/images/image_dropon_diff.png)
 
-Only the overlay itself will experience a loss of quality because it needs to be transformed into the DCT domain
-with the same colorspace and sampling as the image it will be applied to.
+The overlay itself will experience a loss of quality because it needs to be transformed into the DCT domain
+with the same colorspace, sampling, and quantization as the image it will be applied to.
 
 
 ## Compiling and installing
