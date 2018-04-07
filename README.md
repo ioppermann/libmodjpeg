@@ -26,10 +26,7 @@ take place where the overlayed image is applied. All modifications happen in the
 encoded losslessly.
 
 Adding an overlay (e.g. logo, watermark, ...) to an existing JPEG image usually will result in loss of quality because the JPEG
-needs to get decoded and then re-encoded after the overlay has been applied. [Read more about JPEG on Wikipedia](https://en.wikipedia.org/wiki/JPEG)
-
-libmodjpeg avoids the decoding and re-encoding of the JPEG image by applying the overlay directly on the un-transformed DCT
-coefficients. Only the area where the overlay is applied to is affected by changes and the rest of the image will remain untouched.
+needs to get decoded and then re-encoded after the overlay has been applied. [Read more about JPEG on Wikipedia](https://en.wikipedia.org/wiki/JPEG).
 
 The usual process of applying a (masked) overlay involved these steps:
 
@@ -45,6 +42,13 @@ The usual process of applying a (masked) overlay involved these steps:
 
 The steps marked with a * will lead to loss of quality.
 
+Original | Overlay | Result | Difference
+---------|---------|--------|-----------
+![Original](../master/contrib/images/imge.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed.jpg)|![Overlay](../master/contrib/images/image_composed_diff.png)
+
+libmodjpeg avoids the decoding and re-encoding of the JPEG image by applying the overlay directly on the un-transformed DCT
+coefficients. Only the area where the overlay is applied to is affected by changes and the rest of the image will remain untouched.
+
 libmodjpeg avoids all lossy steps by applying the (masked) overlay directly in the DCT domain:
 
 1. Huffman decode
@@ -56,8 +60,13 @@ libmodjpeg avoids all lossy steps by applying the (masked) overlay directly in t
 In step 4, the quantization is lossless compared to the usual process because the same DCT and quantization
 values are used as in step 2.
 
+Original | Overlay | Result | Difference
+---------|---------|--------|-----------
+![Original](../master/contrib/images/imge.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_dropon.jpg)|![Overlay](../master/contrib/images/image_dropon_diff.png)
+
 Only the overlay itself will experience a loss of quality because it needs to be transformed into the DCT domain
 with the same colorspace and sampling as the image it will be applied to.
+
 
 ## Compiling and installing
 
@@ -82,6 +91,56 @@ to the location where the libjpeg is installed, e.g.:
 env CMAKE_PREFIX_PATH=/usr/local/opt/jpeg-turbo/ cmake .
 ```
 
+## Example
+
+```C
+#include <libmodjpeg.h>
+
+int main(int argc, char **argv) {
+	// Initialize dropon struct
+	struct mj_dropon_t d;
+	mj_init_dropon(&d);
+
+	// Read a dropon from a JPEG, without mask and with 50% translucency
+	mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
+
+	// Initialize JPEG image struct
+	struct mj_jpeg_t m;
+	mj_init_jpeg(&m);
+
+	// Read a JPEG image from a file
+	mj_read_jpeg_from_file(&m, "in.jpg", 0);
+
+	// Place the dropon in the bottom right corner of the JPEG image
+	// with 10px distance to the bottom and right border
+	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
+
+	// Write the JPEG image to a file with optimzed Hufman tables and progressive mode
+	mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
+
+	// Free the dropon and JPEG image structs
+	mj_free_jpeg(&m);
+	mj_free_dropon(&d);
+
+	return 0;
+}
+```
+
+In the [contrib](../../tree/master/contrib) directory you find an example program that implements all described functionality.
+
+```bash
+cd contrib
+cmake .
+make
+```
+In case the jpeglib (or compatible) is installed in a non-standard location, use the same environment variable for cmake as described above.
+
+
+## Comparison
+
+For comparing the differnce between the conventional
+
+
 ## Compatibility
 
 libmodjpeg has been tested with the following versions of libjpeg (and compatibles):
@@ -92,6 +151,7 @@ libmodjpeg has been tested with the following versions of libjpeg (and compatibl
 - libjpeg v9c
 - libjpeg-turbo v1.5.3
 - mozjpeg v3.3.1
+
 
 ## Synopsis
 
@@ -311,54 +371,9 @@ of error:
 libmodjpeg only supports the "basic" and most common color spaces in JPEG files: `JCS_RGB`, `JCS_GRAYSCALE`, and `JCS_YCbCr`
 
 
-## Example
-
-```C
-#include <libmodjpeg.h>
-
-int main(int argc, char **argv) {
-	// Initialize dropon struct
-	struct mj_dropon_t d;
-	mj_init_dropon(&d);
-
-	// Read a dropon from a JPEG, without mask and with 50% translucency
-	mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
-
-	// Initialize JPEG image struct
-	struct mj_jpeg_t m;
-	mj_init_jpeg(&m);
-
-	// Read a JPEG image from a file
-	mj_read_jpeg_from_file(&m, "in.jpg", 0);
-
-	// Place the dropon in the bottom right corner of the JPEG image
-	// with 10px distance to the bottom and right border
-	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
-
-	// Write the JPEG image to a file with optimzed Hufman tables and progressive mode
-	mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
-
-	// Free the dropon and JPEG image structs
-	mj_free_jpeg(&m);
-	mj_free_dropon(&d);
-
-	return 0;
-}
-```
-
-In the [contrib](../../tree/master/contrib) directory you find an example program that implements all described functionality.
-
-```bash
-cd contrib
-cmake .
-make
-```
-In case the jpeglib (or compatible) is installed in a non-standard location, use the same environment variable for cmake as described above.
-
-
 ## License
 
-libmodjpeg is released under the [MIT license](../../tree/master/LICENSE).
+libmodjpeg is released under the [MIT license](../master/LICENSE).
 
 
 ## Acknowledgement
