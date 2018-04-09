@@ -42,9 +42,29 @@ The usual process of applying a (masked) overlay involved these steps:
 
 The steps marked with a * will lead to loss of quality.
 
+```bash
+gm convert image.png -filter Lanczos -resize 256x256 -quality 85 image.jpg
+gm composite dropon.png image.jpg -quality 90 image_composed.jpg
+gm compare -highlight-style assign -highlight-color lime -file image_composed_diff.png image.jpg image_composed.jpg
+```
+
 Original | Overlay | Result | Difference
 ---------|---------|--------|-----------
 ![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed.jpg)|![Overlay](../master/contrib/images/image_composed_diff.png)
+
+The composed image above has been saved with a quality setting of 86. Only if the quality settings of the original image are known, the composed image can be saved with the same quality settings in order to have almost no changes outside of the area of the overlay.
+
+```bash
+gm convert image.png -filter Lanczos -resize 256x256 -quality 85 image.jpg
+gm composite dropon.png image.jpg -quality 85 image_composed_sameq.jpg
+gm compare -highlight-style assign -highlight-color lime -file image_composed_sameq_diff.png image.jpg image_composed_sameq.jpg
+```
+
+Original | Overlay | Result | Difference
+---------|---------|--------|-----------
+![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed_sameq.jpg)|![Overlay](../master/contrib/images/image_composed_sameq_diff.png)
+
+The composed image above has been saved with a quality setting of 85, which is the same quality setting as the original image.
 
 libmodjpeg avoids the lossy decoding and re-encoding of the JPEG image by applying the overlay directly on the un-transformed DCT
 coefficients:
@@ -60,9 +80,17 @@ values are used as in step 2.
 
 Only the area where the overlay is applied to is affected by changes and the rest of the image will remain untouched.
 
+```bash
+gm convert image.png -filter Lanczos -resize 256x256 -quality 85 image.jpg
+modjpeg --in image.jpg --dropon dropon.png --out image_dropon.jpg
+gm compare -highlight-style assign -highlight-color lime -file image_dropon_diff.png image.jpg image_dropon.jpg
+```
+
 Original | Overlay | Result | Difference
 ---------|---------|--------|-----------
 ![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_dropon.jpg)|![Overlay](../master/contrib/images/image_dropon_diff.png)
+
+The overlay is applied with the `modjpeg` CLI program, that uses libmodjpeg in order to apply a dropon to a JPEG image. The quality settings of the original image can remain unknown. Changes to the image will only be applied where the overlay will be applied.
 
 The overlay itself will experience a loss of quality because it needs to be transformed into the DCT domain
 with the same colorspace, sampling, and quantization as the image it will be applied to.
@@ -134,11 +162,6 @@ cmake .
 make
 ```
 In case the jpeglib (or compatible) is installed in a non-standard location, use the same environment variable for cmake as described above.
-
-
-## Comparison
-
-For comparing the differnce between the conventional
 
 
 ## Compatibility
