@@ -48,8 +48,8 @@ gm composite dropon.png image.jpg -quality 90 image_composed.jpg
 gm compare -highlight-style assign -highlight-color lime -file image_composed_diff.png image.jpg image_composed.jpg
 ```
 
-Original | Overlay | Result | Difference
----------|---------|--------|-----------
+Original | Overlay | Composed | Difference
+---------|---------|----------|-----------
 ![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed.jpg)|![Overlay](../master/contrib/images/image_composed_diff.png)
 
 The composed image above has been saved with a quality setting of 86. Only if the quality settings of the original image are known, the composed image can be saved with the same quality settings in order to have almost no changes outside of the area of the overlay.
@@ -60,8 +60,8 @@ gm composite dropon.png image.jpg -quality 85 image_composed_sameq.jpg
 gm compare -highlight-style assign -highlight-color lime -file image_composed_sameq_diff.png image.jpg image_composed_sameq.jpg
 ```
 
-Original | Overlay | Result | Difference
----------|---------|--------|-----------
+Original | Overlay | Composed | Difference
+---------|---------|----------|-----------
 ![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed_sameq.jpg)|![Overlay](../master/contrib/images/image_composed_sameq_diff.png)
 
 The composed image above has been saved with a quality setting of 85, which is the same quality setting as the original image.
@@ -86,11 +86,11 @@ modjpeg --in image.jpg --dropon dropon.png --out image_dropon.jpg
 gm compare -highlight-style assign -highlight-color lime -file image_dropon_diff.png image.jpg image_dropon.jpg
 ```
 
-Original | Overlay | Result | Difference
----------|---------|--------|-----------
+Original | Overlay | Composed | Difference
+---------|---------|----------|-----------
 ![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_dropon.jpg)|![Overlay](../master/contrib/images/image_dropon_diff.png)
 
-The overlay is applied with the `modjpeg` CLI program, that uses libmodjpeg in order to apply a dropon to a JPEG image. The quality settings of the original image can remain unknown. Changes to the image will only be applied where the overlay will be applied.
+The overlay is applied with the `modjpeg` CLI program, that uses libmodjpeg in order to apply an overlay to a JPEG image. The quality settings of the original image can remain unknown. Changes to the image will only happen where the overlay is applied.
 
 The overlay itself will experience a loss of quality because it needs to be transformed into the DCT domain
 with the same colorspace, sampling, and quantization as the image it will be applied to.
@@ -102,7 +102,7 @@ libmodjpeg requires the [libjpeg](http://www.ijg.org/) or compatible ([libjpeg-t
 or [mozjpeg](https://github.com/mozilla/mozjpeg)), however the IJG libjpeg or
 libjpeg-turbo are recommended because mozjpeg will always produce progressive JPEGs which is slower and may not be desired.
 
-Optionally it is checked for [libpng-1.6.x](https://libpng.sourceforge.io/) in order to support overlays in PNG format.
+It will be checked for [libpng-1.6.x](https://libpng.sourceforge.io/) as well in order to support overlays in PNG format. PNG support is optional.
 
 ```bash
 git clone https://github.com/ioppermann/libmodjpeg.git
