@@ -44,7 +44,7 @@ The steps marked with a * will lead to loss of quality.
 
 ```bash
 gm convert image.png -filter Lanczos -resize 256x256 -quality 85 image.jpg
-gm composite dropon.png image.jpg -quality 90 image_composed.jpg
+gm composite dropon.png image.jpg -quality 86 image_composed.jpg
 gm compare -highlight-style assign -highlight-color lime -file image_composed_diff.png image.jpg image_composed.jpg
 ```
 
