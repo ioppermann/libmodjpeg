@@ -50,7 +50,7 @@ static struct option longopts[] = {
 void help(void);
 
 int main(int argc, char *argv[]) {
-	int c, opterr, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT, offset_x = 0, offset_y = 0, options = 0, rv = MJ_OK;
+	int c, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT, offset_x = 0, offset_y = 0, options = 0, rv = MJ_OK;
 	char *str;
 	mj_jpeg_t m;
 	mj_dropon_t d;

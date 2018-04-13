@@ -468,12 +468,22 @@ int mj_read_file(unsigned char **buffer, size_t *len, const char *filename) {
 
 	*buffer = (unsigned char *)calloc(*len + 1, sizeof(unsigned char));
 	if(*buffer == NULL) {
+		*len = 0;
+
 		return MJ_ERR_MEMORY;
 	}
 
-	fread(*buffer, 1, *len, fp);
+	size_t b;
+	b = fread(*buffer, 1, *len, fp);
 
 	fclose(fp);
+
+	if(b != *len) {
+		free(*buffer);
+		*len = 0;
+
+		return MJ_ERR_FILEIO;
+	}
 
 	return MJ_OK;
 }
