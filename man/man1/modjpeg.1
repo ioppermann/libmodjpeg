@@ -1,0 +1,82 @@
+.TH "LibModJpeg User Manual" 1.0.0 "27 May 2018" "LibModJpeg documentation"
+.SH NAME
+modjpeg
+.SH DESCRIPTION
+Tool library for JPEG masking and composition in the DCT domain. 
+.SH SYNOPSIS
+modjpeg [options]
+.SH OPTIONS
+.HP
+\fB\-\-input\fR, \fB\-i\fR file
+.IP
+Path to the image to be modified. The image needs to be a JPEG.
+.HP
+\fB\-\-ouput\fR, \fB\-o\fR file
+.IP
+Path to a file to store the modified image in.
+.HP
+\fB\-\-dropon\fR, \fB\-d\fR file[,mask]
+.IP
+Path to the image that should be used as dropon. The path to the mask is optional.
+The dropon and the mask have to be a JPEG and of the same dimension.
+.HP
+\fB\-\-position\fR, \fB\-p\fR [t|b][c][l|r]
+.IP
+The position of the dropon. t = top, b = bottom, l = left, r = right, c = center. Default: center
+.HP
+\fB\-\-offset\fR, \fB\-m\fR [horizontal],[vertical]
+.IP
+The offset to the given position in pixels. Default: 0,0
+.HP
+\fB\-\-luminance\fR, \fB\-y\fR value
+.IP
+Changes the brightness of the image according to the value. Use a negative value
+to darken the image, and a positive value to brighten the image.
+.HP
+\fB\-\-tintblue\fR, \fB\-b\fR value
+.IP
+Color the image. Use a negative value to tint the image yellow, and use a positive
+value to tint the image blue.
+.HP
+\fB\-\-tintred\fR, \fB\-r\fR value
+.IP
+Color the image. Use a negative value to tint the image green, and use a positive
+value to tint the image red.
+.HP
+\fB\-\-pixelate\fR, \fB\-x\fR
+.IP
+Pixelate the image into 8x8 blocks.
+.HP
+\fB\-\-grayscale\fR, \fB\-g\fR
+.IP
+Reduce the image to grayscale.
+.HP
+\fB\-\-optimize\fR, \fB\-O\fR
+.IP
+Optimize the Huffman tables on storing the output image.
+.HP
+\fB\-\-progressive\fR, \fB\-P\fR
+.IP
+Store the output image in progressive mode.
+.HP
+\fB\-\-arithmetric\fR, \fB\-A\fR
+.IP
+Use arithmetric coding instead of Huffman coding.
+.SH EXAMPLES
+Place a logo in the top right corner:
+.PP
+modjpeg \fB\-\-input\fR in.jpg \fB\-\-position\fR tr \fB\-\-dropon\fR logo.jpg \fB\-\-output\fR out.jpg
+.PP
+Pixelate the image and then place a logo in the top right corner:
+.PP
+modjpeg \fB\-\-input\fR in.jpg \fB\-\-pixelate\fR \fB\-\-position\fR tr \fB\-\-dropon\fR logo.jpg \fB\-\-output\fR out.jpg
+.PP
+Place a logo in the top right corner and then pixelate the image (including the logo):
+.PP
+modjpeg \fB\-\-input\fR in.jpg \fB\-\-position\fR tr \fB\-\-dropon\fR logo.jpg \fB\-\-pixelate\fR \fB\-\-output\fR out.jpg
+.SH COPYRIGHT
+modjpeg (c) 2006+ Ingo Oppermann.
+ All rights reserved.
+.SH "SEE ALSO"
+ cjpeg,
+ djpeg.
