@@ -2,6 +2,7 @@
 
 #betterjpeg.sh
 #1.0.0
+#Depends: graphicsmagick, modjpeg
 
 echo "BetterJpeg 1.0.0"
 
@@ -12,14 +13,8 @@ if [ ! -f "$tcomp" ]
 then
     tnocomp="$tnocomp $tcomp($tdeb)"
 fi
-tcomp="/usr/bin/convert"
-tdeb="imagemagick_*.deb"
-if [ ! -f "$tcomp" ]
-then
-    tnocomp="$tnocomp $tcomp($tdeb)"
-fi
-tcomp="/usr/bin/composite"
-tdeb="imagemagick_*.deb"
+tcomp="/usr/bin/gm"
+tdeb="graphicsmagick_*.deb"
 if [ ! -f "$tcomp" ]
 then
     tnocomp="$tnocomp $tcomp($tdeb)"
@@ -79,10 +74,10 @@ then
     exit 1
 fi
 
-composite -compose Difference "$src" "$mod" "$TEMP/betterjpeg.d.$$.png"
-mogrify -threshold "$thres" -negate "$TEMP/betterjpeg.d.$$.png"
-mogrify -transparent white "$TEMP/betterjpeg.d.$$.png"
-composite -compose Atop "$mod" "$TEMP/betterjpeg.d.$$.png" "$TEMP/betterjpeg.s.$$.png"
+gm composite -compose Difference "$src" "$mod" "$TEMP/betterjpeg.d.$$.png"
+gm mogrify -threshold "$thres" -negate "$TEMP/betterjpeg.d.$$.png"
+gm mogrify -transparent white "$TEMP/betterjpeg.d.$$.png"
+gm composite -compose Atop "$mod" "$TEMP/betterjpeg.d.$$.png" "$TEMP/betterjpeg.s.$$.png"
 rm "$TEMP/betterjpeg.d.$$.png"
 modjpeg -i "$src" -d "$TEMP/betterjpeg.s.$$.png" -o "$dst"
 rm "$TEMP/betterjpeg.s.$$.png"
