@@ -29,5 +29,12 @@ add_library(modjpeg SHARED compose.c convolve.c dropon.c effect.c image.c jpeg.c
 #target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
 set_target_properties(modjpeg PROPERTIES VERSION ${libmodjpeg_VERSION_STRING} SOVERSION ${libmodjpeg_VERSION_MAJOR})
 
+add_executable(modjpeg-dynamic contrib/modjpeg.c)
+target_link_libraries(modjpeg-dynamic modjpeg)
+
 install(TARGETS modjpeg DESTINATION lib)
+install(PROGRAMS modjpeg-dynamic DESTINATION bin RENAME modjpeg)
+install(PROGRAMS ../scripts/bash/betterjpeg.sh DESTINATION bin RENAME betterjpeg)
+install(FILES ../man/man1/betterjpeg.1 ../man/man1/modjpeg.1 DESTINATION share/man/man1)
 install(FILES libmodjpeg.h DESTINATION include)
+install(FILES ../LICENSE ../README.md ../VERSION DESTINATION share/doc/libmodjpeg)

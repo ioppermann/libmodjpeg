@@ -4,12 +4,12 @@ A bash script using graphicsmagick and modjpeg for modify jpeg files.
 
 ```bash
 betterjpeg.sh lena.jpg lena.jpg.png lena.jpg.png.jpg
-gm compare -highlight-style assign -highlight-color lime -file lena.jpg.diff.png lena.jpg lena.jpg.png.jpg 
+gm compare -highlight-style assign -highlight-color lime -file lena.jpg.diff.jpg lena.jpg lena.jpg.png.jpg 
 ```
 
 Original | Modify | Composed | Difference
 ---------|---------|----------|-----------
-![Original](./images/lena.jpg)|![Modify](./images/lena.jpg.png)|![Result](./images/lena.jpg.png.jpg)|![Overlay](./images/lena.jpg.diff.png)
+![Original](./images/lena.jpg)|![Modify](./images/lena.jpg.png)|![Result](./images/lena.jpg.png.jpg)|![Overlay](./images/lena.jpg.diff.jpg)
 
 ## URL
 
@@ -17,7 +17,7 @@ Original | Modify | Composed | Difference
 
 ## License
 
-libmodjpeg is released under the [MIT license](../master/LICENSE).
+libmodjpeg is released under the [MIT license](../../LICENSE).
 
 
 ## Acknowledgement

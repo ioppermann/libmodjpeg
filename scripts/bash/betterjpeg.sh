@@ -1,27 +1,21 @@
 #!/bin/sh
 
 #betterjpeg.sh
-#1.0.0
-#Depends: graphicsmagick, modjpeg
+#Depends: dash, graphicsmagick, modjpeg
 
-echo "BetterJpeg 1.0.0"
+sname="BetterJpeg"
+sversion="1.0.0"
+
+echo "$sname $sversion"
 
 tnocomp=""
-tcomp="/usr/bin/modjpeg"
-tdeb="modjpeg_*.deb"
-if [ ! -f "$tcomp" ]
+tcomp="gm"
+[ ! "$(command -v $tcomp)" ] && tnocomp="$tnocomp $tcomp"
+tcomp="modjpeg"
+[ ! "$(command -v $tcomp)" ] && tnocomp="$tnocomp $tcomp"
+if [ "x$tnocomp" != "x" ]
 then
-    tnocomp="$tnocomp $tcomp($tdeb)"
-fi
-tcomp="/usr/bin/gm"
-tdeb="graphicsmagick_*.deb"
-if [ ! -f "$tcomp" ]
-then
-    tnocomp="$tnocomp $tcomp($tdeb)"
-fi
-if [ "+$tnocomp" != "+" ]
-then
-    echo -e "Not found $tnocomp !"
+    echo "Not found:${tnocomp}!"
     echo ""
     exit 1
 fi
@@ -57,7 +51,7 @@ then
     echo "Usage:"
     echo "$0 [options] original.jpg modify.png result.jpg"
     echo "Options:"
-    echo "    -t    threshold (default = 1)"
+    echo "    -t N  threshold (default = 1)"
     echo "    -h    help"    
     exit 0
 fi
