@@ -50,7 +50,7 @@ gm compare -highlight-style assign -highlight-color lime -file image_composed_di
 
 Original | Overlay | Composed | Difference
 ---------|---------|----------|-----------
-![Original](../master/contrib/images/image.jpg)|![Overlay](../master/src/contrib/images/dropon.png)|![Result](../master/src/contrib/images/image_composed.jpg)|![Overlay](../master/src/contrib/images/image_composed_diff.png)
+![Original](../master/src/contrib/images/image.jpg)|![Overlay](../master/src/contrib/images/dropon.png)|![Result](../master/src/contrib/images/image_composed.jpg)|![Overlay](../master/src/contrib/images/image_composed_diff.png)
 
 The composed image above has been saved with a quality setting of 86. Only if the quality settings of the original image are known, the composed image can be saved with the same quality settings in order to have almost no changes outside of the area of the overlay.
 
@@ -106,8 +106,7 @@ It will be checked for [libpng-1.6.x](https://libpng.sourceforge.io/) as well in
 
 ```bash
 git clone https://github.com/ioppermann/libmodjpeg.git
-cd libmodjpeg
-cd src
+cd libmodjpeg/src
 cmake .
 make
 make install
@@ -155,10 +154,10 @@ int main(int argc, char **argv) {
 }
 ```
 
-In the [contrib](../../tree/master/contrib) directory you find an example program that implements all described functionality.
+In the [contrib](../../tree/master/src/contrib) directory you find an example program that implements all described functionality.
 
 ```bash
-cd contrib
+cd src/contrib
 cmake .
 make
 ```
