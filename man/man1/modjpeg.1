@@ -1,4 +1,4 @@
-.TH "LibModJpeg User Manual" 1.0.0 "27 May 2018" "LibModJpeg documentation"
+.TH "modjpeg User Manual" 1.0.0 "27 May 2018" "modjpeg documentation"
 .SH NAME
 modjpeg
 .SH DESCRIPTION
@@ -9,16 +9,17 @@ modjpeg [options]
 .HP
 \fB\-\-input\fR, \fB\-i\fR file
 .IP
-Path to the image to be modified. The image needs to be a JPEG.
+Path to the image to be modified. The image needs to be a JPEG image.
 .HP
 \fB\-\-ouput\fR, \fB\-o\fR file
 .IP
-Path to a file to store the modified image in.
+Path to a file to store the modified image in. The image will be a JPEG image.
 .HP
 \fB\-\-dropon\fR, \fB\-d\fR file[,mask]
 .IP
 Path to the image that should be used as dropon. The path to the mask is optional.
-The dropon and the mask have to be a JPEG and of the same dimension.
+The dropon and the mask have to be a JPEG and of the same dimension. If PNG support
+is compiled in, the dropon can also be a PNG with or without alpha channel.
 .HP
 \fB\-\-position\fR, \fB\-p\fR [t|b][c][l|r]
 .IP
@@ -53,7 +54,7 @@ Reduce the image to grayscale.
 .HP
 \fB\-\-optimize\fR, \fB\-O\fR
 .IP
-Optimize the Huffman tables on storing the output image.
+Optimize the Huffman tables when storing the output image.
 .HP
 \fB\-\-progressive\fR, \fB\-P\fR
 .IP
@@ -74,9 +75,10 @@ modjpeg \fB\-\-input\fR in.jpg \fB\-\-pixelate\fR \fB\-\-position\fR tr \fB\-\-d
 Place a logo in the top right corner and then pixelate the image (including the logo):
 .PP
 modjpeg \fB\-\-input\fR in.jpg \fB\-\-position\fR tr \fB\-\-dropon\fR logo.jpg \fB\-\-pixelate\fR \fB\-\-output\fR out.jpg
+.SH SEE ALSO
+.BR libmodjpeg (3),
+.BR cjpeg (1),
+.BR djpeg (1)
 .SH COPYRIGHT
 modjpeg (c) 2006+ Ingo Oppermann.
- All rights reserved.
-.SH "SEE ALSO"
- cjpeg,
- djpeg.
+All rights reserved.
