@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(libmodjpeg)
 
+cmake_policy(SET CMP0042 NEW)
+
 set(libmodjpeg_VERSION_MAJOR 1)
 set(libmodjpeg_VERSION_MINOR 0)
 set(libmodjpeg_VERSION_PATCH 0)
@@ -26,7 +28,7 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 add_library(modjpeg SHARED compose.c convolve.c dropon.c effect.c image.c jpeg.c)
-#target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
+target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
 set_target_properties(modjpeg PROPERTIES VERSION ${libmodjpeg_VERSION_STRING} SOVERSION ${libmodjpeg_VERSION_MAJOR})
 
 add_executable(modjpeg-dynamic contrib/modjpeg.c)
