@@ -210,7 +210,7 @@ int mj_read_dropon_from_raw(
 	short blend);
 ```
 
-Read a dropon from raw data. The raw data is a pointer to an array of chars holding the raw image data in the given color space
+Read a dropon from raw data. The raw data is a pointer to an array of chars holding the raw image data in the given color space.
 
 ```C
 #define MJ_COLORSPACE_RGB            1  // [0] = R0, [1] = G0, [2] = B0, [3] = R1, ...
@@ -284,7 +284,7 @@ int mj_read_jpeg_from_memory(
 	size_t len,
 	size_t max_pixel);
 ```
-Read a JPEG from a buffer. The buffer holds the JPEG bytestream of length `len` bytes. `max_pixel` is the maximum number of pixel allowed in the image
+Read a JPEG from a buffer. The buffer holds the JPEG bytestream of length `len` bytes. `max_pixel` is the maximum number of pixels allowed in the image
 to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
@@ -293,7 +293,7 @@ int mj_read_jpeg_from_file(
 	const char *filename,
 	size_t max_pixel);
 ```
-Read a JPEG from a file denoted by `filename`. `max_pixel` is the maximum number of pixel allowed in the image
+Read a JPEG from a file denoted by `filename`. `max_pixel` is the maximum number of pixels allowed in the image
 to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
