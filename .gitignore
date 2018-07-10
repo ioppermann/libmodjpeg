@@ -1,4 +1,6 @@
-/contrib/modjpeg
+.DS_Store
+modjpeg-dynamic
+modjpeg-static
 
 # cmake files
 CMakeCache.txt
