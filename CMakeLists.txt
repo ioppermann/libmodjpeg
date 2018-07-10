@@ -5,7 +5,7 @@ cmake_policy(SET CMP0042 NEW)
 
 set(libmodjpeg_VERSION_MAJOR 1)
 set(libmodjpeg_VERSION_MINOR 0)
-set(libmodjpeg_VERSION_PATCH 0)
+set(libmodjpeg_VERSION_PATCH 1)
 set(libmodjpeg_VERSION_STRING ${libmodjpeg_VERSION_MAJOR}.${libmodjpeg_VERSION_MINOR}.${libmodjpeg_VERSION_PATCH})
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
