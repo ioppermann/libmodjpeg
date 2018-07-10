@@ -14,6 +14,7 @@ A library for JPEG masking and composition in the DCT domain.
   - [Return values](#return-values)
   - [Supported color spaces](#supported-color-spaces)
 - [Example](#example)
+- [Who is using libmodjpeg](#who-is-using-libmodjpeg)
 - [License](#license)
 - [Acknowledgement](#acknowledgement)
 - [References](#references)
@@ -392,6 +393,11 @@ of error:
 ### Supported color spaces
 
 libmodjpeg only supports the "basic" and most common color spaces in JPEG files: `JCS_RGB`, `JCS_GRAYSCALE`, and `JCS_YCbCr`
+
+
+## Who is using libmodjpeg
+
+* [modjpeg-nginx](https://github.com/ioppermann/modjpeg-nginx) - NGINX filter module for adding overlays and logos to JPEGs on-the-fly without degrading the quality of the image.
 
 
 ## License
