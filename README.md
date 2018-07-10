@@ -50,7 +50,7 @@ gm compare -highlight-style assign -highlight-color lime -file image_composed_di
 
 Original | Overlay | Composed | Difference
 ---------|---------|----------|-----------
-![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed.jpg)|![Overlay](../master/contrib/images/image_composed_diff.png)
+![Original](../master/src/contrib/images/image.jpg)|![Overlay](../master/src/contrib/images/dropon.png)|![Result](../master/src/contrib/images/image_composed.jpg)|![Overlay](../master/src/contrib/images/image_composed_diff.png)
 
 The composed image above has been saved with a quality setting of 86. Only if the quality settings of the original image are known, the composed image can be saved with the same quality settings in order to have almost no changes outside of the area of the overlay.
 
@@ -62,7 +62,7 @@ gm compare -highlight-style assign -highlight-color lime -file image_composed_sa
 
 Original | Overlay | Composed | Difference
 ---------|---------|----------|-----------
-![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_composed_sameq.jpg)|![Overlay](../master/contrib/images/image_composed_sameq_diff.png)
+![Original](../master/src/contrib/images/image.jpg)|![Overlay](../master/src/contrib/images/dropon.png)|![Result](../master/src/contrib/images/image_composed_sameq.jpg)|![Overlay](../master/src/contrib/images/image_composed_sameq_diff.png)
 
 The composed image above has been saved with a quality setting of 85, which is the same quality setting as the original image.
 
@@ -88,7 +88,7 @@ gm compare -highlight-style assign -highlight-color lime -file image_dropon_diff
 
 Original | Overlay | Composed | Difference
 ---------|---------|----------|-----------
-![Original](../master/contrib/images/image.jpg)|![Overlay](../master/contrib/images/dropon.png)|![Result](../master/contrib/images/image_dropon.jpg)|![Overlay](../master/contrib/images/image_dropon_diff.png)
+![Original](../master/src/contrib/images/image.jpg)|![Overlay](../master/src/contrib/images/dropon.png)|![Result](../master/src/contrib/images/image_dropon.jpg)|![Overlay](../master/src/contrib/images/image_dropon_diff.png)
 
 The overlay is applied with the `modjpeg` CLI program, that uses libmodjpeg in order to apply an overlay to a JPEG image. The quality settings of the original image can remain unknown. Changes to the image will only happen where the overlay is applied.
 
@@ -106,7 +106,7 @@ It will be checked for [libpng-1.6.x](https://libpng.sourceforge.io/) as well in
 
 ```bash
 git clone https://github.com/ioppermann/libmodjpeg.git
-cd libmodjpeg
+cd libmodjpeg/src
 cmake .
 make
 make install
@@ -154,10 +154,10 @@ int main(int argc, char **argv) {
 }
 ```
 
-In the [contrib](../../tree/master/contrib) directory you find an example program that implements all described functionality.
+In the [contrib](../../tree/master/src/contrib) directory you find an example program that implements all described functionality.
 
 ```bash
-cd contrib
+cd src/contrib
 cmake .
 make
 ```

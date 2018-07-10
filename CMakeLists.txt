@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
 project(libmodjpeg)
+
+cmake_policy(SET CMP0042 NEW)
 
 set(libmodjpeg_VERSION_MAJOR 1)
 set(libmodjpeg_VERSION_MINOR 0)
@@ -25,9 +27,15 @@ if(PKG_CONFIG_FOUND)
 	endif()
 endif()
 
-add_library(modjpeg SHARED compose.c convolve.c dropon.c effect.c image.c jpeg.c)
-target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wno-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
+add_library(modjpeg SHARED src/compose.c src/convolve.c src/dropon.c src/effect.c src/image.c src/jpeg.c)
+target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
 set_target_properties(modjpeg PROPERTIES VERSION ${libmodjpeg_VERSION_STRING} SOVERSION ${libmodjpeg_VERSION_MAJOR})
 
+add_executable(modjpeg-dynamic src/contrib/modjpeg.c)
+target_link_libraries(modjpeg-dynamic modjpeg)
+
 install(TARGETS modjpeg DESTINATION lib)
-install(FILES libmodjpeg.h DESTINATION include)
+install(PROGRAMS modjpeg-dynamic DESTINATION bin RENAME modjpeg)
+install(FILES man/man1/modjpeg.1 DESTINATION share/man/man1)
+install(FILES src/libmodjpeg.h DESTINATION include)
+install(FILES LICENSE README.md VERSION DESTINATION share/doc/libmodjpeg)

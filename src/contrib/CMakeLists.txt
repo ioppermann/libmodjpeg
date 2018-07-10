@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
 project(modjpeg)
+
+cmake_policy(SET CMP0042 NEW)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -20,7 +22,7 @@ if(PKG_CONFIG_FOUND)
 	endif()
 endif()
 
-add_executable(modjpeg modjpeg.c ../compose.c ../convolve.c ../dropon.c ../effect.c ../image.c ../jpeg.c)
-target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wno-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
+add_executable(modjpeg-static modjpeg.c ../compose.c ../convolve.c ../dropon.c ../effect.c ../image.c ../jpeg.c)
+target_compile_options(modjpeg-static PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
 
-install(TARGETS modjpeg DESTINATION bin)
+install(PROGRAMS modjpeg-static DESTINATION bin RENAME modjpeg)

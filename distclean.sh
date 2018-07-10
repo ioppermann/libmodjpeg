@@ -1,7 +1,7 @@
 #!/bin/sh
 
-FILES="cmake_install.cmake CMakeCache.txt CMakeFiles install_manifest.txt Makefile"
-DIRS="./ contrib/"
+FILES="cmake_install.cmake CMakeCache.txt CMakeFiles install_manifest.txt Makefile modjpeg-dynamic src/contrib/modjpeg-static"
+DIRS="./"
 
 for dir in ${DIRS}; do
 	for file in ${FILES}; do
@@ -13,6 +13,5 @@ for dir in ${DIRS}; do
 	done
 done
 
-if [ -e ./contrib/modjpeg ]; then
-	rm ./contrib/modjpeg
-fi
+rm *.dylib
+rm *.so
