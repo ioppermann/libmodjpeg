@@ -1,0 +1,199 @@
+.TH "libmodjpeg" 1.0.0 "July 9, 2018" "libmodjpeg"
+.SH NAME
+libmodjpeg \-\- library for JPEG masking and composition in the DCT domain
+
+.SH LIBRARY
+libmodjpeg (\-lmodjpeg)
+
+.SH SYNOPSIS
+.B #include <libmodjpeg.h>
+
+.SH DESCRIPTION
+With libmodjpeg you can overlay a (masked) image onto an existing JPEG as lossless as possible. Changes in the JPEG only take place where the overlayed image is applied. All modifications happen in the DCT domain, thus the JPEG is decoded and encoded losslessly.
+
+.SH DROPON
+.TP
+.B struct \fImj_dropon_t\fB;
+
+A "dropon" denotes the overlay that will be applied to an image and is defined by the struct \fBmj_dropon_t\fR.
+.TP
+.B void mj_init_dropon(mj_dropon_t *\fId\fB);
+
+Initialize the dropon in order to make it ready for use.
+.TP
+.B int mj_read_dropon_from_raw(mj_dropon_t *\fId\fB, const unsigned char *\fIrawdata\fB, unsigned int \fIcolorspace\fB, size_t \fIwidth\fB, size_t \fIheight\fB, short \fIblend\fB);
+
+Read a dropon from raw data. The raw data is a pointer to an array of chars holding the raw image data in the given color space.
+
+\fBMJ_COLORSPACE_RGB\fR           \- [0] = R0, [1] = G0, [2] = B0, [3] = R1, ...
+.br
+\fBMJ_COLORSPACE_RGBA\fR          \- [0] = R0, [1] = G0, [2] = B0, [3] = A0, [4] = R1, ...
+.br
+\fBMJ_COLORSPACE_GRAYSCALE\fR     \- [0] = Y0, [1] = Y1, ...
+.br
+\fBMJ_COLORSPACE_GRAYSCALEA\fR    \- [0] = Y0, [1] = A0, [2] = Y1, ...
+.br
+\fBMJ_COLORSPACE_YCC\fR           \- [0] = Y0, [1] = Cb0, [2] = Cr0, [3] = Y1, ...
+.br
+\fBMJ_COLORSPACE_YCCA\fR          \- [0] = Y0, [1] = Cb0, [2] = Cr0, [3] = A0, [4] = Y1, ...
+
+\fBwidth\fR and \fBheight\fR are the dimensions of the raw image. \fBblend\fR is a value in [0, 255] for the translucency for the dropon if no alpha channel is given, where 0 is fully transparent (the dropon will not be applied) and 255 is fully opaque.
+.TP
+.B int mj_read_dropon_from_file(mj_dropon_t *\fId\fB, const char *\fIfilename\fB, const char *\fImaskfilename\fB, short \fIblend\fB);
+
+Read a dropon from a file (\fBfilename\fR). The file can be a JPEG or a PNG.
+
+If the file is a JPEG, then the alpha channel can be given by a second JPEG file (\fBmaskfilename\fR). Use NULL if no alpha channel is available or wanted. \fBblend\fR is a value for the translucency for the dropon if no alpha channel is given.
+
+If the file is a PNG, then use NULL for \fBmaskfilename\fR and any value for blend because they will be ignored. The alpha channel is taken from the PNG, if available. PNG files are only supported if the library is compiled with PNG support.
+.TP
+.B int mj_read_dropon_from_memory(mj_dropon_t *\fId\fB, const unsigned char *\fImemory\fB, size_t \fIlen\fB, const unsigned char *\fImaskmemory\fB, size_t \fImasklen\fB, short \fIblend\fB);
+
+Read a dropon from a JPEG or PNG bytestream (\fBmemory\fR of \fBlen\fR bytes length).
+
+If the bytestream is a JPEG, then the alpha channel is given by a second JPEG bytestream (\fBmaskmemory\fR of \fBmasklen\fR bytes length). Use NULL for \fBmaskmemory\fR or 0 for \fBmasklen\fR if no alpha channel is available or wanted. \fBblend\fR is a value for the translucency for the dropon if no alpha channel is given.
+
+If the bytestream is a PNG, then use NULL for \fBmaskmemory\fR or 0 for \fBmasklen\fR and any value for \fBblend\fR. The alpha channel is taken from the PNG, if available. PNG files are only supported if the library is compiled with PNG support.
+.TP
+.B void mj_free_dropon(mj_dropon_t *\fId\fB);
+
+Free the memory consumed by the dropon. The dropon struct can be reused for another dropon.
+
+.SH IMAGE
+.TP
+.B struct \fImj_jpeg_t;
+
+The mj_jpeg_t holds the JPEG a dropon can be applied to.
+.TP
+.B void mj_init_jpeg(mj_jpeg_t *\fIm\fB);
+
+Initialize the image in order to make it ready for use.
+.TP
+.B int mj_read_jpeg_from_memory(mj_jpeg_t *\fIm\fB, const unsigned char *\fImemory\fB, size_t \fIlen\fB, size_t \fImax_pixel\fB);
+
+Read a JPEG from \fBmemory\fR. The buffer holds the JPEG bytestream of length \fBlen\fR bytes. \fBmax_pixel\fR is the maximum number of pixels allowed in the image to prevent processing too big images. Set it to 0 to allow any sized images.
+.TP
+.B int mj_read_jpeg_from_file(mj_jpeg_t *\fIm\fB, const char *\fIfilename\fB, size_t \fImax_pixel\fB);
+
+Read a JPEG from a file denoted by \fBfilename\fR. \fBmax_pixel\fR is the maximum number of pixels allowed in the image to prevent processing too big images. Set it to 0 to allow any sized images.
+.TP
+.B int mj_write_jpeg_to_memory(mj_jpeg_t *\fIm\fB, unsigned char **\fImemory\fB, size_t *\fIlen\fB, int \fIoptions\fB);
+
+Write an image to a buffer as a JPEG bytestream. The required memory for the buffer will be allocated and must be free'd after use. \fBlen\fR holds the length of the buffer in bytes. options are encoding features that can be OR'ed:
+
+\fBMJ_OPTION_NONE\fR \- baseline encoding
+.br
+\fBMJ_OPTION_OPTIMIZE\fR \- optimize Huffman tables
+.br
+\fBMJ_OPTION_PROGRESSIVE\fR \- progressive encoding
+.br
+\fBMJ_OPTION_ARITHMETRIC\fR \- arithmetric encoding (overrules Huffman optimizations)
+
+.TP
+.B int mj_write_jpeg_to_file(mj_jpeg_t *\fIm\fB, char *\fIfilename\fB, int \fIoptions\fB);
+
+Write an image to a file (\fBfilename\fR) as a JPEG bytestream. The options are the same as for \fBmj_write_jpeg_to_memory()\fR.
+.TP
+.B void mj_free_jpeg(mj_jpeg_t *\fIm\fB);
+
+Free the memory consumed by the JPEG. The jpeg struct can be reused for another image.
+
+.SH COMPOSE
+.TP
+.B int  mj_compose(mj_jpeg_t *\fIm\fB, mj_dropon_t *\fId\fB, unsigned int \fIalign\fB, int \fIoffset_x\fB, int \fIoffset_y\fB);
+
+Compose an image with a dropon. Use these OR'ed values for align:
+
+\fBMJ_ALIGN_LEFT\fR \- align the dropon to the left border of the image
+.br
+\fBMJ_ALIGN_RIGHT\fR \- align the dropon to the right border of the image
+.br
+\fBMJ_ALIGN_TOP\fR \- align the dropon to the top border of the image
+.br
+\fBMJ_ALIGN_BOTTOM\fR \- align the dropon to the bottom border of the image
+.br
+\fBMJ_ALIGN_CENTER\fR \- align the dropon to the center of the image
+
+Use \fBoffset_x\fR and \fBoffset_y\fR to move the dropon relative to the alignment. If parts of the dropon will be outside of the area of the image, it will be cropped accordingly, e.g. you can apply a dropon that is bigger than the image.
+
+.SH EFFECTS
+.TP
+.B int mj_effect_grayscale(mj_jpeg_t *\fIm\fB);
+
+Convert the image to grayscale. This only works if the image was stored in YCbCr color space. It will keep all three components.
+.TP
+.B int mj_effect_pixelate(mj_jpeg_t *\fIm\fB);
+
+Keep only the DC coefficients from the components. This will remove the details from the image and keep only the "base" color of each block.
+.TP
+.B int mj_effect_tint(mj_jpeg_t *\fIm\fB, int \fIcb_value\fB, int \fIcr_value\fB);
+
+Colorize the image. Use \fBcb_value\fR to colorize in blue (positive value) or yellow (negative value). Use \fBcr_value\fR to colorize in red (positive value) or green (negative value). This only works if the image was stored in YCbCr color space.
+.TP
+.B int mj_effect_luminance(mj_jpeg_t *\fIm\fB, int \fIvalue\fB);
+
+Change the brightness of the image. Use a positive \fBvalue\fR to brighten or a negative \fBvalue\fR to darken then image. This only works if the image was stored in YCbCr color space.
+
+.SH RETURN VALUES
+All non-void functions return \fBMJ_OK\fR if everything went fine. If something went wrong the return value indicates the source of error:
+
+\fBMJ_ERR_MEMORY\fR \- failed to allocate enough memory
+.br
+\fBMJ_ERR_NULL_DATA\fR \- some provided pointers are NULL
+.br
+\fBMJ_ERR_DROPON_DIMENSIONS\fR \- the dimensions of the dropon image and alpha do not correspond
+.br
+\fBMJ_ERR_UNSUPPORTED_COLORSPACE\fR \- the JPEG is in an unsupported color space
+.br
+\fBMJ_ERR_DECODE_JPEG\fR \- error during decoding the JPEG
+.br
+\fBMJ_ERR_ENCODE_JPEG\fR \- error during encoding the JPEG
+.br
+\fBMJ_ERR_FILEIO\fR \- error while reading/writing from/to a file
+.br
+\fBMJ_ERR_IMAGE_SIZE\fR \- the dimensions of the provided image are too large
+.br
+\fBMJ_ERR_UNSUPPORTED_FILETYPE\fR \- the file type of the dropon is unsupported
+
+.SH EXAMPLE
+.nf
+#include <libmodjpeg.h>
+
+int main(int argc, char **argv) {
+	\fB// Initialize dropon struct\fR
+	struct mj_dropon_t d;
+	mj_init_dropon(&d);
+
+	\fB// Read a dropon from a JPEG, without mask and with 50% translucency\fR
+	mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
+
+	\fB// Initialize JPEG image struct\fR
+	struct mj_jpeg_t m;
+	mj_init_jpeg(&m);
+
+	\fB// Read a JPEG image from a file\fR
+	mj_read_jpeg_from_file(&m, "in.jpg", 0);
+
+	\fB// Place the dropon in the bottom right corner of the JPEG image\fR
+	\fB// with 10px distance to the bottom and right border\fR
+	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
+
+	\fB// Write the JPEG image to a file with optimzed Hufman tables and progressive mode\fR
+	mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
+
+	\fB// Free the dropon and JPEG image structs\fR
+	mj_free_jpeg(&m);
+	mj_free_dropon(&d);
+
+	return 0;
+}
+.fi
+
+.SH SEE ALSO
+.BR https://github.com/ioppermann/libmodjpeg,
+.BR libjpeg (3),
+.BR libpng (3)
+
+.SH COPYRIGHT
+libmodjpeg (c) 2006+ Ingo Oppermann.
+All rights reserved.
