@@ -28,7 +28,7 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 add_library(modjpeg SHARED src/compose.c src/convolve.c src/dropon.c src/effect.c src/image.c src/jpeg.c)
-target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
+target_compile_options(modjpeg PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wno-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
 set_target_properties(modjpeg PROPERTIES VERSION ${libmodjpeg_VERSION_STRING} SOVERSION ${libmodjpeg_VERSION_MAJOR})
 
 add_executable(modjpeg-dynamic src/contrib/modjpeg.c)
