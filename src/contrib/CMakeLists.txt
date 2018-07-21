@@ -23,6 +23,6 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 add_executable(modjpeg-static modjpeg.c ../compose.c ../convolve.c ../dropon.c ../effect.c ../image.c ../jpeg.c)
-target_compile_options(modjpeg-static PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
+target_compile_options(modjpeg-static PRIVATE -O2 -Wall -Wextra -Wpointer-arith -Wno-uninitialized -Wno-unused-parameter -Wno-deprecated-declarations -Werror)
 
 install(PROGRAMS modjpeg-static DESTINATION bin RENAME modjpeg)
