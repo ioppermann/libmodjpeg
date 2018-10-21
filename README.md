@@ -126,32 +126,32 @@ env CMAKE_PREFIX_PATH=/usr/local/opt/jpeg-turbo/ cmake .
 #include <libmodjpeg.h>
 
 int main(int argc, char **argv) {
-	// Initialize dropon struct
-	struct mj_dropon_t d;
-	mj_init_dropon(&d);
+    // Initialize dropon struct
+    struct mj_dropon_t d;
+    mj_init_dropon(&d);
 
-	// Read a dropon from a JPEG, without mask and with 50% translucency
-	mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
+    // Read a dropon from a JPEG, without mask and with 50% translucency
+    mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
 
-	// Initialize JPEG image struct
-	struct mj_jpeg_t m;
-	mj_init_jpeg(&m);
+    // Initialize JPEG image struct
+    struct mj_jpeg_t m;
+    mj_init_jpeg(&m);
 
-	// Read a JPEG image from a file
-	mj_read_jpeg_from_file(&m, "in.jpg", 0);
+    // Read a JPEG image from a file
+    mj_read_jpeg_from_file(&m, "in.jpg", 0);
 
-	// Place the dropon in the bottom right corner of the JPEG image
-	// with 10px distance to the bottom and right border
-	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
+    // Place the dropon in the bottom right corner of the JPEG image
+    // with 10px distance to the bottom and right border
+    mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
 
-	// Write the JPEG image to a file with optimzed Hufman tables and progressive mode
-	mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
+    // Write the JPEG image to a file with optimzed Hufman tables and progressive mode
+    mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
 
-	// Free the dropon and JPEG image structs
-	mj_free_jpeg(&m);
-	mj_free_dropon(&d);
+    // Free the dropon and JPEG image structs
+    mj_free_jpeg(&m);
+    mj_free_dropon(&d);
 
-	return 0;
+    return 0;
 }
 ```
 
@@ -203,12 +203,12 @@ Initialize the dropon in order to make it ready for use.
 
 ```C
 int mj_read_dropon_from_raw(
-	mj_dropon_t *d,
-	const unsigned char *rawdata,
-	unsigned int colorspace,
-	size_t width,
-	size_t height,
-	short blend);
+    mj_dropon_t *d,
+    const unsigned char *rawdata,
+    unsigned int colorspace,
+    size_t width,
+    size_t height,
+    short blend);
 ```
 
 Read a dropon from raw data. The raw data is a pointer to an array of chars holding the raw image data in the given color space.
@@ -227,10 +227,10 @@ channel is given, where 0 is fully transparent (the dropon will not be applied) 
 
 ```C
 int mj_read_dropon_from_file(
-	mj_dropon_t *d,
-	const char *filename,
-	const char *maskfilename,
-	short blend);
+    mj_dropon_t *d,
+    const char *filename,
+    const char *maskfilename,
+    short blend);
 ```
 
 Read a dropon from a file (`filename`). The file can be a JPEG or a PNG.
@@ -243,12 +243,12 @@ from the PNG, if available. PNG files are only supported if the library is compi
 
 ```C
 int mj_read_dropon_from_memory(
-	mj_dropon_t *d,
-	const unsigned char *memory,
-	size_t len,
-	const unsigned char *maskmemory,
-	size_t masklen,
-	short blend);
+    mj_dropon_t *d,
+    const unsigned char *memory,
+    size_t len,
+    const unsigned char *maskmemory,
+    size_t masklen,
+    short blend);
 ```
 
 Read a dropon from a JPEG or PNG bytestream (`memory` of `len` bytes length).
@@ -280,29 +280,29 @@ Initialize the image in order to make it ready for use.
 
 ```C
 int mj_read_jpeg_from_memory(
-	mj_jpeg_t *m,
-	const unsigned char *memory,
-	size_t len,
-	size_t max_pixel);
+    mj_jpeg_t *m,
+    const unsigned char *memory,
+    size_t len,
+    size_t max_pixel);
 ```
 Read a JPEG from a buffer. The buffer holds the JPEG bytestream of length `len` bytes. `max_pixel` is the maximum number of pixels allowed in the image
 to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
 int mj_read_jpeg_from_file(
-	mj_jpeg_t *m,
-	const char *filename,
-	size_t max_pixel);
+    mj_jpeg_t *m,
+    const char *filename,
+    size_t max_pixel);
 ```
 Read a JPEG from a file denoted by `filename`. `max_pixel` is the maximum number of pixels allowed in the image
 to prevent processing too big images. Set it to `0` to allow any sized images.
 
 ```C
 int mj_write_jpeg_to_memory(
-	mj_jpeg_t *m,
-	unsigned char **memory,
-	size_t *len,
-	int options);
+    mj_jpeg_t *m,
+    unsigned char **memory,
+    size_t *len,
+    int options);
 ```
 Write an image to a buffer as a JPEG bytestream. The required memory for the buffer will be allocated and must be free'd after use. `len` holds
 the length of the buffer in bytes. `options` are encoding features that can be OR'ed:
@@ -314,9 +314,9 @@ the length of the buffer in bytes. `options` are encoding features that can be O
 
 ```C
 int mj_write_jpeg_to_file(
-	mj_jpeg_t *m,
-	char *filename,
-	int options);
+    mj_jpeg_t *m,
+    char *filename,
+    int options);
 ```
 Write an image to a file (`filename`) as a JPEG bytestream. The options are the same as for `mj_write_jpeg_to_memory()`.
 
@@ -329,11 +329,11 @@ Free the memory consumed by the JPEG. The jpeg struct can be reused for another 
 
 ```C
 int  mj_compose(
-	mj_jpeg_t *m,
-	mj_dropon_t *d,
-	unsigned int align,
-	int offset_x,
-	int offset_y);
+    mj_jpeg_t *m,
+    mj_dropon_t *d,
+    unsigned int align,
+    int offset_x,
+    int offset_y);
 ```
 Compose an image with a dropon. Use these OR'ed values for `align`:
 
@@ -360,17 +360,17 @@ Keep only the DC coefficients from the components. This will remove the details 
 
 ```C
 int mj_effect_tint(
-	mj_jpeg_t *m,
-	int cb_value,
-	int cr_value);
+    mj_jpeg_t *m,
+    int cb_value,
+    int cr_value);
 ```
 Colorize the image. Use `cb_value` to colorize in blue (positive value) or yellow (negative value). Use `cr_value` to colorize in
 red (positive value) or green (negative value). This only works if the image was stored in YCbCr color space.
 
 ```C
 int mj_effect_luminance(
-	mj_jpeg_t *m,
-	int value);
+    mj_jpeg_t *m,
+    int value);
 ```
 Change the brightness of the image. Use a positive value to brighten or a negative value to darken then image.
 This only works if the image was stored in YCbCr color space.

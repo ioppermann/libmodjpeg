@@ -30,234 +30,234 @@
 #include "../libmodjpeg.h"
 
 static struct option longopts[] = {
-	{ "input",       required_argument, NULL, 'i' },
-	{ "output",      required_argument, NULL, 'o' },
-	{ "dropon",      required_argument, NULL, 'd' },
-	{ "position",    required_argument, NULL, 'p' },
-	{ "offset",      required_argument, NULL, 'm' },
-	{ "luminance",   required_argument, NULL, 'y' },
-	{ "tintblue",    required_argument, NULL, 'b' },
-	{ "tintred",     required_argument, NULL, 'r' },
-	{ "pixelate",    no_argument,       NULL, 'x' },
-	{ "grayscale",   no_argument,       NULL, 'g' },
-	{ "progressive", no_argument,       NULL, 'P' },
-	{ "optimize",    no_argument,       NULL, 'O' },
-	{ "arithmetric", no_argument,       NULL, 'A' },
-	{ "help",        no_argument,       NULL, 'h' },
-	{ NULL,          0,                 NULL,  0  }
+    { "input",       required_argument, NULL, 'i' },
+    { "output",      required_argument, NULL, 'o' },
+    { "dropon",      required_argument, NULL, 'd' },
+    { "position",    required_argument, NULL, 'p' },
+    { "offset",      required_argument, NULL, 'm' },
+    { "luminance",   required_argument, NULL, 'y' },
+    { "tintblue",    required_argument, NULL, 'b' },
+    { "tintred",     required_argument, NULL, 'r' },
+    { "pixelate",    no_argument,       NULL, 'x' },
+    { "grayscale",   no_argument,       NULL, 'g' },
+    { "progressive", no_argument,       NULL, 'P' },
+    { "optimize",    no_argument,       NULL, 'O' },
+    { "arithmetric", no_argument,       NULL, 'A' },
+    { "help",        no_argument,       NULL, 'h' },
+    { NULL,          0,                 NULL,  0  }
 };
 
 void help(void);
 
 int main(int argc, char *argv[]) {
-	int c, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT, offset_x = 0, offset_y = 0, options = 0, rv = MJ_OK;
-	char *str;
-	mj_jpeg_t m;
-	mj_dropon_t d;
+    int c, t, position = MJ_ALIGN_TOP | MJ_ALIGN_LEFT, offset_x = 0, offset_y = 0, options = 0, rv = MJ_OK;
+    char *str;
+    mj_jpeg_t m;
+    mj_dropon_t d;
 
-	mj_init_jpeg(&m);
-	mj_init_dropon(&d);
+    mj_init_jpeg(&m);
+    mj_init_dropon(&d);
 
-	opterr = 1;
+    opterr = 1;
 
-	while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgPOAh", longopts, NULL)) != -1) {
-		switch(c) {
-			case 'i':
-				if(mj_read_jpeg_from_file(&m, optarg, 0) != MJ_OK) {
-					fprintf(stderr, "Can't read image from '%s'\n", optarg);
-					exit(1);
-				}
+    while((c = getopt_long(argc, argv, ":i: :o: :d: :p: :m: :y: :b: :r: xgPOAh", longopts, NULL)) != -1) {
+        switch(c) {
+            case 'i':
+                if(mj_read_jpeg_from_file(&m, optarg, 0) != MJ_OK) {
+                    fprintf(stderr, "Can't read image from '%s'\n", optarg);
+                    exit(1);
+                }
 
-				break;
-			case 'o':
-				if(mj_write_jpeg_to_file(&m, optarg, options) != MJ_OK) {
-					fprintf(stderr, "Can't write image to '%s'\n", optarg);
-					exit(1);
-				}
+                break;
+            case 'o':
+                if(mj_write_jpeg_to_file(&m, optarg, options) != MJ_OK) {
+                    fprintf(stderr, "Can't write image to '%s'\n", optarg);
+                    exit(1);
+                }
 
-				break;
-			case 'd':
-				str = strchr(optarg, ',');
-				if(str != NULL) {
-					*str = '\0';
-					rv = mj_read_dropon_from_file(&d, optarg, str + 1, MJ_BLEND_FULL);
-				}
-				else {
-					rv = mj_read_dropon_from_file(&d, optarg, NULL, MJ_BLEND_FULL);
-				}
+                break;
+            case 'd':
+                str = strchr(optarg, ',');
+                if(str != NULL) {
+                    *str = '\0';
+                    rv = mj_read_dropon_from_file(&d, optarg, str + 1, MJ_BLEND_FULL);
+                }
+                else {
+                    rv = mj_read_dropon_from_file(&d, optarg, NULL, MJ_BLEND_FULL);
+                }
 
-				if(rv != MJ_OK) {
-					fprintf(stderr, "Can't read dropon from '%s'\n", optarg);
-					exit(1);
-				}
+                if(rv != MJ_OK) {
+                    fprintf(stderr, "Can't read dropon from '%s'\n", optarg);
+                    exit(1);
+                }
 
-				if(mj_compose(&m, &d, position, offset_x, offset_y) != MJ_OK) {
-					fprintf(stderr, "Failed to apply the dropon onto the image\n");
-					exit(1);
-				}
+                if(mj_compose(&m, &d, position, offset_x, offset_y) != MJ_OK) {
+                    fprintf(stderr, "Failed to apply the dropon onto the image\n");
+                    exit(1);
+                }
 
-				break;
-			case 'p':
-				if(strlen(optarg) != 2) {
-					fprintf(stderr, "Invalid position, use --help for more details\n");
-					break;
-				}
+                break;
+            case 'p':
+                if(strlen(optarg) != 2) {
+                    fprintf(stderr, "Invalid position, use --help for more details\n");
+                    break;
+                }
 
-				position = 0;
-				if(optarg[0] == 't') {
-					position |= MJ_ALIGN_TOP;
-				}
-				else if(optarg[0] == 'b') {
-					position |= MJ_ALIGN_BOTTOM;
-				}
-				else if(optarg[0] == 'c') {
-					position |= MJ_ALIGN_CENTER;
-				}
+                position = 0;
+                if(optarg[0] == 't') {
+                    position |= MJ_ALIGN_TOP;
+                }
+                else if(optarg[0] == 'b') {
+                    position |= MJ_ALIGN_BOTTOM;
+                }
+                else if(optarg[0] == 'c') {
+                    position |= MJ_ALIGN_CENTER;
+                }
 
-				if(optarg[1] == 'l') {
-					position |= MJ_ALIGN_LEFT;
-				}
-				else if(optarg[1] == 'r') {
-					position |= MJ_ALIGN_RIGHT;
-				}
-				else if(optarg[1] == 'c') {
-					position |= MJ_ALIGN_CENTER;
-				}
+                if(optarg[1] == 'l') {
+                    position |= MJ_ALIGN_LEFT;
+                }
+                else if(optarg[1] == 'r') {
+                    position |= MJ_ALIGN_RIGHT;
+                }
+                else if(optarg[1] == 'c') {
+                    position |= MJ_ALIGN_CENTER;
+                }
 
-				break;
-			case 'm':
-				offset_x = (int)strtol(optarg, NULL, 10);
-				str = strchr(optarg, ',');
-				if(str != NULL) {
-					offset_y = (int)strtol(++str, NULL, 10);
-				}
-				break;
-			case 'y':
-				t = (int)strtol(optarg, NULL, 10);
-				mj_effect_luminance(&m, t);
-				break;
-			case 'b':
-				t = (int)strtol(optarg, NULL, 10);
-				mj_effect_tint(&m, t, 0);
-				break;
-			case 'r':
-				t = (int)strtol(optarg, NULL, 10);
-				mj_effect_tint(&m, 0, t);
-				break;
-			case 'x':
-				mj_effect_pixelate(&m);
-				break;
-			case 'g':
-				mj_effect_grayscale(&m);
-				break;
-			case 'O':
-				options |= MJ_OPTION_OPTIMIZE;
-				break;
-			case 'P':
-				options |= MJ_OPTION_PROGRESSIVE;
-				break;
-			case 'A':
-				options |= MJ_OPTION_ARITHMETRIC;
-				break;
-			case 'h':
-				help();
-				exit(0);
-			case ':':
-				fprintf(stderr, "Argument missing, use --help for more details\n");
-				break;
-			case '?':
-			default:
-				fprintf(stderr, "Unknown option, use --help for more details\n");
-				break;
-		}
-	}
+                break;
+            case 'm':
+                offset_x = (int)strtol(optarg, NULL, 10);
+                str = strchr(optarg, ',');
+                if(str != NULL) {
+                    offset_y = (int)strtol(++str, NULL, 10);
+                }
+                break;
+            case 'y':
+                t = (int)strtol(optarg, NULL, 10);
+                mj_effect_luminance(&m, t);
+                break;
+            case 'b':
+                t = (int)strtol(optarg, NULL, 10);
+                mj_effect_tint(&m, t, 0);
+                break;
+            case 'r':
+                t = (int)strtol(optarg, NULL, 10);
+                mj_effect_tint(&m, 0, t);
+                break;
+            case 'x':
+                mj_effect_pixelate(&m);
+                break;
+            case 'g':
+                mj_effect_grayscale(&m);
+                break;
+            case 'O':
+                options |= MJ_OPTION_OPTIMIZE;
+                break;
+            case 'P':
+                options |= MJ_OPTION_PROGRESSIVE;
+                break;
+            case 'A':
+                options |= MJ_OPTION_ARITHMETRIC;
+                break;
+            case 'h':
+                help();
+                exit(0);
+            case ':':
+                fprintf(stderr, "Argument missing, use --help for more details\n");
+                break;
+            case '?':
+            default:
+                fprintf(stderr, "Unknown option, use --help for more details\n");
+                break;
+        }
+    }
 
-	mj_free_jpeg(&m);
-	mj_free_dropon(&d);
+    mj_free_jpeg(&m);
+    mj_free_dropon(&d);
 
-	return 0;
+    return 0;
 }
 
 void help(void) {
-	fprintf(stderr, "modjpeg (c) 2006+ Ingo Oppermann\n\n");
+    fprintf(stderr, "modjpeg (c) 2006+ Ingo Oppermann\n\n");
 
-	fprintf(stderr, "The order for the options is important, i.e. a dropon can't be applied without\n");
-	fprintf(stderr, "loading an image first.\n\n");
+    fprintf(stderr, "The order for the options is important, i.e. a dropon can't be applied without\n");
+    fprintf(stderr, "loading an image first.\n\n");
 
-	fprintf(stderr, "Options:\n\n");
+    fprintf(stderr, "Options:\n\n");
 
-	fprintf(stderr, "\t--input, -i file\n");
-	fprintf(stderr, "\t\tPath to the image to be modified. The image needs to be a JPEG.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--input, -i file\n");
+    fprintf(stderr, "\t\tPath to the image to be modified. The image needs to be a JPEG.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--ouput, -o file\n");
-	fprintf(stderr, "\t\tPath to a file to store the modified image in.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--ouput, -o file\n");
+    fprintf(stderr, "\t\tPath to a file to store the modified image in.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--dropon, -d file[,mask]\n");
-	fprintf(stderr, "\t\tPath to the image that should be used as dropon. The path to the mask is optional.\n");
-	fprintf(stderr, "\t\tThe dropon and the mask have to be a JPEG and of the same dimension.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--dropon, -d file[,mask]\n");
+    fprintf(stderr, "\t\tPath to the image that should be used as dropon. The path to the mask is optional.\n");
+    fprintf(stderr, "\t\tThe dropon and the mask have to be a JPEG and of the same dimension.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--position, -p [t|b][c][l|r]\n");
-	fprintf(stderr, "\t\tThe position of the dropon. t = top, b = bottom, l = left, r = right, c = center. Default: center\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--position, -p [t|b][c][l|r]\n");
+    fprintf(stderr, "\t\tThe position of the dropon. t = top, b = bottom, l = left, r = right, c = center. Default: center\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--offset, -m [horizontal],[vertical]\n");
-	fprintf(stderr, "\t\tThe offset to the given position in pixels. Default: 0,0\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--offset, -m [horizontal],[vertical]\n");
+    fprintf(stderr, "\t\tThe offset to the given position in pixels. Default: 0,0\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--luminance, -y value\n");
-	fprintf(stderr, "\t\tChanges the brightness of the image according to the value. Use a negative value\n");
-	fprintf(stderr, "\t\tto darken the image, and a positive value to brighten the image.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--luminance, -y value\n");
+    fprintf(stderr, "\t\tChanges the brightness of the image according to the value. Use a negative value\n");
+    fprintf(stderr, "\t\tto darken the image, and a positive value to brighten the image.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--tintblue, -b value\n");
-	fprintf(stderr, "\t\tColor the image. Use a negative value to tint the image yellow, and use a positive\n");
-	fprintf(stderr, "\t\tvalue to tint the image blue.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--tintblue, -b value\n");
+    fprintf(stderr, "\t\tColor the image. Use a negative value to tint the image yellow, and use a positive\n");
+    fprintf(stderr, "\t\tvalue to tint the image blue.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--tintred, -r value\n");
-	fprintf(stderr, "\t\tColor the image. Use a negative value to tint the image green, and use a positive\n");
-	fprintf(stderr, "\t\tvalue to tint the image red.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--tintred, -r value\n");
+    fprintf(stderr, "\t\tColor the image. Use a negative value to tint the image green, and use a positive\n");
+    fprintf(stderr, "\t\tvalue to tint the image red.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--pixelate, -x\n");
-	fprintf(stderr, "\t\tPixelate the image into 8x8 blocks.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--pixelate, -x\n");
+    fprintf(stderr, "\t\tPixelate the image into 8x8 blocks.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--grayscale, -g\n");
-	fprintf(stderr, "\t\tReduce the image to grayscale.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--grayscale, -g\n");
+    fprintf(stderr, "\t\tReduce the image to grayscale.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--optimize, -O\n");
-	fprintf(stderr, "\t\tOptimize the Huffman tables on storing the output image.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--optimize, -O\n");
+    fprintf(stderr, "\t\tOptimize the Huffman tables on storing the output image.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--progressive, -P\n");
-	fprintf(stderr, "\t\tStore the output image in progressive mode.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--progressive, -P\n");
+    fprintf(stderr, "\t\tStore the output image in progressive mode.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\t--arithmetric, -A\n");
-	fprintf(stderr, "\t\tUse arithmetric coding instead of Huffman coding.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\t--arithmetric, -A\n");
+    fprintf(stderr, "\t\tUse arithmetric coding instead of Huffman coding.\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "Examples:\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "Examples:\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\tPlace a logo in the top right corner:\n");
-	fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --output out.jpg\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\tPlace a logo in the top right corner:\n");
+    fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --output out.jpg\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\tPixelate the image and then place a logo in the top right corner:\n");
-	fprintf(stderr, "\t\tmodjpeg --input in.jpg --pixelate --position tr --dropon logo.jpg --output out.jpg\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\tPixelate the image and then place a logo in the top right corner:\n");
+    fprintf(stderr, "\t\tmodjpeg --input in.jpg --pixelate --position tr --dropon logo.jpg --output out.jpg\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\tPlace a logo in the top right corner and then pixelate the image (including the logo):\n");
-	fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --pixelate --output out.jpg\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "\tPlace a logo in the top right corner and then pixelate the image (including the logo):\n");
+    fprintf(stderr, "\t\tmodjpeg --input in.jpg --position tr --dropon logo.jpg --pixelate --output out.jpg\n");
+    fprintf(stderr, "\n");
 
-	fprintf(stderr, "\n");
-	return;
+    fprintf(stderr, "\n");
+    return;
 }
 

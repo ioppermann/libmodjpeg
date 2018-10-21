@@ -4,13 +4,13 @@ FILES="cmake_install.cmake CMakeCache.txt CMakeFiles install_manifest.txt Makefi
 DIRS="./"
 
 for dir in ${DIRS}; do
-	for file in ${FILES}; do
-		if [ ! -e ${dir}${file} ]; then
-			continue
-		fi
+    for file in ${FILES}; do
+        if [ ! -e ${dir}${file} ]; then
+            continue
+        fi
 
-		rm -rf ${dir}${file}
-	done
+        rm -rf ${dir}${file}
+    done
 done
 
 rm *.dylib

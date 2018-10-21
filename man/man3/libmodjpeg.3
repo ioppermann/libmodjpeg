@@ -160,32 +160,32 @@ All non-void functions return \fBMJ_OK\fR if everything went fine. If something 
 #include <libmodjpeg.h>
 
 int main(int argc, char **argv) {
-	\fB// Initialize dropon struct\fR
-	struct mj_dropon_t d;
-	mj_init_dropon(&d);
+    \fB// Initialize dropon struct\fR
+    struct mj_dropon_t d;
+    mj_init_dropon(&d);
 
-	\fB// Read a dropon from a JPEG, without mask and with 50% translucency\fR
-	mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
+    \fB// Read a dropon from a JPEG, without mask and with 50% translucency\fR
+    mj_read_dropon_from_file(&d, "logo.jpg", NULL, 50);
 
-	\fB// Initialize JPEG image struct\fR
-	struct mj_jpeg_t m;
-	mj_init_jpeg(&m);
+    \fB// Initialize JPEG image struct\fR
+    struct mj_jpeg_t m;
+    mj_init_jpeg(&m);
 
-	\fB// Read a JPEG image from a file\fR
-	mj_read_jpeg_from_file(&m, "in.jpg", 0);
+    \fB// Read a JPEG image from a file\fR
+    mj_read_jpeg_from_file(&m, "in.jpg", 0);
 
-	\fB// Place the dropon in the bottom right corner of the JPEG image\fR
-	\fB// with 10px distance to the bottom and right border\fR
-	mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
+    \fB// Place the dropon in the bottom right corner of the JPEG image\fR
+    \fB// with 10px distance to the bottom and right border\fR
+    mj_compose(&m, &d, MJ_ALIGN_BOTTOM | MJ_ALIGN_RIGHT, -10, -10);
 
-	\fB// Write the JPEG image to a file with optimzed Hufman tables and progressive mode\fR
-	mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
+    \fB// Write the JPEG image to a file with optimzed Hufman tables and progressive mode\fR
+    mj_write_jpeg_to_file(&m, "out.jpg", MJ_OPTION_OPTIMIZE | MJ_OPTION_PROGRESSIVE);
 
-	\fB// Free the dropon and JPEG image structs\fR
-	mj_free_jpeg(&m);
-	mj_free_dropon(&d);
+    \fB// Free the dropon and JPEG image structs\fR
+    mj_free_jpeg(&m);
+    mj_free_dropon(&d);
 
-	return 0;
+    return 0;
 }
 .fi
 

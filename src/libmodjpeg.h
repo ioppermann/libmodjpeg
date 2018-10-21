@@ -26,100 +26,100 @@
 #include <stdio.h>
 #include <jpeglib.h>
 
-#define MJ_LIB_VERSION_MAJOR     1
-#define MJ_LIB_VERSION_MINOR     0
-#define MJ_LIB_VERSION_RELEASE   0
-#define MJ_LIB_VERSION           10000
+#define MJ_LIB_VERSION_MAJOR      1
+#define MJ_LIB_VERSION_MINOR      0
+#define MJ_LIB_VERSION_RELEASE    0
+#define MJ_LIB_VERSION            10000
 
-#define MJ_COLORSPACE_RGB               1
-#define MJ_COLORSPACE_RGBA              2
-#define MJ_COLORSPACE_GRAYSCALE         3
-#define MJ_COLORSPACE_GRAYSCALEA        4
-#define MJ_COLORSPACE_YCC               5
-#define MJ_COLORSPACE_YCCA              6
+#define MJ_COLORSPACE_RGB           1
+#define MJ_COLORSPACE_RGBA          2
+#define MJ_COLORSPACE_GRAYSCALE     3
+#define MJ_COLORSPACE_GRAYSCALEA    4
+#define MJ_COLORSPACE_YCC           5
+#define MJ_COLORSPACE_YCCA          6
 
-#define MJ_ALIGN_LEFT                   (1 << 0)
-#define MJ_ALIGN_RIGHT                  (1 << 1)
-#define MJ_ALIGN_TOP                    (1 << 2)
-#define MJ_ALIGN_BOTTOM                 (1 << 3)
-#define MJ_ALIGN_CENTER                 (1 << 4)
+#define MJ_ALIGN_LEFT      (1 << 0)
+#define MJ_ALIGN_RIGHT     (1 << 1)
+#define MJ_ALIGN_TOP       (1 << 2)
+#define MJ_ALIGN_BOTTOM    (1 << 3)
+#define MJ_ALIGN_CENTER    (1 << 4)
 
-#define MJ_BLEND_NONUNIFORM             -1
-#define MJ_BLEND_NONE                   0
-#define MJ_BLEND_FULL                   255
+#define MJ_BLEND_NONUNIFORM    -1
+#define MJ_BLEND_NONE          0
+#define MJ_BLEND_FULL          255
 
-#define MJ_OPTION_NONE                  0
-#define MJ_OPTION_OPTIMIZE              (1 << 0)
-#define MJ_OPTION_PROGRESSIVE           (1 << 1)
-#define MJ_OPTION_ARITHMETRIC		(1 << 2)
+#define MJ_OPTION_NONE           0
+#define MJ_OPTION_OPTIMIZE       (1 << 0)
+#define MJ_OPTION_PROGRESSIVE    (1 << 1)
+#define MJ_OPTION_ARITHMETRIC    (1 << 2)
 
-#define MJ_OK                           0
-#define MJ_ERR_MEMORY                   1
-#define MJ_ERR_NULL_DATA                2
-#define MJ_ERR_DROPON_DIMENSIONS        3
-#define MJ_ERR_UNSUPPORTED_COLORSPACE   4
-#define MJ_ERR_DECODE_JPEG              5
-#define MJ_ERR_ENCODE_JPEG              6
-#define MJ_ERR_FILEIO                   7
-#define MJ_ERR_IMAGE_SIZE               8
-#define MJ_ERR_UNSUPPORTED_FILETYPE     9
+#define MJ_OK                            0
+#define MJ_ERR_MEMORY                    1
+#define MJ_ERR_NULL_DATA                 2
+#define MJ_ERR_DROPON_DIMENSIONS         3
+#define MJ_ERR_UNSUPPORTED_COLORSPACE    4
+#define MJ_ERR_DECODE_JPEG               5
+#define MJ_ERR_ENCODE_JPEG               6
+#define MJ_ERR_FILEIO                    7
+#define MJ_ERR_IMAGE_SIZE                8
+#define MJ_ERR_UNSUPPORTED_FILETYPE      9
 
 typedef struct {
-	int h_samp_factor;
-	int v_samp_factor;
+    int h_samp_factor;
+    int v_samp_factor;
 } mj_samplingfactor_t;
 
 typedef struct {
-	int max_h_samp_factor;
-	int max_v_samp_factor;
+    int max_h_samp_factor;
+    int max_v_samp_factor;
 
-	int h_factor;
-	int v_factor;
+    int h_factor;
+    int v_factor;
 
-	mj_samplingfactor_t samp_factor[4];
+    mj_samplingfactor_t samp_factor[4];
 } mj_sampling_t;
 
 typedef float mj_block_t;
 
 typedef struct {
-	int width_in_blocks;
-	int height_in_blocks;
+    int width_in_blocks;
+    int height_in_blocks;
 
-	int h_samp_factor;
-	int v_samp_factor;
+    int h_samp_factor;
+    int v_samp_factor;
 
-	int nblocks;
-	mj_block_t **blocks;
+    int nblocks;
+    mj_block_t **blocks;
 } mj_component_t;
 
 typedef struct {
-	struct jpeg_decompress_struct cinfo;
-	jvirt_barray_ptr *coef;
+    struct jpeg_decompress_struct cinfo;
+    jvirt_barray_ptr *coef;
 
-	int width;
-	int height;
+    int width;
+    int height;
 
-	mj_sampling_t sampling;
+    mj_sampling_t sampling;
 } mj_jpeg_t;
 
 typedef struct {
-	unsigned char *image;
-	unsigned char *alpha;
+    unsigned char *image;
+    unsigned char *alpha;
 
-	int width;
-	int height;
-	int colorspace;
+    int width;
+    int height;
+    int colorspace;
 
-	int blend;
+    int blend;
 } mj_dropon_t;
 
 typedef struct {
-	int image_ncomponents;
-	int image_colorspace;
-	mj_component_t *image;
+    int image_ncomponents;
+    int image_colorspace;
+    mj_component_t *image;
 
-	int alpha_ncomponents;
-	mj_component_t *alpha;
+    int alpha_ncomponents;
+    mj_component_t *alpha;
 } mj_compileddropon_t;
 
 void mj_init_dropon(mj_dropon_t *d);

@@ -27,26 +27,26 @@
 
 #include "libmodjpeg.h"
 
-#define MJ_DESTBUFFER_CHUNKSIZE		2048
+#define MJ_DESTBUFFER_CHUNKSIZE    2048
 
 struct mj_jpeg_error_mgr {
-	struct jpeg_error_mgr pub;
+    struct jpeg_error_mgr pub;
 
-	jmp_buf setjmp_buffer;
+    jmp_buf setjmp_buffer;
 };
 
 struct mj_jpeg_dest_mgr {
-	struct jpeg_destination_mgr pub;
+    struct jpeg_destination_mgr pub;
 
-	JOCTET *buf;
-	size_t size;
+    JOCTET *buf;
+    size_t size;
 };
 
 struct mj_jpeg_src_mgr {
-	struct jpeg_source_mgr pub;
+    struct jpeg_source_mgr pub;
 
-	JOCTET *buf;
-	size_t size;
+    JOCTET *buf;
+    size_t size;
 };
 
 typedef struct mj_jpeg_error_mgr* mj_jpeg_error_ptr;
