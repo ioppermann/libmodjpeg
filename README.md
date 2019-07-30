@@ -328,7 +328,7 @@ Free the memory consumed by the JPEG. The jpeg struct can be reused for another 
 ### Composition
 
 ```C
-int  mj_compose(
+int mj_compose(
     mj_jpeg_t *m,
     mj_dropon_t *d,
     unsigned int align,
