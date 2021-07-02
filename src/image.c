@@ -20,14 +20,15 @@
  * SOFTWARE.
  */
 
+#include "image.h"
+
+#include "jpeg.h"
+#include "libmodjpeg.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-
-#include "libmodjpeg.h"
-#include "image.h"
-#include "jpeg.h"
 
 int mj_read_jpeg_from_memory(mj_jpeg_t *m, const unsigned char *memory, size_t len, size_t max_pixel) {
     if(m == NULL) {
@@ -41,7 +42,7 @@ int mj_read_jpeg_from_memory(mj_jpeg_t *m, const unsigned char *memory, size_t l
     mj_free_jpeg(m);
 
     struct mj_jpeg_error_mgr jerr;
-    struct mj_jpeg_src_mgr src;
+    struct mj_jpeg_src_mgr   src;
 
     m->cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = mj_jpeg_error_exit;
@@ -98,7 +99,7 @@ int mj_read_jpeg_from_memory(mj_jpeg_t *m, const unsigned char *memory, size_t l
     m->sampling.h_factor = (m->sampling.max_h_samp_factor * DCTSIZE);
     m->sampling.v_factor = (m->sampling.max_v_samp_factor * DCTSIZE);
 
-    int c;
+    int                  c;
     jpeg_component_info *component;
 
     for(c = 0; c < m->cinfo.num_components; c++) {
@@ -116,9 +117,9 @@ int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel)
         return MJ_ERR_NULL_DATA;
     }
 
-    int rv;
+    int            rv;
     unsigned char *buffer;
-    size_t len;
+    size_t         len;
 
     rv = mj_read_file(&buffer, &len, filename);
     if(rv != MJ_OK) {
@@ -138,10 +139,10 @@ int mj_write_jpeg_to_memory(mj_jpeg_t *m, unsigned char **memory, size_t *len, i
     }
 
     struct jpeg_compress_struct cinfo;
-    jvirt_barray_ptr *dst_coef_arrays;
-    struct mj_jpeg_error_mgr jerr;
-    struct mj_jpeg_dest_mgr dest;
-    char jpegerrorbuffer[JMSG_LENGTH_MAX];
+    jvirt_barray_ptr *          dst_coef_arrays;
+    struct mj_jpeg_error_mgr    jerr;
+    struct mj_jpeg_dest_mgr     dest;
+    char                        jpegerrorbuffer[JMSG_LENGTH_MAX];
 
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = mj_jpeg_error_exit;
@@ -208,9 +209,9 @@ int mj_write_jpeg_to_memory(mj_jpeg_t *m, unsigned char **memory, size_t *len, i
 }
 
 int mj_write_jpeg_to_file(mj_jpeg_t *m, char *filename, int options) {
-    FILE *fp;
+    FILE *         fp;
     unsigned char *buffer = NULL;
-    size_t len = 0;
+    size_t         len = 0;
 
     if(m == NULL) {
         return MJ_ERR_NULL_DATA;
@@ -255,9 +256,9 @@ void mj_free_jpeg(mj_jpeg_t *m) {
 
 int mj_encode_raw_to_jpeg_memory(unsigned char **memory, size_t *len, unsigned char *rawdata, int colorspace, J_COLOR_SPACE jpeg_colorspace, mj_sampling_t *s, int width, int height) {
     struct jpeg_compress_struct cinfo;
-    struct mj_jpeg_error_mgr jerr;
-    struct mj_jpeg_dest_mgr dest;
-    char jpegerrorbuffer[JMSG_LENGTH_MAX];
+    struct mj_jpeg_error_mgr    jerr;
+    struct mj_jpeg_dest_mgr     dest;
+    char                        jpegerrorbuffer[JMSG_LENGTH_MAX];
 
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = mj_jpeg_error_exit;
@@ -304,9 +305,9 @@ int mj_encode_raw_to_jpeg_memory(unsigned char **memory, size_t *len, unsigned c
 
     jpeg_set_colorspace(&cinfo, jpeg_colorspace);
 
-    cinfo.optimize_coding = FALSE;  // don't optimize
-    cinfo.scan_info = NULL;     // don't create progressive output
-    cinfo.arith_code = FALSE;   // don't do arithmetric coding
+    cinfo.optimize_coding = FALSE;    // don't optimize
+    cinfo.scan_info = NULL;           // don't create progressive output
+    cinfo.arith_code = FALSE;         // don't do arithmetric coding
 
     if(colorspace == MJ_COLORSPACE_RGB || colorspace == MJ_COLORSPACE_YCC) {
         cinfo.comp_info[0].h_samp_factor = s->samp_factor[0].h_samp_factor;
@@ -346,9 +347,9 @@ int mj_encode_raw_to_jpeg_memory(unsigned char **memory, size_t *len, unsigned c
 }
 
 int mj_decode_jpeg_file_to_raw(unsigned char **rawdata, int *width, int *height, int want_colorspace, const char *filename) {
-    FILE *fp;
+    FILE *                        fp;
     struct jpeg_decompress_struct cinfo;
-    struct mj_jpeg_error_mgr jerr;
+    struct mj_jpeg_error_mgr      jerr;
 
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = mj_jpeg_error_exit;
@@ -377,8 +378,8 @@ int mj_decode_jpeg_file_to_raw(unsigned char **rawdata, int *width, int *height,
 
 int mj_decode_jpeg_memory_to_raw(unsigned char **rawdata, int *width, int *height, int want_colorspace, const unsigned char *memory, size_t blen) {
     struct jpeg_decompress_struct cinfo;
-    struct mj_jpeg_error_mgr jerr;
-    struct mj_jpeg_src_mgr src;
+    struct mj_jpeg_error_mgr      jerr;
+    struct mj_jpeg_src_mgr        src;
 
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = mj_jpeg_error_exit;
@@ -454,7 +455,7 @@ int mj_read_file(unsigned char **buffer, size_t *len, const char *filename) {
         return MJ_ERR_NULL_DATA;
     }
 
-    FILE *fp;
+    FILE *      fp;
     struct stat s;
 
     fp = fopen(filename, "rb");
@@ -487,4 +488,3 @@ int mj_read_file(unsigned char **buffer, size_t *len, const char *filename) {
 
     return MJ_OK;
 }
-

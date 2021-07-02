@@ -20,21 +20,21 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <setjmp.h>
-
-#include <jerror.h>
+#include "jpeg.h"
 
 #include "libmodjpeg.h"
-#include "jpeg.h"
+
+#include <jerror.h>
+#include <setjmp.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /** JPEG reading and writing **/
 
 void mj_jpeg_error_exit(j_common_ptr cinfo) {
     mj_jpeg_error_ptr myerr = (mj_jpeg_error_ptr)cinfo->err;
 
-    (*cinfo->err->output_message) (cinfo);
+    (*cinfo->err->output_message)(cinfo);
 
     longjmp(myerr->setjmp_buffer, 1);
 }
@@ -55,7 +55,7 @@ void mj_jpeg_init_destination(j_compress_ptr cinfo) {
 }
 
 boolean mj_jpeg_empty_output_buffer(j_compress_ptr cinfo) {
-    JOCTET *ret;
+    JOCTET *         ret;
     mj_jpeg_dest_ptr dest = (mj_jpeg_dest_ptr)cinfo->dest;
 
     ret = (JOCTET *)realloc(dest->buf, (dest->size + MJ_DESTBUFFER_CHUNKSIZE) * sizeof(JOCTET));
@@ -107,5 +107,3 @@ void mj_jpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes) {
 void mj_jpeg_term_source(j_decompress_ptr cinfo) {
     /* no work necessary here */
 }
-
-

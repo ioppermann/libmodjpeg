@@ -23,46 +23,50 @@
 #ifndef _LIBMODJPEG_H_
 #define _LIBMODJPEG_H_
 
+// clang-format off
+// The stdio.h header must be before jpeglib.h, otherwise the compiler
+// complains about a missing definition of size_t
 #include <stdio.h>
 #include <jpeglib.h>
+// clang-format on
 
-#define MJ_LIB_VERSION_MAJOR      1
-#define MJ_LIB_VERSION_MINOR      0
-#define MJ_LIB_VERSION_RELEASE    0
-#define MJ_LIB_VERSION            10000
+#define MJ_LIB_VERSION_MAJOR   1
+#define MJ_LIB_VERSION_MINOR   0
+#define MJ_LIB_VERSION_RELEASE 0
+#define MJ_LIB_VERSION         10000
 
-#define MJ_COLORSPACE_RGB           1
-#define MJ_COLORSPACE_RGBA          2
-#define MJ_COLORSPACE_GRAYSCALE     3
-#define MJ_COLORSPACE_GRAYSCALEA    4
-#define MJ_COLORSPACE_YCC           5
-#define MJ_COLORSPACE_YCCA          6
+#define MJ_COLORSPACE_RGB        1
+#define MJ_COLORSPACE_RGBA       2
+#define MJ_COLORSPACE_GRAYSCALE  3
+#define MJ_COLORSPACE_GRAYSCALEA 4
+#define MJ_COLORSPACE_YCC        5
+#define MJ_COLORSPACE_YCCA       6
 
-#define MJ_ALIGN_LEFT      (1 << 0)
-#define MJ_ALIGN_RIGHT     (1 << 1)
-#define MJ_ALIGN_TOP       (1 << 2)
-#define MJ_ALIGN_BOTTOM    (1 << 3)
-#define MJ_ALIGN_CENTER    (1 << 4)
+#define MJ_ALIGN_LEFT   (1 << 0)
+#define MJ_ALIGN_RIGHT  (1 << 1)
+#define MJ_ALIGN_TOP    (1 << 2)
+#define MJ_ALIGN_BOTTOM (1 << 3)
+#define MJ_ALIGN_CENTER (1 << 4)
 
-#define MJ_BLEND_NONUNIFORM    -1
-#define MJ_BLEND_NONE          0
-#define MJ_BLEND_FULL          255
+#define MJ_BLEND_NONUNIFORM -1
+#define MJ_BLEND_NONE       0
+#define MJ_BLEND_FULL       255
 
-#define MJ_OPTION_NONE           0
-#define MJ_OPTION_OPTIMIZE       (1 << 0)
-#define MJ_OPTION_PROGRESSIVE    (1 << 1)
-#define MJ_OPTION_ARITHMETRIC    (1 << 2)
+#define MJ_OPTION_NONE        0
+#define MJ_OPTION_OPTIMIZE    (1 << 0)
+#define MJ_OPTION_PROGRESSIVE (1 << 1)
+#define MJ_OPTION_ARITHMETRIC (1 << 2)
 
-#define MJ_OK                            0
-#define MJ_ERR_MEMORY                    1
-#define MJ_ERR_NULL_DATA                 2
-#define MJ_ERR_DROPON_DIMENSIONS         3
-#define MJ_ERR_UNSUPPORTED_COLORSPACE    4
-#define MJ_ERR_DECODE_JPEG               5
-#define MJ_ERR_ENCODE_JPEG               6
-#define MJ_ERR_FILEIO                    7
-#define MJ_ERR_IMAGE_SIZE                8
-#define MJ_ERR_UNSUPPORTED_FILETYPE      9
+#define MJ_OK                         0
+#define MJ_ERR_MEMORY                 1
+#define MJ_ERR_NULL_DATA              2
+#define MJ_ERR_DROPON_DIMENSIONS      3
+#define MJ_ERR_UNSUPPORTED_COLORSPACE 4
+#define MJ_ERR_DECODE_JPEG            5
+#define MJ_ERR_ENCODE_JPEG            6
+#define MJ_ERR_FILEIO                 7
+#define MJ_ERR_IMAGE_SIZE             8
+#define MJ_ERR_UNSUPPORTED_FILETYPE   9
 
 typedef struct {
     int h_samp_factor;
@@ -88,13 +92,13 @@ typedef struct {
     int h_samp_factor;
     int v_samp_factor;
 
-    int nblocks;
+    int          nblocks;
     mj_block_t **blocks;
 } mj_component_t;
 
 typedef struct {
     struct jpeg_decompress_struct cinfo;
-    jvirt_barray_ptr *coef;
+    jvirt_barray_ptr *            coef;
 
     int width;
     int height;
@@ -114,22 +118,22 @@ typedef struct {
 } mj_dropon_t;
 
 typedef struct {
-    int image_ncomponents;
-    int image_colorspace;
+    int             image_ncomponents;
+    int             image_colorspace;
     mj_component_t *image;
 
-    int alpha_ncomponents;
+    int             alpha_ncomponents;
     mj_component_t *alpha;
 } mj_compileddropon_t;
 
 void mj_init_dropon(mj_dropon_t *d);
-int mj_read_dropon_from_raw(mj_dropon_t *d, const unsigned char *rawdata, unsigned int colorspace, int width, int height, short blend);
-int mj_read_dropon_from_memory(mj_dropon_t *d, const unsigned char *memory, size_t len, const unsigned char *maskmemory, size_t masklen, short blend);
-int mj_read_dropon_from_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend);
+int  mj_read_dropon_from_raw(mj_dropon_t *d, const unsigned char *rawdata, unsigned int colorspace, int width, int height, short blend);
+int  mj_read_dropon_from_memory(mj_dropon_t *d, const unsigned char *memory, size_t len, const unsigned char *maskmemory, size_t masklen, short blend);
+int  mj_read_dropon_from_file(mj_dropon_t *d, const char *filename, const char *maskfilename, short blend);
 
 void mj_init_jpeg(mj_jpeg_t *m);
-int mj_read_jpeg_from_memory(mj_jpeg_t *m, const unsigned char *memory, size_t len, size_t max_pixel);
-int mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel);
+int  mj_read_jpeg_from_memory(mj_jpeg_t *m, const unsigned char *memory, size_t len, size_t max_pixel);
+int  mj_read_jpeg_from_file(mj_jpeg_t *m, const char *filename, size_t max_pixel);
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y);
 

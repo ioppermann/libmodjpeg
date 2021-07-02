@@ -20,14 +20,15 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include "libmodjpeg.h"
-#include "dropon.h"
-#include "convolve.h"
 #include "compose.h"
+
+#include "convolve.h"
+#include "dropon.h"
+#include "libmodjpeg.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, int offset_y) {
     if(m == NULL || d == NULL) {
@@ -47,7 +48,6 @@ int mj_compose(mj_jpeg_t *m, mj_dropon_t *d, unsigned int align, int offset_x, i
     // top-left corner of the crop area of the dropon and width and height of the crop area
     // initially the whole dropon
     int crop_x = 0, crop_y = 0, crop_w = d->width, crop_h = d->height;
-
 
     // first we have to calculate the position of the dropon on the image,
     // then we know how we have to crop the dropon. in most cases the
@@ -184,16 +184,16 @@ int mj_compose_without_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, 
         return MJ_ERR_NULL_DATA;
     }
 
-    int c, k, l, i;
-    int width_offset = 0, height_offset = 0;
-    int width_in_blocks = 0, height_in_blocks = 0;
+    int                            c, k, l, i;
+    int                            width_offset = 0, height_offset = 0;
+    int                            width_in_blocks = 0, height_in_blocks = 0;
     struct jpeg_decompress_struct *cinfo_m;
-    jpeg_component_info *component_m;
-    JBLOCKARRAY blocks_m;
-    JCOEFPTR coefs_m;
+    jpeg_component_info *          component_m;
+    JBLOCKARRAY                    blocks_m;
+    JCOEFPTR                       coefs_m;
 
     mj_component_t *imagecomp;
-    mj_block_t *imageblock;
+    mj_block_t *    imageblock;
 
     cinfo_m = &m->cinfo;
 
@@ -239,17 +239,17 @@ int mj_compose_with_mask(mj_jpeg_t *m, mj_compileddropon_t *cd, int block_x, int
         return MJ_ERR_NULL_DATA;
     }
 
-    int c, k, l, i;
-    int width_offset = 0, height_offset = 0;
-    int width_in_blocks = 0, height_in_blocks = 0;
+    int                            c, k, l, i;
+    int                            width_offset = 0, height_offset = 0;
+    int                            width_in_blocks = 0, height_in_blocks = 0;
     struct jpeg_decompress_struct *cinfo_m;
-    jpeg_component_info *component_m;
-    JBLOCKARRAY blocks_m;
-    JCOEFPTR coefs_m;
-    float X[DCTSIZE2], Y[DCTSIZE2];
+    jpeg_component_info *          component_m;
+    JBLOCKARRAY                    blocks_m;
+    JCOEFPTR                       coefs_m;
+    float                          X[DCTSIZE2], Y[DCTSIZE2];
 
     mj_component_t *imagecomp, *alphacomp;
-    mj_block_t *imageblock, *alphablock;
+    mj_block_t *    imageblock, *alphablock;
 
     cinfo_m = &m->cinfo;
 

@@ -23,11 +23,11 @@
 #ifndef _LIBMODJPEG_JPEG_H_
 #define _LIBMODJPEG_JPEG_H_
 
-#include <setjmp.h>
-
 #include "libmodjpeg.h"
 
-#define MJ_DESTBUFFER_CHUNKSIZE    2048
+#include <setjmp.h>
+
+#define MJ_DESTBUFFER_CHUNKSIZE 2048
 
 struct mj_jpeg_error_mgr {
     struct jpeg_error_mgr pub;
@@ -39,28 +39,28 @@ struct mj_jpeg_dest_mgr {
     struct jpeg_destination_mgr pub;
 
     JOCTET *buf;
-    size_t size;
+    size_t  size;
 };
 
 struct mj_jpeg_src_mgr {
     struct jpeg_source_mgr pub;
 
     JOCTET *buf;
-    size_t size;
+    size_t  size;
 };
 
-typedef struct mj_jpeg_error_mgr* mj_jpeg_error_ptr;
-typedef struct mj_jpeg_src_mgr *mj_jpeg_src_ptr;
-typedef struct mj_jpeg_dest_mgr* mj_jpeg_dest_ptr;
+typedef struct mj_jpeg_error_mgr *mj_jpeg_error_ptr;
+typedef struct mj_jpeg_src_mgr *  mj_jpeg_src_ptr;
+typedef struct mj_jpeg_dest_mgr * mj_jpeg_dest_ptr;
 
-void mj_jpeg_init_source(j_decompress_ptr cinfo);
+void    mj_jpeg_init_source(j_decompress_ptr cinfo);
 boolean mj_jpeg_fill_input_buffer(j_decompress_ptr cinfo);
-void mj_jpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes);
-void mj_jpeg_term_source(j_decompress_ptr cinfo);
+void    mj_jpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes);
+void    mj_jpeg_term_source(j_decompress_ptr cinfo);
 
-void mj_jpeg_error_exit(j_common_ptr cinfo);
-void mj_jpeg_init_destination(j_compress_ptr cinfo);
+void    mj_jpeg_error_exit(j_common_ptr cinfo);
+void    mj_jpeg_init_destination(j_compress_ptr cinfo);
 boolean mj_jpeg_empty_output_buffer(j_compress_ptr cinfo);
-void mj_jpeg_term_destination(j_compress_ptr cinfo);
+void    mj_jpeg_term_destination(j_compress_ptr cinfo);
 
 #endif

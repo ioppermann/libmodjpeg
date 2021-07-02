@@ -20,16 +20,17 @@
  * SOFTWARE.
  */
 
-#include "libmodjpeg.h"
 #include "effect.h"
+
 #include "jpeg.h"
+#include "libmodjpeg.h"
 
 int mj_effect_grayscale(mj_jpeg_t *m) {
-    int i, c;
-    JDIMENSION k, l;
+    int                  i, c;
+    JDIMENSION           k, l;
     jpeg_component_info *component;
-    JBLOCKARRAY blocks;
-    JCOEFPTR coefs;
+    JBLOCKARRAY          blocks;
+    JCOEFPTR             coefs;
 
     if(m == NULL || m->coef == NULL) {
         return MJ_ERR_NULL_DATA;
@@ -67,11 +68,11 @@ int mj_effect_grayscale(mj_jpeg_t *m) {
 }
 
 int mj_effect_pixelate(mj_jpeg_t *m) {
-    int i, c;
-    JDIMENSION k, l;
+    int                  i, c;
+    JDIMENSION           k, l;
     jpeg_component_info *component;
-    JBLOCKARRAY blocks;
-    JCOEFPTR coefs;
+    JBLOCKARRAY          blocks;
+    JCOEFPTR             coefs;
 
     if(m == NULL || m->coef == NULL) {
         return MJ_ERR_NULL_DATA;
@@ -113,10 +114,10 @@ int mj_effect_pixelate(mj_jpeg_t *m) {
 }
 
 int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
-    JDIMENSION k, l;
+    JDIMENSION           k, l;
     jpeg_component_info *component;
-    JBLOCKARRAY blocks;
-    JCOEFPTR coefs;
+    JBLOCKARRAY          blocks;
+    JCOEFPTR             coefs;
 
     if(m == NULL || m->coef == NULL) {
         return MJ_ERR_NULL_DATA;
@@ -182,10 +183,10 @@ int mj_effect_tint(mj_jpeg_t *m, int cb_value, int cr_value) {
 }
 
 int mj_effect_luminance(mj_jpeg_t *m, int value) {
-    JDIMENSION k, l;
+    JDIMENSION           k, l;
     jpeg_component_info *component;
-    JBLOCKARRAY blocks;
-    JCOEFPTR coefs;
+    JBLOCKARRAY          blocks;
+    JCOEFPTR             coefs;
 
     if(m == NULL || m->coef == NULL) {
         return MJ_ERR_NULL_DATA;
