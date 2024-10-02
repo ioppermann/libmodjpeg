@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.9)
+cmake_minimum_required(VERSION 3.5)
 project(libmodjpeg)
 
 cmake_policy(SET CMP0042 NEW)
@@ -16,6 +16,7 @@ include_directories(${JPEG_INCLUDE_DIR})
 link_libraries(${JPEG_LIBRARIES})
 
 include(FindPkgConfig)
+
 if(PKG_CONFIG_FOUND)
     pkg_check_modules(LIBPNG libpng16)
 
@@ -23,7 +24,7 @@ if(PKG_CONFIG_FOUND)
         add_definitions(-DWITH_LIBPNG)
         include_directories(${LIBPNG_INCLUDE_DIRS})
         link_directories(${LIBPNG_LIBRARY_DIRS})
-            link_libraries(${LIBPNG_LIBRARIES})
+        link_libraries(${LIBPNG_LIBRARIES})
     endif()
 endif()
 
